@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/nav_graph"
+    app:startDestination="@id/postsFragment">
+
+    <fragment
+        android:id="@+id/postsFragment"
+        android:name="ru.netology.nework.ui.posts.PostsFragment"
+        android:label="Посты"
+        tools:layout="@layout/fragment_posts">
+
+        <action
+            android:id="@+id/action_postsFragment_to_postDetailsFragment"
+            app:destination="@id/postDetailsFragment" />
+
+        <action
+            android:id="@+id/action_postsFragment_to_createPostFragment"
+            app:destination="@id/createPostFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/eventsFragment"
+        android:name="ru.netology.nework.ui.events.EventsFragment"
+        android:label="События"
+        tools:layout="@layout/fragment_events">
+
+        <action
+            android:id="@+id/action_eventsFragment_to_eventDetailsFragment"
+            app:destination="@id/eventDetailsFragment" />
+
+        <action
+            android:id="@+id/action_eventsFragment_to_createEventFragment"
+            app:destination="@id/createEventFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/usersFragment"
+        android:name="ru.netology.nework.ui.users.UsersFragment"
+        android:label="Пользователи"
+        tools:layout="@layout/fragment_users">
+
+        <action
+            android:id="@+id/action_usersFragment_to_userProfileFragment"
+            app:destination="@id/userProfileFragment" />
+    </fragment>
+
+
+    <fragment
+        android:id="@+id/postDetailsFragment"
+        android:name="ru.netology.nework.ui.posts.PostDetailsFragment"
+        android:label="Детали поста" />
+
+    <fragment
+        android:id="@+id/eventDetailsFragment"
+        android:name="ru.netology.nework.ui.events.EventDetailsFragment"
+        android:label="Детали события" />
+
+    <fragment
+        android:id="@+id/userProfileFragment"
+        android:name="ru.netology.nework.ui.profile.UserProfileFragment"
+        android:label="Профиль пользователя" />
+
+
+    <fragment
+        android:id="@+id/createPostFragment"
+        android:name="ru.netology.nework.ui.posts.CreatePostFragment"
+        android:label="Новый пост" />
+
+    <fragment
+        android:id="@+id/createEventFragment"
+        android:name="ru.netology.nework.ui.events.CreateEventFragment"
+        android:label="Новое событие" />
+
+
+    <fragment
+        android:id="@+id/loginFragment"
+        android:name="ru.netology.nework.ui.auth.LoginFragment"
+        android:label="Вход">
+
+        <action
+            android:id="@+id/action_loginFragment_to_registerFragment"
+            app:destination="@id/registerFragment" />
+
+        <action
+            android:id="@+id/action_loginFragment_to_postsFragment"
+            app:destination="@id/postsFragment"
+            app:popUpTo="@id/loginFragment"
+            app:popUpToInclusive="true" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/registerFragment"
+        android:name="ru.netology.nework.ui.auth.RegisterFragment"
+        android:label="Регистрация">
+
+        <action
+            android:id="@+id/action_registerFragment_to_postsFragment"
+            app:destination="@id/postsFragment"
+            app:popUpTo="@id/registerFragment"
+            app:popUpToInclusive="true" />
+    </fragment>
+
+</navigation>
