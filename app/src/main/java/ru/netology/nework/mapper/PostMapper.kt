@@ -3,7 +3,12 @@ package ru.netology.nework.mapper
 import com.google.gson.Gson
 import ru.netology.nework.data.Post
 import ru.netology.nework.data.PostEntity
+import ru.netology.nework.dto.AttachmentDto
+import ru.netology.nework.dto.AttachmentTypeDto
+import ru.netology.nework.dto.CoordinatesDto
 import ru.netology.nework.dto.PostDto
+
+private val gson = Gson()
 
 fun PostDto.toEntity(): PostEntity = PostEntity(
     id = id,
@@ -41,7 +46,7 @@ fun PostEntity.toModel(): Post = Post(
     }
 )
 
-fun Post.toDto(): PostDto = PostDto(
+fun PostEntity.toDto(): PostDto = PostDto(
     id = id,
     authorId = authorId,
     author = author,
@@ -49,13 +54,23 @@ fun Post.toDto(): PostDto = PostDto(
     authorJob = authorJob,
     content = content,
     published = published,
-    coords = coords?.let {
-        PostDto.CoordinatesDto(it.lat.toString(), it.long.toString())
-    },
+    coords = try {
+        gson.fromJson(coords, CoordinatesDto::class.java)
+    } catch (e: Exception) { null },
     link = link,
-    likeOwnerIds = likeOwnerIds,
+    mentionIds = try {
+        gson.fromJson(mentionIds, Array<Long>::class.java).toList()
+    } catch (e: Exception) { emptyList() },
+    mentionedMe = false,
+    likeOwnerIds = try {
+        gson.fromJson(likeOwnerIds, Array<Long>::class.java).toList()
+    } catch (e: Exception) { emptyList() },
     likedByMe = likedByMe,
-    attachment = attachment?.let {
-        PostDto.AttachmentDto(it.url, PostDto.AttachmentTypeDto.valueOf(it.type.name))
-    }
+    attachment = attachmentUrl?.let { url ->
+        AttachmentDto(
+            url = url,
+            type = AttachmentTypeDto.valueOf(attachmentType ?: "IMAGE")
+        )
+    },
+    users = emptyMap()
 )
