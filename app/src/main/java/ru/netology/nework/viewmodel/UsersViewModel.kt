@@ -5,8 +5,6 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
-import ru.netology.nework.data.Job
-import ru.netology.nework.data.Post
 import ru.netology.nework.data.User
 import ru.netology.nework.repository.UserRepository
 import javax.inject.Inject

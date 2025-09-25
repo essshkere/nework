@@ -35,11 +35,20 @@ fun PostEntity.toModel(): Post = Post(
     authorJob = authorJob,
     content = content,
     published = published,
-    coords = coords?.split(",")?.let {
-        Post.Coordinates(it[0].toDouble(), it[1].toDouble())
+    coords = coords?.let {
+        try {
+            val coordsDto = gson.fromJson(it, CoordinatesDto::class.java)
+            Post.Coordinates(coordsDto.lat.toDouble(), coordsDto.long.toDouble())
+        } catch (e: Exception) {
+            null
+        }
     },
     link = link,
-    likeOwnerIds = likeOwnerIds.split(",").map { it.toLong() },
+    likeOwnerIds = try {
+        gson.fromJson(likeOwnerIds, Array<Long>::class.java).toList()
+    } catch (e: Exception) {
+        emptyList()
+    },
     likedByMe = likedByMe,
     attachment = attachmentUrl?.let {
         Post.Attachment(it, Post.AttachmentType.valueOf(attachmentType ?: "IMAGE"))
