@@ -4,7 +4,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
-import androidx.paging.filter
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
@@ -56,18 +55,6 @@ class PostsViewModel @Inject constructor(
     }
 
     suspend fun getPostById(id: Long): Post? {
-        return try {
-
-            var result: Post? = null
-            data.collect { pagingData ->
-                pagingData.filter { it.id == id }.firstOrNull()?.let {
-                    result = it
-                }
-            }
-            result
-        } catch (e: Exception) {
-            e.printStackTrace()
-            null
-        }
+        return repository.getById(id)
     }
 }

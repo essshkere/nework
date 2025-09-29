@@ -1,7 +1,5 @@
 package ru.netology.nework.data
 
-import com.google.android.gms.fido.fido2.api.common.Attachment
-
 data class Post(
     val id: Long,
     val authorId: Long,
@@ -10,9 +8,23 @@ data class Post(
     val authorJob: String? = null,
     val content: String,
     val published: String,
-    val coords: Event.Coordinates? = null,
+    val coords: Coordinates? = null,
     val link: String? = null,
     val likeOwnerIds: List<Long> = emptyList(),
     val likedByMe: Boolean = false,
     val attachment: Attachment? = null
-)
+){
+    data class Coordinates(
+        val lat: Double,
+        val long: Double
+    )
+
+    data class Attachment(
+        val url: String,
+        val type: AttachmentType
+    )
+
+    enum class AttachmentType {
+        IMAGE, VIDEO, AUDIO
+    }
+}

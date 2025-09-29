@@ -11,4 +11,5 @@ interface PostRepository {
     suspend fun dislikeById(id: Long)
     suspend fun removeById(id: Long)
     suspend fun save(post: Post)
+    suspend fun getById(id: Long): Post?
 }

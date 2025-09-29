@@ -36,12 +36,8 @@ fun PostEntity.toModel(): Post = Post(
     content = content,
     published = published,
     coords = coords?.let {
-        try {
-            val coordsDto = gson.fromJson(it, CoordinatesDto::class.java)
-            Post.Coordinates(coordsDto.lat.toDouble(), coordsDto.long.toDouble())
-        } catch (e: Exception) {
-            null
-        }
+        val coordsDto = gson.fromJson(it, CoordinatesDto::class.java)
+        Post.Coordinates(coordsDto.lat.toDouble(), coordsDto.long.toDouble())
     },
     link = link,
     likeOwnerIds = try {
