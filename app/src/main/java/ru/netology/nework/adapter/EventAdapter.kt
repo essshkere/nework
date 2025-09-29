@@ -6,20 +6,21 @@ import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
-import ru.netology.nework.databinding.ItemPostBinding
-import ru.netology.nework.data.Post
+import ru.netology.nework.databinding.ItemEventBinding
+import ru.netology.nework.data.Event
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-class PostAdapter : ListAdapter<Post, PostAdapter.ViewHolder>(DiffCallback) {
+class EventAdapter : ListAdapter<Event, EventAdapter.ViewHolder>(DiffCallback) {
 
-    var onPostClicked: ((Long) -> Unit)? = null
+    var onEventClicked: ((Long) -> Unit)? = null
     var onLikeClicked: ((Long) -> Unit)? = null
-    var onMentionClicked: ((Long) -> Unit)? = null
+    var onParticipateClicked: ((Long) -> Unit)? = null
+    var onSpeakerClicked: ((Long) -> Unit)? = null
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
-        val binding = ItemPostBinding.inflate(LayoutInflater.from(parent.context), parent, false)
+        val binding = ItemEventBinding.inflate(LayoutInflater.from(parent.context), parent, false)
         return ViewHolder(binding)
     }
 
@@ -27,18 +28,24 @@ class PostAdapter : ListAdapter<Post, PostAdapter.ViewHolder>(DiffCallback) {
         holder.bind(getItem(position))
     }
 
-    inner class ViewHolder(private val binding: ItemPostBinding) :
+    inner class ViewHolder(private val binding: ItemEventBinding) :
         RecyclerView.ViewHolder(binding.root) {
 
-        fun bind(post: Post) {
+        fun bind(event: Event) {
             binding.apply {
-                authorNameTextView.text = post.author
-                publishedDateTextView.text = formatDate(post.published)
-                contentTextView.text = post.content
-                likesCountTextView.text = post.likeOwnerIds.size.toString()
+                authorNameTextView.text = event.author
+                publishedDateTextView.text = formatDate(event.published)
+                eventDateTimeTextView.text = "Когда: ${formatDate(event.datetime)}"
+                eventTypeTextView.text = when (event.type) {
+                    Event.EventType.ONLINE -> "Онлайн"
+                    Event.EventType.OFFLINE -> "Офлайн"
+                }
+                contentTextView.text = event.content
+                likesCountTextView.text = event.likeOwnerIds.size.toString()
+                participantsCountTextView.text = "Участников: ${event.participantsIds.size}"
 
 
-                post.authorAvatar?.let { avatarUrl ->
+                event.authorAvatar?.let { avatarUrl ->
                     Glide.with(authorAvatarImageView)
                         .load(avatarUrl)
                         .placeholder(ru.netology.nework.R.drawable.ic_account_circle)
@@ -49,21 +56,20 @@ class PostAdapter : ListAdapter<Post, PostAdapter.ViewHolder>(DiffCallback) {
                 }
 
 
-                post.attachment?.let { attachment ->
+                event.attachment?.let { attachment ->
                     when (attachment.type) {
-                        Post.Attachment.AttachmentType.IMAGE -> {
+                        Event.Attachment.AttachmentType.IMAGE -> {
                             attachmentImageView.visibility = android.view.View.VISIBLE
                             Glide.with(attachmentImageView)
                                 .load(attachment.url)
                                 .centerCrop()
                                 .into(attachmentImageView)
                         }
-                        Post.Attachment.AttachmentType.VIDEO -> {
+                        Event.Attachment.AttachmentType.VIDEO -> {
                             attachmentImageView.visibility = android.view.View.VISIBLE
-
                             attachmentImageView.setImageResource(ru.netology.nework.R.drawable.ic_video)
                         }
-                        Post.Attachment.AttachmentType.AUDIO -> {
+                        Event.Attachment.AttachmentType.AUDIO -> {
                             attachmentImageView.visibility = android.view.View.VISIBLE
                             attachmentImageView.setImageResource(ru.netology.nework.R.drawable.ic_audio)
                         }
@@ -73,24 +79,7 @@ class PostAdapter : ListAdapter<Post, PostAdapter.ViewHolder>(DiffCallback) {
                 }
 
 
-                post.link?.let { link ->
-                    linkTextView.visibility = android.view.View.VISIBLE
-                    linkTextView.text = link
-                } ?: run {
-                    linkTextView.visibility = android.view.View.GONE
-                }
-
-
-                val mentionIds = post.mentionIds ?: emptyList()
-                if (mentionIds.isNotEmpty()) {
-                    mentionedUsersTextView.visibility = android.view.View.VISIBLE
-                    mentionedUsersTextView.text = "Упомянуто: ${mentionIds.size} пользователей"
-                } else {
-                    mentionedUsersTextView.visibility = android.view.View.GONE
-                }
-
-
-                val likeIcon = if (post.likedByMe) {
+                val likeIcon = if (event.likedByMe) {
                     ru.netology.nework.R.drawable.ic_favorite
                 } else {
                     ru.netology.nework.R.drawable.ic_favorite_border
@@ -98,21 +87,24 @@ class PostAdapter : ListAdapter<Post, PostAdapter.ViewHolder>(DiffCallback) {
                 likeButton.setImageResource(likeIcon)
 
 
+                participateButton.text = if (event.participatedByMe) "Отказаться" else "Участвовать"
+
+
                 root.setOnClickListener {
-                    onPostClicked?.invoke(post.id)
+                    onEventClicked?.invoke(event.id)
                 }
 
                 likeButton.setOnClickListener {
-                    onLikeClicked?.invoke(post.id)
+                    onLikeClicked?.invoke(event.id)
                 }
 
-                mentionedUsersTextView.setOnClickListener {
-
-                    if (mentionIds.isNotEmpty()) {
-                        onMentionClicked?.invoke(mentionIds.first())
-                    }
+                participateButton.setOnClickListener {
+                    onParticipateClicked?.invoke(event.id)
                 }
 
+                authorAvatarImageView.setOnClickListener {
+
+                }
 
                 menuButton.visibility = android.view.View.GONE
             }
@@ -131,21 +123,22 @@ class PostAdapter : ListAdapter<Post, PostAdapter.ViewHolder>(DiffCallback) {
     }
 
     companion object {
-        private val DiffCallback = object : DiffUtil.ItemCallback<Post>() {
-            override fun areItemsTheSame(oldItem: Post, newItem: Post): Boolean {
+        private val DiffCallback = object : DiffUtil.ItemCallback<Event>() {
+            override fun areItemsTheSame(oldItem: Event, newItem: Event): Boolean {
                 return oldItem.id == newItem.id
             }
 
-            override fun areContentsTheSame(oldItem: Post, newItem: Post): Boolean {
+            override fun areContentsTheSame(oldItem: Event, newItem: Event): Boolean {
                 return oldItem == newItem
             }
 
-            override fun getChangePayload(oldItem: Post, newItem: Post): Any? {
-                return if (oldItem.likedByMe != newItem.likedByMe ||
-                    oldItem.likeOwnerIds.size != newItem.likeOwnerIds.size) {
-                    "likes_changed"
-                } else {
-                    null
+            override fun getChangePayload(oldItem: Event, newItem: Event): Any? {
+                return when {
+                    oldItem.likedByMe != newItem.likedByMe ||
+                            oldItem.likeOwnerIds.size != newItem.likeOwnerIds.size -> "likes_changed"
+                    oldItem.participatedByMe != newItem.participatedByMe ||
+                            oldItem.participantsIds.size != newItem.participantsIds.size -> "participation_changed"
+                    else -> null
                 }
             }
         }

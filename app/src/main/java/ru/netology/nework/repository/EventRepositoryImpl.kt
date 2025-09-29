@@ -41,7 +41,7 @@ class EventRepositoryImpl @Inject constructor(
                 }
             }
         } catch (e: Exception) {
-            // Handle error
+
             e.printStackTrace()
         }
     }

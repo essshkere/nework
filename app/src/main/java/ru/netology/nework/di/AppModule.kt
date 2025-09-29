@@ -30,7 +30,7 @@ object AppModule {
         .addInterceptor { chain ->
             val originalRequest = chain.request()
             val requestBuilder = originalRequest.newBuilder()
-                .addHeader("Api-Key", "ваш-api-key-здесь")
+                .addHeader("Api-Key", "c1378193-bc0e-42c8-a502-b8d66d189617")
 
 
             authRepository.getToken()?.let { token ->

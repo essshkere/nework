@@ -26,13 +26,13 @@ class UserRepositoryImpl @Inject constructor(
     }
 
     override suspend fun getUserById(id: Long): User? {
-        // Try to get from cache first
+
         val cachedUser = userDao.getById(id)?.toModel()
         if (cachedUser != null) {
             return cachedUser
         }
 
-        // If not in cache, fetch from API
+
         return try {
             val response = userApi.getById(id)
             if (response.isSuccessful) {
@@ -89,7 +89,6 @@ class UserRepositoryImpl @Inject constructor(
     }
 
     override suspend fun saveUser(user: User) {
-        // For local cache update
         userDao.insert(user.toDto().toEntity())
     }
 }

@@ -10,7 +10,7 @@ data class Post(
     val authorJob: String? = null,
     val content: String,
     val published: String,
-    val coords: Coordinates? = null,
+    val coords: Event.Coordinates? = null,
     val link: String? = null,
     val likeOwnerIds: List<Long> = emptyList(),
     val likedByMe: Boolean = false,

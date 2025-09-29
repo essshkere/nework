@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
+import androidx.paging.filter
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
@@ -19,19 +20,54 @@ class PostsViewModel @Inject constructor(
     val data: Flow<PagingData<Post>> = repository.getPagingData().cachedIn(viewModelScope)
 
     fun likeById(id: Long) = viewModelScope.launch {
-        repository.likeById(id)
+        try {
+            repository.likeById(id)
+        } catch (e: Exception) {
+
+            e.printStackTrace()
+        }
     }
 
     fun dislikeById(id: Long) = viewModelScope.launch {
+        try {
+            repository.dislikeById(id)
+        } catch (e: Exception) {
 
-        repository.dislikeById(id)
+            e.printStackTrace()
+        }
     }
 
     fun removeById(id: Long) = viewModelScope.launch {
-        repository.removeById(id)
+        try {
+            repository.removeById(id)
+        } catch (e: Exception) {
+
+            e.printStackTrace()
+        }
     }
 
     fun save(post: Post) = viewModelScope.launch {
-        repository.save(post)
+        try {
+            repository.save(post)
+        } catch (e: Exception) {
+
+            e.printStackTrace()
+        }
+    }
+
+    suspend fun getPostById(id: Long): Post? {
+        return try {
+
+            var result: Post? = null
+            data.collect { pagingData ->
+                pagingData.filter { it.id == id }.firstOrNull()?.let {
+                    result = it
+                }
+            }
+            result
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
+        }
     }
 }

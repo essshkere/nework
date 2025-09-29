@@ -61,6 +61,8 @@ dependencies {
     implementation(libs.androidx.media3.common.ktx)
     implementation(libs.transport.api)
     implementation(libs.androidx.swiperefreshlayout)
+    implementation libs.androidx.compose.runtime.saved.instance.state
+    implementation libs.firebase.crashlytics.buildtools
 
 
     def core_version = "1.16.0"

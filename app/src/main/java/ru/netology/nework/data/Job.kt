@@ -1,7 +1,5 @@
 package ru.netology.nework.data
 
-import com.google.android.gms.fido.fido2.api.common.Attachment
-
 data class Job(
     val id: Long,
     val name: String,
