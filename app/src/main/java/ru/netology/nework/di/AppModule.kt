@@ -8,8 +8,11 @@ import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import okhttp3.OkHttpClient
+import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
+import ru.netology.nework.R
+import ru.netology.nework.adapter.*
 import ru.netology.nework.api.AuthApi
 import ru.netology.nework.api.EventApi
 import ru.netology.nework.api.PostApi
@@ -26,21 +29,23 @@ object AppModule {
 
     @Provides
     @Singleton
-    fun provideOkHttpClient(authRepository: AuthRepository): OkHttpClient = OkHttpClient.Builder()
-        .addInterceptor { chain ->
-            val originalRequest = chain.request()
-            val requestBuilder = originalRequest.newBuilder()
-                .addHeader("Api-Key", "c1378193-bc0e-42c8-a502-b8d66d189617")
-
-
-            authRepository.getToken()?.let { token ->
-                requestBuilder.addHeader("Authorization", "Bearer $token")
-            }
-
-            val request = requestBuilder.build()
-            chain.proceed(request)
+    fun provideOkHttpClient(): OkHttpClient {
+        val loggingInterceptor = HttpLoggingInterceptor().apply {
+            level = HttpLoggingInterceptor.Level.BODY
         }
-        .build()
+
+        return OkHttpClient.Builder()
+            .addInterceptor { chain ->
+                val originalRequest = chain.request()
+                val requestBuilder = originalRequest.newBuilder()
+                    .addHeader("Api-Key", "c1378193-bc0e-42c8-a502-b8d66d189617")
+
+                val request = requestBuilder.build()
+                chain.proceed(request)
+            }
+            .addInterceptor(loggingInterceptor)
+            .build()
+    }
 
     @Provides
     @Singleton
@@ -92,4 +97,29 @@ object AppModule {
     @Singleton
     fun provideAuthRepository(authApi: AuthApi, @ApplicationContext context: Context): AuthRepository =
         AuthRepositoryImpl(authApi, context)
+}
+
+@Module
+@InstallIn(SingletonComponent::class)
+object AdapterModule {
+
+    @Provides
+    @Singleton
+    fun providePostAdapter(): PostAdapter = PostAdapter()
+
+    @Provides
+    @Singleton
+    fun provideEventAdapter(): EventAdapter = EventAdapter()
+
+    @Provides
+    @Singleton
+    fun provideUserAdapter(): UserAdapter = UserAdapter()
+
+    @Provides
+    @Singleton
+    fun provideJobAdapter(): JobAdapter = JobAdapter()
+
+    @Provides
+    @Singleton
+    fun provideParticipantAdapter(): ParticipantAdapter = ParticipantAdapter()
 }
