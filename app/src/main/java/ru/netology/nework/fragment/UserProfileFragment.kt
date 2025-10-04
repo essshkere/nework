@@ -36,12 +36,6 @@ class UserProfileFragment : Fragment() {
     private val postsViewModel: PostsViewModel by viewModels()
     private val authViewModel: AuthViewModel by viewModels()
 
-    @Inject
-    lateinit var postAdapter: PostAdapter
-
-    @Inject
-    lateinit var jobAdapter: JobAdapter
-
     private lateinit var viewPagerAdapter: ProfileViewPagerAdapter
 
     private var userId: Long = 0
@@ -143,6 +137,8 @@ class UserWallFragment : Fragment() {
     private val viewModel: PostsViewModel by viewModels()
     private val usersViewModel: UsersViewModel by viewModels()
 
+    private lateinit var postAdapter: PostAdapter
+
     private var userId: Long = 0
 
     companion object {
@@ -180,10 +176,19 @@ class UserWallFragment : Fragment() {
     }
 
     private fun setupRecyclerView() {
+        postAdapter = PostAdapter().apply {
+            onPostClicked = { postId ->
+                val action = UserWallFragmentDirections.actionUserWallFragmentToPostDetailsFragment(postId)
+                findNavController().navigate(action)
+            }
+            onLikeClicked = { postId ->
+                viewModel.likeById(postId)
+            }
+        }
+
         binding.postsRecyclerView.apply {
             layoutManager = LinearLayoutManager(requireContext())
-
-             adapter = postAdapter
+            adapter = postAdapter
         }
     }
 
@@ -191,8 +196,7 @@ class UserWallFragment : Fragment() {
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 usersViewModel.getUserWall(userId).let { posts ->
-
-                     postAdapter.submitList(posts)
+                    postAdapter.submitList(posts)
                 }
             }
         }
@@ -210,6 +214,8 @@ class UserJobsFragment : Fragment() {
     private val binding get() = _binding!!
 
     private val usersViewModel: UsersViewModel by viewModels()
+
+    private lateinit var jobAdapter: JobAdapter
 
     private var userId: Long = 0
 
@@ -247,10 +253,11 @@ class UserJobsFragment : Fragment() {
     }
 
     private fun setupRecyclerView() {
+        jobAdapter = JobAdapter()
+
         binding.usersRecyclerView.apply {
             layoutManager = LinearLayoutManager(requireContext())
-
-             adapter = jobAdapter
+            adapter = jobAdapter
         }
     }
 
@@ -258,8 +265,7 @@ class UserJobsFragment : Fragment() {
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 usersViewModel.getJobs(userId).let { jobs ->
-
-                     jobAdapter.submitList(jobs)
+                    jobAdapter.submitList(jobs)
                 }
             }
         }

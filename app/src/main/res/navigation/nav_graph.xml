@@ -18,6 +18,10 @@
         <action
             android:id="@+id/action_postsFragment_to_createPostFragment"
             app:destination="@id/createPostFragment" />
+
+        <action
+            android:id="@+id/action_postsFragment_to_loginFragment"
+            app:destination="@id/loginFragment" />
     </fragment>
 
     <fragment
@@ -33,6 +37,10 @@
         <action
             android:id="@+id/action_eventsFragment_to_createEventFragment"
             app:destination="@id/createEventFragment" />
+
+        <action
+            android:id="@+id/action_eventsFragment_to_loginFragment"
+            app:destination="@id/loginFragment" />
     </fragment>
 
     <fragment
@@ -46,22 +54,54 @@
             app:destination="@id/userProfileFragment" />
     </fragment>
 
-
     <fragment
         android:id="@+id/postDetailsFragment"
         android:name="ru.netology.nework.fragment.PostDetailsFragment"
-        android:label="Детали поста" />
+        android:label="Детали поста">
+
+        <argument
+            android:name="postId"
+            android:defaultValue="0"
+            app:argType="long" />
+
+        <action
+            android:id="@+id/action_postDetailsFragment_to_userProfileFragment"
+            app:destination="@id/userProfileFragment" />
+
+        <action
+            android:id="@+id/action_postDetailsFragment_to_loginFragment"
+            app:destination="@id/loginFragment" />
+    </fragment>
 
     <fragment
         android:id="@+id/eventDetailsFragment"
         android:name="ru.netology.nework.fragment.EventDetailsFragment"
-        android:label="Детали события" />
+        android:label="Детали события">
+
+        <argument
+            android:name="eventId"
+            android:defaultValue="0"
+            app:argType="long" />
+
+        <action
+            android:id="@+id/action_eventDetailsFragment_to_userProfileFragment"
+            app:destination="@id/userProfileFragment" />
+
+        <action
+            android:id="@+id/action_eventDetailsFragment_to_loginFragment"
+            app:destination="@id/loginFragment" />
+    </fragment>
 
     <fragment
         android:id="@+id/userProfileFragment"
         android:name="ru.netology.nework.fragment.UserProfileFragment"
-        android:label="Профиль пользователя" />
+        android:label="Профиль пользователя">
 
+        <argument
+            android:name="userId"
+            android:defaultValue="0"
+            app:argType="long" />
+    </fragment>
 
     <fragment
         android:id="@+id/createPostFragment"
@@ -73,7 +113,7 @@
         android:name="ru.netology.nework.fragment.CreateEventFragment"
         android:label="Новое событие" />
 
-
+    <!-- Аутентификация -->
     <fragment
         android:id="@+id/loginFragment"
         android:name="ru.netology.nework.fragment.LoginFragment"

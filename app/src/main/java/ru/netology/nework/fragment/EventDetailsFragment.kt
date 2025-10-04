@@ -35,10 +35,8 @@ class EventDetailsFragment : Fragment() {
 
     @Inject
     lateinit var speakersAdapter: ParticipantAdapter
-
     @Inject
     lateinit var participantsAdapter: ParticipantAdapter
-
     private var eventId: Long = 0
 
     override fun onCreateView(
@@ -88,17 +86,12 @@ class EventDetailsFragment : Fragment() {
     private fun observeEvent() {
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-
-                 eventsViewModel.getById(eventId)?.let { event ->
-                     bindEvent(event)
-                     loadAuthorJob(event.authorId)
-                     loadSpeakers(event.speakerIds)
-                     loadParticipants(event.participantsIds)
-                 }
-
-
-                eventsViewModel.data.collect { pagingData ->
-
+                val event = eventsViewModel.getById(eventId)
+                event?.let {
+                    bindEvent(it)
+                    loadAuthorJob(it.authorId)
+                    loadSpeakers(it.speakerIds)
+                    loadParticipants(it.participantsIds)
                 }
             }
         }
@@ -210,11 +203,12 @@ class EventDetailsFragment : Fragment() {
 
     private fun setupClickListeners() {
         binding.authorAvatarImageView.setOnClickListener {
-
-             eventsViewModel.getById(eventId)?.authorId?.let { authorId ->
-                 val action = EventDetailsFragmentDirections.actionEventDetailsFragmentToUserProfileFragment(authorId)
-                 findNavController().navigate(action)
-             }
+            viewLifecycleOwner.lifecycleScope.launch {
+                eventsViewModel.getById(eventId)?.authorId?.let { authorId ->
+                    val action = EventDetailsFragmentDirections.actionEventDetailsFragmentToUserProfileFragment(authorId)
+                    findNavController().navigate(action)
+                }
+            }
         }
     }
 

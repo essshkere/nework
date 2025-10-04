@@ -10,7 +10,7 @@ import kotlinx.coroutines.flow.map
 import ru.netology.nework.api.PostApi
 import ru.netology.nework.dao.PostDao
 import ru.netology.nework.data.Post
-import ru.netology.nework.mapper.toDto
+import ru.netology.nework.dto.PostDto
 import ru.netology.nework.mapper.toEntity
 import ru.netology.nework.mapper.toModel
 import javax.inject.Inject
@@ -80,7 +80,39 @@ class PostRepositoryImpl @Inject constructor(
 
     override suspend fun save(post: Post) {
         try {
-            val response = postApi.save(post.toDto())
+            val postDto = PostDto(
+                id = post.id,
+                authorId = post.authorId,
+                author = post.author,
+                authorAvatar = post.authorAvatar,
+                authorJob = post.authorJob,
+                content = post.content,
+                published = post.published,
+                coords = post.coords?.let { coords ->
+                    ru.netology.nework.dto.CoordinatesDto(
+                        lat = coords.lat.toString(),
+                        long = coords.long.toString()
+                    )
+                },
+                link = post.link,
+                mentionIds = post.mentionIds,
+                mentionedMe = false,
+                likeOwnerIds = post.likeOwnerIds,
+                likedByMe = post.likedByMe,
+                attachment = post.attachment?.let { attachment ->
+                    ru.netology.nework.dto.AttachmentDto(
+                        url = attachment.url,
+                        type = when (attachment.type) {
+                            Post.AttachmentType.IMAGE -> ru.netology.nework.dto.AttachmentTypeDto.IMAGE
+                            Post.AttachmentType.VIDEO -> ru.netology.nework.dto.AttachmentTypeDto.VIDEO
+                            Post.AttachmentType.AUDIO -> ru.netology.nework.dto.AttachmentTypeDto.AUDIO
+                        }
+                    )
+                },
+                users = emptyMap()
+            )
+
+            val response = postApi.save(postDto)
             if (response.isSuccessful) {
                 response.body()?.let { postDto ->
                     postDao.insert(postDto.toEntity())
@@ -88,6 +120,29 @@ class PostRepositoryImpl @Inject constructor(
             }
         } catch (e: Exception) {
             throw e
+        }
+    }
+
+    override suspend fun getById(id: Long): Post? {
+        return try {
+            val cachedPost = postDao.getById(id)?.toModel()
+            if (cachedPost != null) {
+                return cachedPost
+            }
+
+
+            val response = postApi.getById(id)
+            if (response.isSuccessful) {
+                response.body()?.let { postDto ->
+                    val post = postDto.toEntity().toModel()
+                    postDao.insert(postDto.toEntity())
+                    post
+                }
+            } else {
+                null
+            }
+        } catch (e: Exception) {
+            null
         }
     }
 }
