@@ -10,7 +10,6 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
-import androidx.navigation.fragment.navArgs
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.bumptech.glide.Glide
 import dagger.hilt.android.AndroidEntryPoint
@@ -18,6 +17,7 @@ import kotlinx.coroutines.launch
 import ru.netology.nework.R
 import ru.netology.nework.adapter.ParticipantAdapter
 import ru.netology.nework.databinding.FragmentEventDetailsBinding
+import ru.netology.nework.data.Event
 import ru.netology.nework.viewmodel.AuthViewModel
 import ru.netology.nework.viewmodel.EventsViewModel
 import ru.netology.nework.viewmodel.UsersViewModel
@@ -29,7 +29,6 @@ class EventDetailsFragment : Fragment() {
     private var _binding: FragmentEventDetailsBinding? = null
     private val binding get() = _binding!!
 
-    private val args: EventDetailsFragmentArgs by navArgs()
     private val eventsViewModel: EventsViewModel by viewModels()
     private val usersViewModel: UsersViewModel by viewModels()
     private val authViewModel: AuthViewModel by viewModels()
@@ -39,6 +38,8 @@ class EventDetailsFragment : Fragment() {
 
     @Inject
     lateinit var participantsAdapter: ParticipantAdapter
+
+    private var eventId: Long = 0
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -51,6 +52,9 @@ class EventDetailsFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
+
+        eventId = arguments?.getLong("eventId") ?: 0
 
         setupRecyclerViews()
         observeEvent()
@@ -69,41 +73,48 @@ class EventDetailsFragment : Fragment() {
         }
 
         speakersAdapter.onUserClicked = { userId ->
-            val action = EventDetailsFragmentDirections.actionEventDetailsFragmentToUserProfileFragment(userId)
-            findNavController().navigate(action)
+
+             val action = EventDetailsFragmentDirections.actionEventDetailsFragmentToUserProfileFragment(userId)
+             findNavController().navigate(action)
         }
 
         participantsAdapter.onUserClicked = { userId ->
-            val action = EventDetailsFragmentDirections.actionEventDetailsFragmentToUserProfileFragment(userId)
-            findNavController().navigate(action)
+
+             val action = EventDetailsFragmentDirections.actionEventDetailsFragmentToUserProfileFragment(userId)
+             findNavController().navigate(action)
         }
     }
 
     private fun observeEvent() {
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                eventsViewModel.getById(args.eventId)?.let { event ->
-                    bindEvent(event)
-                    loadAuthorJob(event.authorId)
-                    loadSpeakers(event.speakerIds)
-                    loadParticipants(event.participantsIds)
+
+                 eventsViewModel.getById(eventId)?.let { event ->
+                     bindEvent(event)
+                     loadAuthorJob(event.authorId)
+                     loadSpeakers(event.speakerIds)
+                     loadParticipants(event.participantsIds)
+                 }
+
+
+                eventsViewModel.data.collect { pagingData ->
+
                 }
             }
         }
     }
 
-    private fun bindEvent(event: ru.netology.nework.data.Event) {
+    private fun bindEvent(event: Event) {
         binding.apply {
             authorNameTextView.text = event.author
             publishedDateTextView.text = event.published
             eventDateTimeTextView.text = "Дата проведения: ${event.datetime}"
             eventTypeTextView.text = when (event.type) {
-                ru.netology.nework.data.Event.EventType.ONLINE -> "Онлайн"
-                ru.netology.nework.data.Event.EventType.OFFLINE -> "Офлайн"
+                Event.EventType.ONLINE -> "Онлайн"
+                Event.EventType.OFFLINE -> "Офлайн"
             }
             contentTextView.text = event.content
             likesCountTextView.text = event.likeOwnerIds.size.toString()
-
 
             event.authorAvatar?.let { avatarUrl ->
                 Glide.with(authorAvatarImageView)
@@ -112,10 +123,9 @@ class EventDetailsFragment : Fragment() {
                     .into(authorAvatarImageView)
             }
 
-
             event.attachment?.let { attachment ->
                 when (attachment.type) {
-                    ru.netology.nework.data.Event.Attachment.AttachmentType.IMAGE -> {
+                    Event.AttachmentType.IMAGE -> {
                         attachmentImageView.visibility = View.VISIBLE
                         Glide.with(attachmentImageView)
                             .load(attachment.url)
@@ -129,25 +139,20 @@ class EventDetailsFragment : Fragment() {
                 attachmentImageView.visibility = View.GONE
             }
 
-
             event.link?.let { link ->
                 linkTextView.visibility = View.VISIBLE
                 linkTextView.text = link
                 linkTextView.setOnClickListener {
-
                 }
             } ?: run {
                 linkTextView.visibility = View.GONE
             }
 
-
             event.coords?.let { coords ->
                 locationCardView.visibility = View.VISIBLE
-
             } ?: run {
                 locationCardView.visibility = View.GONE
             }
-
 
             likeButton.setImageResource(
                 if (event.likedByMe) R.drawable.ic_favorite else R.drawable.ic_favorite_border
@@ -156,10 +161,9 @@ class EventDetailsFragment : Fragment() {
                 if (authViewModel.isAuthenticated()) {
                     eventsViewModel.likeById(event.id)
                 } else {
-                    findNavController().navigate(R.id.action_eventDetailsFragment_to_loginFragment)
+                    findNavController().navigate(R.id.loginFragment)
                 }
             }
-
 
             participateButton.text = if (event.participatedByMe) "Отказаться" else "Участвовать"
             participateButton.setOnClickListener {
@@ -170,7 +174,7 @@ class EventDetailsFragment : Fragment() {
                         eventsViewModel.participate(event.id)
                     }
                 } else {
-                    findNavController().navigate(R.id.action_eventDetailsFragment_to_loginFragment)
+                    findNavController().navigate(R.id.loginFragment)
                 }
             }
         }
@@ -180,7 +184,6 @@ class EventDetailsFragment : Fragment() {
         viewLifecycleOwner.lifecycleScope.launch {
             usersViewModel.getJobs(authorId).let { jobs ->
                 val currentJob = jobs.firstOrNull { it.finish == null }
-
             }
         }
     }
@@ -207,12 +210,11 @@ class EventDetailsFragment : Fragment() {
 
     private fun setupClickListeners() {
         binding.authorAvatarImageView.setOnClickListener {
-            args.eventId.let { eventId ->
-                eventsViewModel.getById(eventId)?.authorId?.let { authorId ->
-                    val action = EventDetailsFragmentDirections.actionEventDetailsFragmentToUserProfileFragment(authorId)
-                    findNavController().navigate(action)
-                }
-            }
+
+             eventsViewModel.getById(eventId)?.authorId?.let { authorId ->
+                 val action = EventDetailsFragmentDirections.actionEventDetailsFragmentToUserProfileFragment(authorId)
+                 findNavController().navigate(action)
+             }
         }
     }
 

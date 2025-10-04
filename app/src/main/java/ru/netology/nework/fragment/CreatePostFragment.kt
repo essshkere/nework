@@ -43,7 +43,7 @@ class CreatePostFragment : Fragment(), MenuProvider {
     private val usersViewModel: UsersViewModel by viewModels()
 
     private var attachmentUri: Uri? = null
-    private var attachmentType: Post.Attachment.AttachmentType? = null
+    private var attachmentType: Post.AttachmentType? = null
     private var coordinates: Post.Coordinates? = null
     private var mentionedUserIds: List<Long> = emptyList()
 
@@ -53,7 +53,7 @@ class CreatePostFragment : Fragment(), MenuProvider {
         if (result.resultCode == android.app.Activity.RESULT_OK) {
             result.data?.data?.let { uri ->
                 attachmentUri = uri
-                attachmentType = Post.Attachment.AttachmentType.IMAGE
+                attachmentType = Post.AttachmentType.IMAGE
                 showAttachmentPreview(uri)
             }
         }
@@ -65,7 +65,7 @@ class CreatePostFragment : Fragment(), MenuProvider {
         if (result.resultCode == android.app.Activity.RESULT_OK) {
             result.data?.data?.let { uri ->
                 attachmentUri = uri
-                attachmentType = Post.Attachment.AttachmentType.VIDEO
+                attachmentType = Post.AttachmentType.VIDEO
                 showAttachmentPreview(uri)
             }
         }
@@ -77,7 +77,7 @@ class CreatePostFragment : Fragment(), MenuProvider {
         if (result.resultCode == android.app.Activity.RESULT_OK) {
             result.data?.data?.let { uri ->
                 attachmentUri = uri
-                attachmentType = Post.Attachment.AttachmentType.AUDIO
+                attachmentType = Post.AttachmentType.AUDIO
                 showAudioAttachment()
             }
         }
@@ -151,6 +151,7 @@ class CreatePostFragment : Fragment(), MenuProvider {
     private fun observePostCreation() {
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+
             }
         }
     }
@@ -222,7 +223,7 @@ class CreatePostFragment : Fragment(), MenuProvider {
             attachment = attachmentUri?.let { uri ->
                 Post.Attachment(
                     url = uri.toString(),
-                    type = attachmentType ?: Post.Attachment.AttachmentType.IMAGE
+                    type = attachmentType ?: Post.AttachmentType.IMAGE
                 )
             }
         )

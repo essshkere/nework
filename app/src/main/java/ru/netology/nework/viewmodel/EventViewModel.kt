@@ -40,4 +40,7 @@ class EventsViewModel @Inject constructor(
     fun unparticipate(id: Long) = viewModelScope.launch {
         repository.unparticipate(id)
     }
+    suspend fun getById(id: Long): Event? {
+        return repository.getById(id)
+    }
 }

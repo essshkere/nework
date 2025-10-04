@@ -44,7 +44,6 @@ class EventAdapter : ListAdapter<Event, EventAdapter.ViewHolder>(DiffCallback) {
                 likesCountTextView.text = event.likeOwnerIds.size.toString()
                 participantsCountTextView.text = "Участников: ${event.participantsIds.size}"
 
-
                 event.authorAvatar?.let { avatarUrl ->
                     Glide.with(authorAvatarImageView)
                         .load(avatarUrl)
@@ -55,21 +54,20 @@ class EventAdapter : ListAdapter<Event, EventAdapter.ViewHolder>(DiffCallback) {
                     authorAvatarImageView.setImageResource(ru.netology.nework.R.drawable.ic_account_circle)
                 }
 
-
                 event.attachment?.let { attachment ->
                     when (attachment.type) {
-                        Event.Attachment.AttachmentType.IMAGE -> {
+                        Event.AttachmentType.IMAGE -> {
                             attachmentImageView.visibility = android.view.View.VISIBLE
                             Glide.with(attachmentImageView)
                                 .load(attachment.url)
                                 .centerCrop()
                                 .into(attachmentImageView)
                         }
-                        Event.Attachment.AttachmentType.VIDEO -> {
+                        Event.AttachmentType.VIDEO -> {
                             attachmentImageView.visibility = android.view.View.VISIBLE
                             attachmentImageView.setImageResource(ru.netology.nework.R.drawable.ic_video)
                         }
-                        Event.Attachment.AttachmentType.AUDIO -> {
+                        Event.AttachmentType.AUDIO -> {
                             attachmentImageView.visibility = android.view.View.VISIBLE
                             attachmentImageView.setImageResource(ru.netology.nework.R.drawable.ic_audio)
                         }
@@ -78,7 +76,6 @@ class EventAdapter : ListAdapter<Event, EventAdapter.ViewHolder>(DiffCallback) {
                     attachmentImageView.visibility = android.view.View.GONE
                 }
 
-
                 val likeIcon = if (event.likedByMe) {
                     ru.netology.nework.R.drawable.ic_favorite
                 } else {
@@ -86,9 +83,7 @@ class EventAdapter : ListAdapter<Event, EventAdapter.ViewHolder>(DiffCallback) {
                 }
                 likeButton.setImageResource(likeIcon)
 
-
                 participateButton.text = if (event.participatedByMe) "Отказаться" else "Участвовать"
-
 
                 root.setOnClickListener {
                     onEventClicked?.invoke(event.id)
@@ -103,7 +98,7 @@ class EventAdapter : ListAdapter<Event, EventAdapter.ViewHolder>(DiffCallback) {
                 }
 
                 authorAvatarImageView.setOnClickListener {
-
+                    // TODO: Navigate to user profile
                 }
 
                 menuButton.visibility = android.view.View.GONE

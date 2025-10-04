@@ -11,7 +11,6 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
-import androidx.paging.LoadState
 import androidx.recyclerview.widget.LinearLayoutManager
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.collectLatest
@@ -51,7 +50,6 @@ class EventsFragment : Fragment() {
         setupSwipeRefresh()
         setupFab()
         observeEvents()
-        observeLoadState()
     }
 
     private fun setupRecyclerView() {
@@ -61,8 +59,12 @@ class EventsFragment : Fragment() {
         }
 
         eventAdapter.onEventClicked = { eventId ->
-            val action = EventsFragmentDirections.actionEventsFragmentToEventDetailsFragment(eventId)
-            findNavController().navigate(action)
+
+             val action = EventsFragmentDirections.actionEventsFragmentToEventDetailsFragment(eventId)
+             findNavController().navigate(action)
+
+
+            Toast.makeText(requireContext(), "Event ID: $eventId", Toast.LENGTH_SHORT).show()
         }
 
         eventAdapter.onLikeClicked = { eventId ->
@@ -73,23 +75,30 @@ class EventsFragment : Fragment() {
             if (authViewModel.isAuthenticated()) {
                 viewModel.participate(eventId)
             } else {
-                findNavController().navigate(R.id.action_eventsFragment_to_loginFragment)
+                findNavController().navigate(R.id.loginFragment)
             }
         }
     }
 
     private fun setupSwipeRefresh() {
-        binding.swipeRefresh.setOnRefreshListener {
-            eventAdapter.refresh()
+        binding.swipeRefreshLayout.setOnRefreshListener {
+
+            binding.swipeRefreshLayout.isRefreshing = false
+
+            viewLifecycleOwner.lifecycleScope.launch {
+                viewModel.data.collectLatest { pagingData ->
+
+                }
+            }
         }
     }
 
     private fun setupFab() {
         binding.fab.setOnClickListener {
             if (authViewModel.isAuthenticated()) {
-                findNavController().navigate(R.id.action_eventsFragment_to_createEventFragment)
+                findNavController().navigate(R.id.createEventFragment)
             } else {
-                findNavController().navigate(R.id.action_eventsFragment_to_loginFragment)
+                findNavController().navigate(R.id.loginFragment)
             }
         }
     }
@@ -97,29 +106,14 @@ class EventsFragment : Fragment() {
     private fun observeEvents() {
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.data.collectLatest { pagingData ->
-                    eventAdapter.submitData(pagingData)
-                }
-            }
-        }
-    }
 
-    private fun observeLoadState() {
-        viewLifecycleOwner.lifecycleScope.launch {
-            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                eventAdapter.loadStateFlow.collectLatest { loadState ->
-                    binding.swipeRefresh.isRefreshing = loadState.refresh is LoadState.Loading
+                 viewModel.data.collectLatest { pagingData ->
+                     eventAdapter.submitData(pagingData)
+                 }
 
-                    when (loadState.refresh) {
-                        is LoadState.Error -> {
-                            val error = (loadState.refresh as LoadState.Error).error
-                             Toast.makeText(requireContext(), "Ошибка загрузки: ${error.message}", Toast.LENGTH_SHORT).show()
-                        }
-                        is LoadState.NotLoading -> {
 
-                        }
-                        else -> {}
-                    }
+                viewModel.data.collectLatest {
+
                 }
             }
         }

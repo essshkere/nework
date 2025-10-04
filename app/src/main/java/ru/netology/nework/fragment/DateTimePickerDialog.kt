@@ -50,7 +50,7 @@ class DateTimePickerDialog : DialogFragment() {
             .create()
     }
 
-    override fun onViewCreated(android.view.View view, Bundle savedInstanceState?) {
+    override fun onViewCreated(view: android.view.View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
         setupClickListeners()

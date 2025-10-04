@@ -72,7 +72,7 @@ class LoginFragment : Fragment() {
         }
 
         binding.registerTextView.setOnClickListener {
-            findNavController().navigate(R.id.action_loginFragment_to_registerFragment)
+            findNavController().navigate(R.id.registerFragment)
         }
     }
 
@@ -81,18 +81,18 @@ class LoginFragment : Fragment() {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.authState.collect { state ->
                     when (state) {
-                        is AuthViewModel.AuthState.Loading -> {
+                        AuthViewModel.AuthState.Loading -> {
                             showLoading(true)
                         }
-                        is AuthViewModel.AuthState.Success -> {
+                        AuthViewModel.AuthState.Success -> {
                             showLoading(false)
-                            findNavController().navigate(R.id.action_loginFragment_to_postsFragment)
+                            findNavController().navigate(R.id.postsFragment)
                         }
                         is AuthViewModel.AuthState.Error -> {
                             showLoading(false)
                             showError(state.message)
                         }
-                        is AuthViewModel.AuthState.Idle -> {
+                        AuthViewModel.AuthState.Idle -> {
                             showLoading(false)
                         }
                     }

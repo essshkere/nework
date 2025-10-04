@@ -12,7 +12,6 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
-import androidx.navigation.fragment.navArgs
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.bumptech.glide.Glide
 import dagger.hilt.android.AndroidEntryPoint
@@ -20,6 +19,7 @@ import kotlinx.coroutines.launch
 import ru.netology.nework.R
 import ru.netology.nework.adapter.ParticipantAdapter
 import ru.netology.nework.databinding.FragmentPostDetailsBinding
+import ru.netology.nework.data.Post
 import ru.netology.nework.viewmodel.AuthViewModel
 import ru.netology.nework.viewmodel.PostsViewModel
 import ru.netology.nework.viewmodel.UsersViewModel
@@ -31,13 +31,14 @@ class PostDetailsFragment : Fragment() {
     private var _binding: FragmentPostDetailsBinding? = null
     private val binding get() = _binding!!
 
-    private val args: PostDetailsFragmentArgs by navArgs()
     private val postsViewModel: PostsViewModel by viewModels()
     private val usersViewModel: UsersViewModel by viewModels()
     private val authViewModel: AuthViewModel by viewModels()
 
     @Inject
     lateinit var participantAdapter: ParticipantAdapter
+
+    private var postId: Long = 0
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -50,6 +51,7 @@ class PostDetailsFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        postId = arguments?.getLong("postId") ?: 0
 
         setupRecyclerView()
         observePost()
@@ -63,30 +65,36 @@ class PostDetailsFragment : Fragment() {
         }
 
         participantAdapter.onUserClicked = { userId ->
-            val action = PostDetailsFragmentDirections.actionPostDetailsFragmentToUserProfileFragment(userId)
-            findNavController().navigate(action)
+
+             val action = PostDetailsFragmentDirections.actionPostDetailsFragmentToUserProfileFragment(userId)
+             findNavController().navigate(action)
         }
     }
 
     private fun observePost() {
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                postsViewModel.getPostById(args.postId)?.let { post ->
-                    bindPost(post)
-                    loadAuthorJob(post.authorId)
-                    loadMentionedUsers(post.mentionIds ?: emptyList())
+
+                 postsViewModel.getPostById(postId)?.let { post ->
+                     bindPost(post)
+                     loadAuthorJob(post.authorId)
+                     loadMentionedUsers(post.mentionIds)
+                 }
+
+
+                postsViewModel.data.collect { pagingData ->
+
                 }
             }
         }
     }
 
-    private fun bindPost(post: ru.netology.nework.data.Post) {
+    private fun bindPost(post: Post) {
         binding.apply {
             authorNameTextView.text = post.author
             publishedDateTextView.text = post.published
             contentTextView.text = post.content
             likesCountTextView.text = post.likeOwnerIds.size.toString()
-
 
             post.authorAvatar?.let { avatarUrl ->
                 Glide.with(authorAvatarImageView)
@@ -95,10 +103,9 @@ class PostDetailsFragment : Fragment() {
                     .into(authorAvatarImageView)
             }
 
-
             post.attachment?.let { attachment ->
                 when (attachment.type) {
-                    ru.netology.nework.data.Post.Attachment.AttachmentType.IMAGE -> {
+                    Post.AttachmentType.IMAGE -> {
                         attachmentImageView.visibility = View.VISIBLE
                         Glide.with(attachmentImageView)
                             .load(attachment.url)
@@ -112,27 +119,22 @@ class PostDetailsFragment : Fragment() {
                 attachmentImageView.visibility = View.GONE
             }
 
-
             post.link?.let { link ->
                 linkTextView.visibility = View.VISIBLE
                 linkTextView.text = link
                 linkTextView.setOnClickListener {
-
-                     val intent = Intent(Intent.ACTION_VIEW, Uri.parse(link))
-                     startActivity(intent)
+                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse(link))
+                    startActivity(intent)
                 }
             } ?: run {
                 linkTextView.visibility = View.GONE
             }
 
-
             post.coords?.let { coords ->
                 locationCardView.visibility = View.VISIBLE
-
             } ?: run {
                 locationCardView.visibility = View.GONE
             }
-
 
             likeButton.setImageResource(
                 if (post.likedByMe) R.drawable.ic_favorite else R.drawable.ic_favorite_border
@@ -141,7 +143,7 @@ class PostDetailsFragment : Fragment() {
                 if (authViewModel.isAuthenticated()) {
                     postsViewModel.likeById(post.id)
                 } else {
-                    findNavController().navigate(R.id.action_postDetailsFragment_to_loginFragment)
+                    findNavController().navigate(R.id.loginFragment)
                 }
             }
         }
@@ -173,12 +175,13 @@ class PostDetailsFragment : Fragment() {
 
     private fun setupClickListeners() {
         binding.authorAvatarImageView.setOnClickListener {
-            args.postId.let { postId ->
-                postsViewModel.getPostById(postId)?.authorId?.let { authorId ->
-                    val action = PostDetailsFragmentDirections.actionPostDetailsFragmentToUserProfileFragment(authorId)
-                    findNavController().navigate(action)
-                }
-            }
+
+             viewLifecycleOwner.lifecycleScope.launch {
+                 postsViewModel.getPostById(postId)?.authorId?.let { authorId ->
+                     val action = PostDetailsFragmentDirections.actionPostDetailsFragmentToUserProfileFragment(authorId)
+                     findNavController().navigate(action)
+                 }
+             }
         }
     }
 

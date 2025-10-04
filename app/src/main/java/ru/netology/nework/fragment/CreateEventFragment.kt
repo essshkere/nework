@@ -44,7 +44,7 @@ class CreateEventFragment : Fragment(), MenuProvider {
     private val usersViewModel: UsersViewModel by viewModels()
 
     private var attachmentUri: Uri? = null
-    private var attachmentType: Event.Attachment.AttachmentType? = null
+    private var attachmentType: Event.AttachmentType? = null
     private var coordinates: Event.Coordinates? = null
     private var speakerIds: List<Long> = emptyList()
     private var eventDateTime: Date? = null
@@ -56,7 +56,7 @@ class CreateEventFragment : Fragment(), MenuProvider {
         if (result.resultCode == android.app.Activity.RESULT_OK) {
             result.data?.data?.let { uri ->
                 attachmentUri = uri
-                attachmentType = Event.Attachment.AttachmentType.IMAGE
+                attachmentType = Event.AttachmentType.IMAGE
                 showAttachmentPreview(uri)
             }
         }
@@ -68,7 +68,7 @@ class CreateEventFragment : Fragment(), MenuProvider {
         if (result.resultCode == android.app.Activity.RESULT_OK) {
             result.data?.data?.let { uri ->
                 attachmentUri = uri
-                attachmentType = Event.Attachment.AttachmentType.VIDEO
+                attachmentType = Event.AttachmentType.VIDEO
                 showAttachmentPreview(uri)
             }
         }
@@ -80,7 +80,7 @@ class CreateEventFragment : Fragment(), MenuProvider {
         if (result.resultCode == android.app.Activity.RESULT_OK) {
             result.data?.data?.let { uri ->
                 attachmentUri = uri
-                attachmentType = Event.Attachment.AttachmentType.AUDIO
+                attachmentType = Event.AttachmentType.AUDIO
                 showAudioAttachment()
             }
         }
@@ -136,12 +136,10 @@ class CreateEventFragment : Fragment(), MenuProvider {
         }
 
         binding.selectLocationButton.setOnClickListener {
-
             Snackbar.make(binding.root, "Выбор локации будет реализован позже", Snackbar.LENGTH_SHORT).show()
         }
 
         binding.selectSpeakersButton.setOnClickListener {
-
             Snackbar.make(binding.root, "Выбор спикеров будет реализован позже", Snackbar.LENGTH_SHORT).show()
         }
 
@@ -159,14 +157,17 @@ class CreateEventFragment : Fragment(), MenuProvider {
     }
 
     private fun setupEventType() {
-        binding.eventTypeRadioGroup.setOnCheckedChangeListener { _, checkedId ->
-            eventType = when (checkedId) {
-                R.id.onlineRadioButton -> Event.EventType.ONLINE
-                R.id.offlineRadioButton -> Event.EventType.OFFLINE
-                else -> Event.EventType.ONLINE
+        binding.onlineRadioButton.setOnCheckedChangeListener { _, isChecked ->
+            if (isChecked) {
+                eventType = Event.EventType.ONLINE
             }
         }
 
+        binding.offlineRadioButton.setOnCheckedChangeListener { _, isChecked ->
+            if (isChecked) {
+                eventType = Event.EventType.OFFLINE
+            }
+        }
 
         binding.onlineRadioButton.isChecked = true
     }
@@ -174,7 +175,6 @@ class CreateEventFragment : Fragment(), MenuProvider {
     private fun observeEventCreation() {
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-
             }
         }
     }
@@ -269,7 +269,7 @@ class CreateEventFragment : Fragment(), MenuProvider {
             attachment = attachmentUri?.let { uri ->
                 Event.Attachment(
                     url = uri.toString(),
-                    type = attachmentType ?: Event.Attachment.AttachmentType.IMAGE
+                    type = attachmentType ?: Event.AttachmentType.IMAGE
                 )
             }
         )

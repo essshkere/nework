@@ -37,7 +37,6 @@ class PostAdapter : ListAdapter<Post, PostAdapter.ViewHolder>(DiffCallback) {
                 contentTextView.text = post.content
                 likesCountTextView.text = post.likeOwnerIds.size.toString()
 
-
                 post.authorAvatar?.let { avatarUrl ->
                     Glide.with(authorAvatarImageView)
                         .load(avatarUrl)
@@ -48,22 +47,20 @@ class PostAdapter : ListAdapter<Post, PostAdapter.ViewHolder>(DiffCallback) {
                     authorAvatarImageView.setImageResource(ru.netology.nework.R.drawable.ic_account_circle)
                 }
 
-
                 post.attachment?.let { attachment ->
                     when (attachment.type) {
-                        Post.Attachment.AttachmentType.IMAGE -> {
+                        Post.AttachmentType.IMAGE -> {
                             attachmentImageView.visibility = android.view.View.VISIBLE
                             Glide.with(attachmentImageView)
                                 .load(attachment.url)
                                 .centerCrop()
                                 .into(attachmentImageView)
                         }
-                        Post.Attachment.AttachmentType.VIDEO -> {
+                        Post.AttachmentType.VIDEO -> {
                             attachmentImageView.visibility = android.view.View.VISIBLE
-
                             attachmentImageView.setImageResource(ru.netology.nework.R.drawable.ic_video)
                         }
-                        Post.Attachment.AttachmentType.AUDIO -> {
+                        Post.AttachmentType.AUDIO -> {
                             attachmentImageView.visibility = android.view.View.VISIBLE
                             attachmentImageView.setImageResource(ru.netology.nework.R.drawable.ic_audio)
                         }
@@ -72,7 +69,6 @@ class PostAdapter : ListAdapter<Post, PostAdapter.ViewHolder>(DiffCallback) {
                     attachmentImageView.visibility = android.view.View.GONE
                 }
 
-
                 post.link?.let { link ->
                     linkTextView.visibility = android.view.View.VISIBLE
                     linkTextView.text = link
@@ -80,8 +76,7 @@ class PostAdapter : ListAdapter<Post, PostAdapter.ViewHolder>(DiffCallback) {
                     linkTextView.visibility = android.view.View.GONE
                 }
 
-
-                val mentionIds = post.mentionIds ?: emptyList()
+                val mentionIds = post.mentionIds
                 if (mentionIds.isNotEmpty()) {
                     mentionedUsersTextView.visibility = android.view.View.VISIBLE
                     mentionedUsersTextView.text = "Упомянуто: ${mentionIds.size} пользователей"
@@ -89,14 +84,12 @@ class PostAdapter : ListAdapter<Post, PostAdapter.ViewHolder>(DiffCallback) {
                     mentionedUsersTextView.visibility = android.view.View.GONE
                 }
 
-
                 val likeIcon = if (post.likedByMe) {
                     ru.netology.nework.R.drawable.ic_favorite
                 } else {
                     ru.netology.nework.R.drawable.ic_favorite_border
                 }
                 likeButton.setImageResource(likeIcon)
-
 
                 root.setOnClickListener {
                     onPostClicked?.invoke(post.id)
@@ -107,12 +100,10 @@ class PostAdapter : ListAdapter<Post, PostAdapter.ViewHolder>(DiffCallback) {
                 }
 
                 mentionedUsersTextView.setOnClickListener {
-
                     if (mentionIds.isNotEmpty()) {
                         onMentionClicked?.invoke(mentionIds.first())
                     }
                 }
-
 
                 menuButton.visibility = android.view.View.GONE
             }

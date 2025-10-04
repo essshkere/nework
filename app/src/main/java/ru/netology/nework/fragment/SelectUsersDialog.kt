@@ -4,7 +4,6 @@ import android.app.AlertDialog
 import android.app.Dialog
 import android.os.Bundle
 import android.view.LayoutInflater
-import androidx.compose.runtime.savedinstancestate.savedInstanceState
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.viewModels
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -39,7 +38,7 @@ class SelectUsersDialog : DialogFragment() {
             .create()
     }
 
-    override fun onViewCreated(android.view.View view, Bundle savedInstanceState?) {
+    override fun onViewCreated(view: android.view.View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
         setupRecyclerView()
@@ -47,6 +46,7 @@ class SelectUsersDialog : DialogFragment() {
         setupClickListeners()
         observeUsers()
     }
+
 
     private fun setupRecyclerView() {
         binding.usersRecyclerView.apply {

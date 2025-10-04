@@ -11,7 +11,6 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
-import androidx.paging.LoadState
 import androidx.recyclerview.widget.LinearLayoutManager
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.collectLatest
@@ -51,7 +50,6 @@ class PostsFragment : Fragment() {
         setupSwipeRefresh()
         setupFab()
         observePosts()
-        observeLoadState()
     }
 
     private fun setupRecyclerView() {
@@ -61,8 +59,11 @@ class PostsFragment : Fragment() {
         }
 
         postAdapter.onPostClicked = { postId ->
-            val action = PostsFragmentDirections.actionPostsFragmentToPostDetailsFragment(postId)
-            findNavController().navigate(action)
+             val action = PostsFragmentDirections.actionPostsFragmentToPostDetailsFragment(postId)
+             findNavController().navigate(action)
+
+
+            Toast.makeText(requireContext(), "Post ID: $postId", Toast.LENGTH_SHORT).show()
         }
 
         postAdapter.onLikeClicked = { postId ->
@@ -71,18 +72,24 @@ class PostsFragment : Fragment() {
     }
 
     private fun setupSwipeRefresh() {
-        binding.swipeRefresh.setOnRefreshListener {
-            postAdapter.refresh()
+        binding.swipeRefreshLayout.setOnRefreshListener {
+
+            binding.swipeRefreshLayout.isRefreshing = false
+
+            viewLifecycleOwner.lifecycleScope.launch {
+                viewModel.data.collectLatest { pagingData ->
+
+                }
+            }
         }
     }
 
     private fun setupFab() {
         binding.fab.setOnClickListener {
             if (authViewModel.isAuthenticated()) {
-                findNavController().navigate(R.id.action_postsFragment_to_createPostFragment)
+                findNavController().navigate(R.id.createPostFragment)
             } else {
-
-                findNavController().navigate(R.id.action_postsFragment_to_loginFragment)
+                findNavController().navigate(R.id.loginFragment)
             }
         }
     }
@@ -90,30 +97,12 @@ class PostsFragment : Fragment() {
     private fun observePosts() {
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.data.collectLatest { pagingData ->
-                    postAdapter.submitData(pagingData)
-                }
-            }
-        }
-    }
 
-    private fun observeLoadState() {
-        viewLifecycleOwner.lifecycleScope.launch {
-            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                postAdapter.loadStateFlow.collectLatest { loadState ->
-                    binding.swipeRefresh.isRefreshing = loadState.refresh is LoadState.Loading
+                 viewModel.data.collectLatest { pagingData ->
+                     postAdapter.submitData(pagingData)
+                 }
 
-                    when (loadState.refresh) {
-                        is LoadState.Error -> {
-
-                            val error = (loadState.refresh as LoadState.Error).error
-                            Toast.makeText(requireContext(), "Ошибка загрузки: ${error.message}", Toast.LENGTH_SHORT).show()
-                        }
-                        is LoadState.NotLoading -> {
-
-                        }
-                        else -> {}
-                    }
+                viewModel.data.collectLatest {
                 }
             }
         }

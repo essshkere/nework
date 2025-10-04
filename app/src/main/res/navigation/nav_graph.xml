@@ -7,7 +7,7 @@
 
     <fragment
         android:id="@+id/postsFragment"
-        android:name="ru.netology.nework.ui.posts.PostsFragment"
+        android:name="ru.netology.nework.fragment.PostsFragment"
         android:label="Посты"
         tools:layout="@layout/fragment_posts">
 
@@ -22,7 +22,7 @@
 
     <fragment
         android:id="@+id/eventsFragment"
-        android:name="ru.netology.nework.ui.events.EventsFragment"
+        android:name="ru.netology.nework.fragment.EventsFragment"
         android:label="События"
         tools:layout="@layout/fragment_events">
 
@@ -37,7 +37,7 @@
 
     <fragment
         android:id="@+id/usersFragment"
-        android:name="ru.netology.nework.ui.users.UsersFragment"
+        android:name="ru.netology.nework.fragment.UsersFragment"
         android:label="Пользователи"
         tools:layout="@layout/fragment_users">
 
@@ -49,34 +49,34 @@
 
     <fragment
         android:id="@+id/postDetailsFragment"
-        android:name="ru.netology.nework.ui.posts.PostDetailsFragment"
+        android:name="ru.netology.nework.fragment.PostDetailsFragment"
         android:label="Детали поста" />
 
     <fragment
         android:id="@+id/eventDetailsFragment"
-        android:name="ru.netology.nework.ui.events.EventDetailsFragment"
+        android:name="ru.netology.nework.fragment.EventDetailsFragment"
         android:label="Детали события" />
 
     <fragment
         android:id="@+id/userProfileFragment"
-        android:name="ru.netology.nework.ui.profile.UserProfileFragment"
+        android:name="ru.netology.nework.fragment.UserProfileFragment"
         android:label="Профиль пользователя" />
 
 
     <fragment
         android:id="@+id/createPostFragment"
-        android:name="ru.netology.nework.ui.posts.CreatePostFragment"
+        android:name="ru.netology.nework.fragment.CreatePostFragment"
         android:label="Новый пост" />
 
     <fragment
         android:id="@+id/createEventFragment"
-        android:name="ru.netology.nework.ui.events.CreateEventFragment"
+        android:name="ru.netology.nework.fragment.CreateEventFragment"
         android:label="Новое событие" />
 
 
     <fragment
         android:id="@+id/loginFragment"
-        android:name="ru.netology.nework.ui.auth.LoginFragment"
+        android:name="ru.netology.nework.fragment.LoginFragment"
         android:label="Вход">
 
         <action
@@ -92,7 +92,7 @@
 
     <fragment
         android:id="@+id/registerFragment"
-        android:name="ru.netology.nework.ui.auth.RegisterFragment"
+        android:name="ru.netology.nework.fragment.RegisterFragment"
         android:label="Регистрация">
 
         <action

@@ -10,8 +10,8 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
-import androidx.navigation.fragment.navArgs
 import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.viewpager2.adapter.FragmentStateAdapter
 import androidx.viewpager2.widget.ViewPager2
 import com.bumptech.glide.Glide
 import com.google.android.material.tabs.TabLayoutMediator
@@ -32,7 +32,6 @@ class UserProfileFragment : Fragment() {
     private var _binding: FragmentUserProfileBinding? = null
     private val binding get() = _binding!!
 
-    private val args: UserProfileFragmentArgs by navArgs()
     private val usersViewModel: UsersViewModel by viewModels()
     private val postsViewModel: PostsViewModel by viewModels()
     private val authViewModel: AuthViewModel by viewModels()
@@ -44,6 +43,8 @@ class UserProfileFragment : Fragment() {
     lateinit var jobAdapter: JobAdapter
 
     private lateinit var viewPagerAdapter: ProfileViewPagerAdapter
+
+    private var userId: Long = 0
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -57,13 +58,15 @@ class UserProfileFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        userId = arguments?.getLong("userId") ?: 0
+
         setupViewPager()
         observeUser()
         setupCurrentJob()
     }
 
     private fun setupViewPager() {
-        viewPagerAdapter = ProfileViewPagerAdapter(this, args.userId)
+        viewPagerAdapter = ProfileViewPagerAdapter(this, userId)
         binding.viewPager.adapter = viewPagerAdapter
 
         TabLayoutMediator(binding.tabLayout, binding.viewPager) { tab, position ->
@@ -78,7 +81,7 @@ class UserProfileFragment : Fragment() {
     private fun observeUser() {
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                usersViewModel.getUserById(args.userId)?.let { user ->
+                usersViewModel.getUserById(userId)?.let { user ->
                     bindUser(user)
                 }
             }
@@ -89,7 +92,6 @@ class UserProfileFragment : Fragment() {
         binding.apply {
             userNameTextView.text = user.name
             userLoginTextView.text = user.login
-
 
             user.avatar?.let { avatarUrl ->
                 Glide.with(avatarImageView)
@@ -102,7 +104,7 @@ class UserProfileFragment : Fragment() {
 
     private fun setupCurrentJob() {
         viewLifecycleOwner.lifecycleScope.launch {
-            usersViewModel.getJobs(args.userId).let { jobs ->
+            usersViewModel.getJobs(userId).let { jobs ->
                 val currentJob = jobs.firstOrNull { it.finish == null }
                 binding.currentJobTextView.text = currentJob?.let {
                     "${it.position} в ${it.name}"
@@ -117,11 +119,10 @@ class UserProfileFragment : Fragment() {
     }
 }
 
-
 class ProfileViewPagerAdapter(
     fragment: Fragment,
     private val userId: Long
-) : androidx.viewpager2.adapter.FragmentStateAdapter(fragment) {
+) : FragmentStateAdapter(fragment) {
 
     override fun getItemCount(): Int = 2
 
@@ -133,7 +134,6 @@ class ProfileViewPagerAdapter(
         }
     }
 }
-
 
 class UserWallFragment : Fragment() {
 
@@ -183,6 +183,7 @@ class UserWallFragment : Fragment() {
         binding.postsRecyclerView.apply {
             layoutManager = LinearLayoutManager(requireContext())
 
+             adapter = postAdapter
         }
     }
 
@@ -202,7 +203,6 @@ class UserWallFragment : Fragment() {
         _binding = null
     }
 }
-
 
 class UserJobsFragment : Fragment() {
 
@@ -250,6 +250,7 @@ class UserJobsFragment : Fragment() {
         binding.usersRecyclerView.apply {
             layoutManager = LinearLayoutManager(requireContext())
 
+             adapter = jobAdapter
         }
     }
 
