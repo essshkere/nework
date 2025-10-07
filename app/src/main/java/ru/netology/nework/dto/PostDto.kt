@@ -6,8 +6,8 @@ data class PostDto(
     @SerializedName("id") val id: Long,
     @SerializedName("authorId") val authorId: Long,
     @SerializedName("author") val author: String,
-    @SerializedName("authorAvatar") val authorAvatar: String? = null,
     @SerializedName("authorJob") val authorJob: String? = null,
+    @SerializedName("authorAvatar") val authorAvatar: String? = null,
     @SerializedName("content") val content: String,
     @SerializedName("published") val published: String,
     @SerializedName("coords") val coords: CoordinatesDto? = null,
@@ -21,17 +21,6 @@ data class PostDto(
 )
 
 data class CoordinatesDto(
-    @SerializedName("lat") val lat: String,
-    @SerializedName("long") val long: String
+    @SerializedName("lat") val lat: Double,
+    @SerializedName("long") val long: Double
 )
-
-data class AttachmentDto(
-    @SerializedName("url") val url: String,
-    @SerializedName("type") val type: AttachmentTypeDto
-)
-
-enum class AttachmentTypeDto {
-    @SerializedName("IMAGE") IMAGE,
-    @SerializedName("VIDEO") VIDEO,
-    @SerializedName("AUDIO") AUDIO
-}

@@ -1,16 +1,25 @@
 package ru.netology.nework.api
 
-import retrofit2.http.Body
-import retrofit2.http.POST
-import ru.netology.nework.dto.LoginRequestDto
-import ru.netology.nework.dto.LoginResponseDto
+import okhttp3.MultipartBody
+import okhttp3.RequestBody
 import retrofit2.Response
-import ru.netology.nework.dto.RegisterRequestDto
+import retrofit2.http.*
+import ru.netology.nework.dto.LoginResponseDto
 
 interface AuthApi {
+    @FormUrlEncoded
     @POST("api/users/authentication")
-    suspend fun signIn(@Body loginRequest: LoginRequestDto): Response<LoginResponseDto>
+    suspend fun signIn(
+        @Field("login") login: String,
+        @Field("pass") password: String
+    ): Response<LoginResponseDto>
 
+    @Multipart
     @POST("api/users/registration")
-    suspend fun signUp(@Body registerRequest: RegisterRequestDto): Response<LoginResponseDto>
+    suspend fun signUp(
+        @Part("login") login: RequestBody,
+        @Part("pass") password: RequestBody,
+        @Part("name") name: RequestBody,
+        @Part file: MultipartBody.Part?
+    ): Response<LoginResponseDto>
 }

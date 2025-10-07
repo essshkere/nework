@@ -1,13 +1,8 @@
 package ru.netology.nework.api
 
-import retrofit2.http.Body
-import retrofit2.http.DELETE
-import retrofit2.http.GET
-import retrofit2.http.POST
-import retrofit2.http.Path
-import ru.netology.nework.dto.PostDto
 import retrofit2.Response
-
+import retrofit2.http.*
+import ru.netology.nework.dto.PostDto
 
 interface PostApi {
     @GET("api/posts")
@@ -27,4 +22,22 @@ interface PostApi {
 
     @DELETE("api/posts/{id}/likes")
     suspend fun dislikeById(@Path("id") id: Long): Response<PostDto>
+
+    @GET("api/posts/latest")
+    suspend fun getLatest(@Query("count") count: Int): Response<List<PostDto>>
+
+    @GET("api/posts/{id}/newer")
+    suspend fun getNewer(@Path("id") id: Long): Response<List<PostDto>>
+
+    @GET("api/posts/{id}/before")
+    suspend fun getBefore(
+        @Path("id") id: Long,
+        @Query("count") count: Int
+    ): Response<List<PostDto>>
+
+    @GET("api/posts/{id}/after")
+    suspend fun getAfter(
+        @Path("id") id: Long,
+        @Query("count") count: Int
+    ): Response<List<PostDto>>
 }

@@ -12,5 +12,5 @@ data class UserDto(
 
 data class UserPreviewDto(
     @SerializedName("name") val name: String,
-    @SerializedName("avatar") val avatar: String? = null
+    @SerializedName("avatar") val avatar: String?
 )

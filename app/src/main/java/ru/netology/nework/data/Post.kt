@@ -13,7 +13,8 @@ data class Post(
     val likeOwnerIds: List<Long> = emptyList(),
     val likedByMe: Boolean = false,
     val attachment: Attachment? = null,
-    val mentionIds: List<Long> = emptyList()
+    val mentionIds: List<Long> = emptyList(),
+    val mentionedMe: Boolean = false
 ) {
     data class Coordinates(
         val lat: Double,
