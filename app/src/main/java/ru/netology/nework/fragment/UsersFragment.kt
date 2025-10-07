@@ -12,8 +12,8 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import ru.netology.nework.R
 import ru.netology.nework.adapter.UserAdapter
 import ru.netology.nework.databinding.FragmentUsersBinding
 import ru.netology.nework.viewmodel.UsersViewModel
@@ -53,15 +53,20 @@ class UsersFragment : Fragment() {
         }
 
         userAdapter.onUserClicked = { userId ->
-            val action = UsersFragmentDirections.actionUsersFragmentToUserProfileFragment(userId)
-            findNavController().navigate(action)
+//            val action = UsersFragmentDirections.actionUsersFragmentToUserProfileFragment(userId)
+//            findNavController().navigate(action)
+            val bundle = Bundle().apply {
+                putLong("userId", userId)
+            }
+            findNavController().navigate(R.id.userProfileFragment, bundle)
         }
     }
 
     private fun observeUsers() {
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.users.collectLatest { users ->
+//                viewModel.users.collectLatest { users ->
+                    viewModel.usersFlow.collect { users ->
                     userAdapter.submitList(users)
                 }
             }

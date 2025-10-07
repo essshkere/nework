@@ -60,8 +60,13 @@ class EventsFragment : Fragment() {
 
         eventAdapter.onEventClicked = { eventId ->
 
-             val action = EventsFragmentDirections.actionEventsFragmentToEventDetailsFragment(eventId)
-             findNavController().navigate(action)
+//             val action = EventsFragmentDirections.actionEventsFragmentToEventDetailsFragment(eventId)
+            //             findNavController().navigate(action)
+            val bundle = Bundle().apply {
+                putLong("eventId", eventId)
+            }
+            findNavController().navigate(R.id.eventDetailsFragment, bundle)
+
 
 
             Toast.makeText(requireContext(), "Event ID: $eventId", Toast.LENGTH_SHORT).show()
@@ -107,9 +112,9 @@ class EventsFragment : Fragment() {
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
 
-                 viewModel.data.collectLatest { pagingData ->
-                     eventAdapter.submitData(pagingData)
-                 }
+//                 viewModel.data.collectLatest { pagingData ->
+//                     eventAdapter.submitData(pagingData)
+//                 }
 
 
                 viewModel.data.collectLatest {

@@ -66,8 +66,13 @@ class PostDetailsFragment : Fragment() {
 
         participantAdapter.onUserClicked = { userId ->
 
-             val action = PostDetailsFragmentDirections.actionPostDetailsFragmentToUserProfileFragment(userId)
-             findNavController().navigate(action)
+//             val action = PostDetailsFragmentDirections.actionPostDetailsFragmentToUserProfileFragment(userId)
+//             findNavController().navigate(action)
+            val bundle = Bundle().apply {
+                putLong("userId", userId)
+            }
+            findNavController().navigate(R.id.userProfileFragment, bundle)
+
         }
     }
 
@@ -180,6 +185,7 @@ class PostDetailsFragment : Fragment() {
                  postsViewModel.getPostById(postId)?.authorId?.let { authorId ->
                      val action = PostDetailsFragmentDirections.actionPostDetailsFragmentToUserProfileFragment(authorId)
                      findNavController().navigate(action)
+
                  }
              }
         }

@@ -59,9 +59,12 @@ class PostsFragment : Fragment() {
         }
 
         postAdapter.onPostClicked = { postId ->
-             val action = PostsFragmentDirections.actionPostsFragmentToPostDetailsFragment(postId)
-             findNavController().navigate(action)
-
+//             val action = PostsFragmentDirections.actionPostsFragmentToPostDetailsFragment(postId)
+//             findNavController().navigate(action)
+            val bundle = Bundle().apply {
+                putLong("postId", postId)
+            }
+            findNavController().navigate(R.id.postDetailsFragment, bundle)
 
             Toast.makeText(requireContext(), "Post ID: $postId", Toast.LENGTH_SHORT).show()
         }
@@ -98,9 +101,9 @@ class PostsFragment : Fragment() {
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
 
-                 viewModel.data.collectLatest { pagingData ->
-                     postAdapter.submitData(pagingData)
-                 }
+//                 viewModel.data.collectLatest { pagingData ->
+//                     postAdapter.submitData(pagingData)
+//                 }
 
                 viewModel.data.collectLatest {
                 }

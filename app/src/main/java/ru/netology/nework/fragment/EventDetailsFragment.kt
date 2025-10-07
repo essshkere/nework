@@ -72,14 +72,24 @@ class EventDetailsFragment : Fragment() {
 
         speakersAdapter.onUserClicked = { userId ->
 
-             val action = EventDetailsFragmentDirections.actionEventDetailsFragmentToUserProfileFragment(userId)
-             findNavController().navigate(action)
+//             val action = EventDetailsFragmentDirections.actionEventDetailsFragmentToUserProfileFragment(userId)
+//             findNavController().navigate(action)
+            val bundle = Bundle().apply {
+                putLong("userId", userId)
+            }
+            findNavController().navigate(R.id.userProfileFragment, bundle)
+
         }
 
         participantsAdapter.onUserClicked = { userId ->
 
-             val action = EventDetailsFragmentDirections.actionEventDetailsFragmentToUserProfileFragment(userId)
-             findNavController().navigate(action)
+//             val action = EventDetailsFragmentDirections.actionEventDetailsFragmentToUserProfileFragment(userId)
+//             findNavController().navigate(action)
+            val bundle = Bundle().apply {
+                putLong("userId", userId)
+            }
+            findNavController().navigate(R.id.userProfileFragment, bundle)
+
         }
     }
 

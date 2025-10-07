@@ -12,6 +12,8 @@ import ru.netology.nework.data.User
 class ParticipantAdapter : ListAdapter<User, ParticipantAdapter.ViewHolder>(DiffCallback) {
 
     var onUserClicked: ((Long) -> Unit)? = null
+    var showCheckbox: Boolean = false
+    val selectedUserIds = mutableSetOf<Long>()
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         val binding = ItemParticipantBinding.inflate(LayoutInflater.from(parent.context), parent, false)

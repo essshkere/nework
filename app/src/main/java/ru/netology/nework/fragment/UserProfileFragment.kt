@@ -12,7 +12,6 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.viewpager2.adapter.FragmentStateAdapter
-import androidx.viewpager2.widget.ViewPager2
 import com.bumptech.glide.Glide
 import com.google.android.material.tabs.TabLayoutMediator
 import dagger.hilt.android.AndroidEntryPoint
@@ -24,7 +23,6 @@ import ru.netology.nework.databinding.FragmentUserProfileBinding
 import ru.netology.nework.viewmodel.AuthViewModel
 import ru.netology.nework.viewmodel.PostsViewModel
 import ru.netology.nework.viewmodel.UsersViewModel
-import javax.inject.Inject
 
 @AndroidEntryPoint
 class UserProfileFragment : Fragment() {
@@ -178,8 +176,13 @@ class UserWallFragment : Fragment() {
     private fun setupRecyclerView() {
         postAdapter = PostAdapter().apply {
             onPostClicked = { postId ->
-                val action = UserWallFragmentDirections.actionUserWallFragmentToPostDetailsFragment(postId)
-                findNavController().navigate(action)
+//                val action = UserWallFragmentDirections.actionUserWallFragmentToPostDetailsFragment(postId)
+//                findNavController().navigate(action)
+                val bundle = Bundle().apply {
+                    putLong("postId", postId)
+                }
+                findNavController().navigate(R.id.postDetailsFragment, bundle)
+
             }
             onLikeClicked = { postId ->
                 viewModel.likeById(postId)
