@@ -215,8 +215,10 @@ class EventDetailsFragment : Fragment() {
         binding.authorAvatarImageView.setOnClickListener {
             viewLifecycleOwner.lifecycleScope.launch {
                 eventsViewModel.getById(eventId)?.authorId?.let { authorId ->
-                    val action = EventDetailsFragmentDirections.actionEventDetailsFragmentToUserProfileFragment(authorId)
-                    findNavController().navigate(action)
+                    val bundle = Bundle().apply {
+                        putLong("userId", authorId)
+                    }
+                    findNavController().navigate(R.id.action_eventDetailsFragment_to_userProfileFragment, bundle)
                 }
             }
         }

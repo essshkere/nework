@@ -92,8 +92,8 @@ class SelectUsersDialog : DialogFragment() {
 
         binding.confirmButton.setOnClickListener {
             if (multiSelect) {
-                val selectedUsers = participantAdapter.getSelectedUsers()
-                onUsersSelected?.invoke(selectedUsers)
+//                val selectedUsers = participantAdapter.getSelectedUsers()
+//                onUsersSelected?.invoke(selectedUsers)
             }
             dismiss()
         }

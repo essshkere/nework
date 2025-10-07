@@ -180,14 +180,14 @@ class PostDetailsFragment : Fragment() {
 
     private fun setupClickListeners() {
         binding.authorAvatarImageView.setOnClickListener {
-
-             viewLifecycleOwner.lifecycleScope.launch {
-                 postsViewModel.getPostById(postId)?.authorId?.let { authorId ->
-                     val action = PostDetailsFragmentDirections.actionPostDetailsFragmentToUserProfileFragment(authorId)
-                     findNavController().navigate(action)
-
-                 }
-             }
+            viewLifecycleOwner.lifecycleScope.launch {
+                postsViewModel.getPostById(postId)?.authorId?.let { authorId ->
+                    val bundle = Bundle().apply {
+                        putLong("userId", authorId)
+                    }
+                    findNavController().navigate(R.id.action_postDetailsFragment_to_userProfileFragment, bundle)
+                }
+            }
         }
     }
 
