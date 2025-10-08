@@ -11,12 +11,7 @@ import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
-import ru.netology.nework.R
-import ru.netology.nework.adapter.*
-import ru.netology.nework.api.AuthApi
-import ru.netology.nework.api.EventApi
-import ru.netology.nework.api.PostApi
-import ru.netology.nework.api.UserApi
+import ru.netology.nework.api.*
 import ru.netology.nework.data.AppDatabase
 import ru.netology.nework.repository.*
 import javax.inject.Singleton
@@ -29,7 +24,7 @@ object AppModule {
 
     @Provides
     @Singleton
-    fun provideOkHttpClient(): OkHttpClient {
+    fun provideOkHttpClient(authRepository: AuthRepository): OkHttpClient {
         val loggingInterceptor = HttpLoggingInterceptor().apply {
             level = HttpLoggingInterceptor.Level.BODY
         }
@@ -39,6 +34,10 @@ object AppModule {
                 val originalRequest = chain.request()
                 val requestBuilder = originalRequest.newBuilder()
                     .addHeader("Api-Key", "c1378193-bc0e-42c8-a502-b8d66d189617")
+
+                authRepository.getToken()?.let { token ->
+                    requestBuilder.addHeader("Authorization", "Bearer $token")
+                }
 
                 val request = requestBuilder.build()
                 chain.proceed(request)
@@ -73,6 +72,14 @@ object AppModule {
 
     @Provides
     @Singleton
+    fun provideMediaApi(retrofit: Retrofit): MediaApi = retrofit.create(MediaApi::class.java)
+
+    @Provides
+    @Singleton
+    fun provideJobApi(retrofit: Retrofit): JobApi = retrofit.create(JobApi::class.java)
+
+    @Provides
+    @Singleton
     fun provideDatabase(@ApplicationContext context: Context): AppDatabase =
         Room.databaseBuilder(context, AppDatabase::class.java, "app.db")
             .fallbackToDestructiveMigration()
@@ -97,29 +104,8 @@ object AppModule {
     @Singleton
     fun provideAuthRepository(authApi: AuthApi, @ApplicationContext context: Context): AuthRepository =
         AuthRepositoryImpl(authApi, context)
-}
-
-@Module
-@InstallIn(SingletonComponent::class)
-object AdapterModule {
 
     @Provides
     @Singleton
-    fun providePostAdapter(): PostAdapter = PostAdapter()
-
-    @Provides
-    @Singleton
-    fun provideEventAdapter(): EventAdapter = EventAdapter()
-
-    @Provides
-    @Singleton
-    fun provideUserAdapter(): UserAdapter = UserAdapter()
-
-    @Provides
-    @Singleton
-    fun provideJobAdapter(): JobAdapter = JobAdapter()
-
-    @Provides
-    @Singleton
-    fun provideParticipantAdapter(): ParticipantAdapter = ParticipantAdapter()
+    fun provideJobRepository(jobApi: JobApi): JobRepository = JobRepositoryImpl(jobApi)
 }

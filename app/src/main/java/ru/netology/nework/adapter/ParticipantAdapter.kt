@@ -35,7 +35,10 @@ class ParticipantAdapter : ListAdapter<User, ParticipantAdapter.ViewHolder>(Diff
                     Glide.with(avatarImageView)
                         .load(avatarUrl)
                         .placeholder(ru.netology.nework.R.drawable.ic_account_circle)
+                        .circleCrop()
                         .into(avatarImageView)
+                } ?: run {
+                    avatarImageView.setImageResource(ru.netology.nework.R.drawable.ic_account_circle)
                 }
 
                 root.setOnClickListener {

@@ -4,7 +4,6 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
@@ -13,7 +12,6 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import ru.netology.nework.R
 import ru.netology.nework.adapter.PostAdapter
@@ -59,29 +57,29 @@ class PostsFragment : Fragment() {
         }
 
         postAdapter.onPostClicked = { postId ->
-//             val action = PostsFragmentDirections.actionPostsFragmentToPostDetailsFragment(postId)
-//             findNavController().navigate(action)
             val bundle = Bundle().apply {
                 putLong("postId", postId)
             }
             findNavController().navigate(R.id.postDetailsFragment, bundle)
-
-            Toast.makeText(requireContext(), "Post ID: $postId", Toast.LENGTH_SHORT).show()
         }
 
         postAdapter.onLikeClicked = { postId ->
             viewModel.likeById(postId)
         }
+
+        postAdapter.onMentionClicked = { userId ->
+            val bundle = Bundle().apply {
+                putLong("userId", userId)
+            }
+            findNavController().navigate(R.id.userProfileFragment, bundle)
+        }
     }
 
     private fun setupSwipeRefresh() {
         binding.swipeRefreshLayout.setOnRefreshListener {
-
-            binding.swipeRefreshLayout.isRefreshing = false
-
             viewLifecycleOwner.lifecycleScope.launch {
-                viewModel.data.collectLatest { pagingData ->
-
+                viewModel.data.collect {
+                    binding.swipeRefreshLayout.isRefreshing = false
                 }
             }
         }
@@ -100,12 +98,8 @@ class PostsFragment : Fragment() {
     private fun observePosts() {
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-
-//                 viewModel.data.collectLatest { pagingData ->
-//                     postAdapter.submitData(pagingData)
-//                 }
-
-                viewModel.data.collectLatest {
+                viewModel.data.collect { pagingData ->
+                    postAdapter.submitData(pagingData)
                 }
             }
         }

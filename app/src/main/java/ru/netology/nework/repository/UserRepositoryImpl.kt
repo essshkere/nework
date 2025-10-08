@@ -26,12 +26,10 @@ class UserRepositoryImpl @Inject constructor(
     }
 
     override suspend fun getUserById(id: Long): User? {
-
         val cachedUser = userDao.getById(id)?.toModel()
         if (cachedUser != null) {
             return cachedUser
         }
-
 
         return try {
             val response = userApi.getById(id)

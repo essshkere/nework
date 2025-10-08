@@ -5,7 +5,6 @@
     android:id="@+id/nav_graph"
     app:startDestination="@id/postsFragment">
 
-    <!-- Основные фрагменты -->
     <fragment
         android:id="@+id/postsFragment"
         android:name="ru.netology.nework.fragment.PostsFragment"
@@ -48,11 +47,11 @@
             app:destination="@id/userProfileFragment" />
     </fragment>
 
-    <!-- Детальные просмотры -->
     <fragment
         android:id="@+id/postDetailsFragment"
         android:name="ru.netology.nework.fragment.PostDetailsFragment"
-        android:label="Детали поста">
+        android:label="Детали поста"
+        tools:layout="@layout/fragment_post_details">
         <argument
             android:name="postId"
             app:argType="long" />
@@ -64,7 +63,8 @@
     <fragment
         android:id="@+id/eventDetailsFragment"
         android:name="ru.netology.nework.fragment.EventDetailsFragment"
-        android:label="Детали события">
+        android:label="Детали события"
+        tools:layout="@layout/fragment_event_details">
         <argument
             android:name="eventId"
             app:argType="long" />
@@ -76,13 +76,13 @@
     <fragment
         android:id="@+id/userProfileFragment"
         android:name="ru.netology.nework.fragment.UserProfileFragment"
-        android:label="Профиль пользователя">
+        android:label="Профиль пользователя"
+        tools:layout="@layout/fragment_user_profile">
         <argument
             android:name="userId"
             app:argType="long" />
     </fragment>
 
-    <!-- Создание контента -->
     <fragment
         android:id="@+id/createPostFragment"
         android:name="ru.netology.nework.fragment.CreatePostFragment"
@@ -93,7 +93,6 @@
         android:name="ru.netology.nework.fragment.CreateEventFragment"
         android:label="Новое событие" />
 
-    <!-- Аутентификация -->
     <fragment
         android:id="@+id/loginFragment"
         android:name="ru.netology.nework.fragment.LoginFragment"
@@ -118,5 +117,33 @@
             app:popUpTo="@id/postsFragment"
             app:popUpToInclusive="true" />
     </fragment>
+    <fragment
+        android:id="@+id/myProfileFragment"
+        android:name="ru.netology.nework.fragment.MyProfileFragment"
+        android:label="Мой профиль"
+        tools:layout="@layout/fragment_my_profile">
+        <action
+            android:id="@+id/action_myProfileFragment_to_createJobFragment"
+            app:destination="@id/createJobFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/createJobFragment"
+        android:name="ru.netology.nework.fragment.CreateJobFragment"
+        android:label="Новая работа" />
+
+    <fragment
+        android:id="@+id/editJobFragment"
+        android:name="ru.netology.nework.fragment.EditJobFragment"
+        android:label="Редактировать работу">
+        <argument
+            android:name="jobId"
+            app:argType="long" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/mapFragment"
+        android:name="ru.netology.nework.fragment.MapFragment"
+        android:label="Выбор локации" />
 
 </navigation>

@@ -28,7 +28,6 @@ import ru.netology.nework.R
 import ru.netology.nework.databinding.FragmentCreatePostBinding
 import ru.netology.nework.data.Post
 import ru.netology.nework.viewmodel.PostsViewModel
-import ru.netology.nework.viewmodel.UsersViewModel
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -40,7 +39,6 @@ class CreatePostFragment : Fragment(), MenuProvider {
     private val binding get() = _binding!!
 
     private val postsViewModel: PostsViewModel by viewModels()
-    private val usersViewModel: UsersViewModel by viewModels()
 
     private var attachmentUri: Uri? = null
     private var attachmentType: Post.AttachmentType? = null
@@ -151,7 +149,7 @@ class CreatePostFragment : Fragment(), MenuProvider {
     private fun observePostCreation() {
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-
+                // Observe post creation state if needed
             }
         }
     }

@@ -4,7 +4,5 @@ data class User(
     val id: Long,
     val login: String,
     val name: String,
-    val avatar: String? = null,
-    val lastName: String? = null
+    val avatar: String? = null
 )
-

@@ -22,7 +22,6 @@ class PostsViewModel @Inject constructor(
         try {
             repository.likeById(id)
         } catch (e: Exception) {
-
             e.printStackTrace()
         }
     }
@@ -31,7 +30,6 @@ class PostsViewModel @Inject constructor(
         try {
             repository.dislikeById(id)
         } catch (e: Exception) {
-
             e.printStackTrace()
         }
     }
@@ -40,7 +38,6 @@ class PostsViewModel @Inject constructor(
         try {
             repository.removeById(id)
         } catch (e: Exception) {
-
             e.printStackTrace()
         }
     }
@@ -49,7 +46,6 @@ class PostsViewModel @Inject constructor(
         try {
             repository.save(post)
         } catch (e: Exception) {
-
             e.printStackTrace()
         }
     }

@@ -18,14 +18,11 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import com.bumptech.glide.Glide
 import com.google.android.material.snackbar.Snackbar
-import com.google.firebase.crashlytics.buildtools.reloc.org.apache.http.auth.AuthState
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import ru.netology.nework.R
 import ru.netology.nework.databinding.FragmentRegisterBinding
 import ru.netology.nework.viewmodel.AuthViewModel
-import java.io.File
-import java.io.FileOutputStream
 
 @AndroidEntryPoint
 class RegisterFragment : Fragment() {
@@ -120,7 +117,7 @@ class RegisterFragment : Fragment() {
                 val password = binding.passwordEditText.text.toString()
                 val name = binding.nameEditText.text.toString().trim()
 
-                viewModel.signUp(login, password, name)
+                viewModel.signUp(login, password, name, avatarUri?.toString())
             }
         }
     }
@@ -130,18 +127,18 @@ class RegisterFragment : Fragment() {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.authState.collect { state ->
                     when (state) {
-                        is AuthViewModel.AuthState.Loading -> {
+                        AuthViewModel.AuthState.Loading -> {
                             showLoading(true)
                         }
-                        is AuthViewModel.AuthState.Success -> {
+                        AuthViewModel.AuthState.Success -> {
                             showLoading(false)
-                            findNavController().navigate(R.id.action_registerFragment_to_postsFragment)
+                            findNavController().navigate(R.id.postsFragment)
                         }
                         is AuthViewModel.AuthState.Error -> {
                             showLoading(false)
                             showError(state.message)
                         }
-                        is AuthViewModel.AuthState.Idle -> {
+                        AuthViewModel.AuthState.Idle -> {
                             showLoading(false)
                         }
                     }

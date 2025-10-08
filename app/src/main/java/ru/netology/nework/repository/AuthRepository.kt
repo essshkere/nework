@@ -6,9 +6,12 @@ import ru.netology.nework.dto.RegisterRequestDto
 
 interface AuthRepository {
     suspend fun signIn(login: String, password: String): LoginResponseDto
-    suspend fun signUp(login: String, password: String, name: String): LoginResponseDto
+    suspend fun signUp(login: String, password: String, name: String, avatarUri: String?): LoginResponseDto
     suspend fun logout()
     fun getToken(): String?
     fun saveToken(token: String)
     fun clearToken()
+    fun getUserId(): Long
+    fun clearUserId()
+    fun saveUserId(userId: Long)
 }

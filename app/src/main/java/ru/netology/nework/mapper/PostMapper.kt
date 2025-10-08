@@ -18,13 +18,13 @@ fun PostDto.toEntity(): PostEntity = PostEntity(
     authorJob = authorJob,
     content = content,
     published = published,
-    coords = coords?.let { Gson().toJson(it) },
+    coords = coords?.let { gson.toJson(it) },
     link = link,
-    likeOwnerIds = Gson().toJson(likeOwnerIds),
+    likeOwnerIds = gson.toJson(likeOwnerIds),
     likedByMe = likedByMe,
     attachmentUrl = attachment?.url,
     attachmentType = attachment?.type?.name,
-    mentionIds = Gson().toJson(mentionIds)
+    mentionIds = gson.toJson(mentionIds)
 )
 
 fun PostEntity.toModel(): Post = Post(
@@ -46,12 +46,21 @@ fun PostEntity.toModel(): Post = Post(
         emptyList()
     },
     likedByMe = likedByMe,
-    attachment = attachmentUrl?.let {
-        Post.Attachment(it, Post.AttachmentType.valueOf(attachmentType ?: "IMAGE"))
-    }
+    attachment = attachmentUrl?.let { url ->
+        Post.Attachment(
+            url = url,
+            type = Post.AttachmentType.valueOf(attachmentType ?: "IMAGE")
+        )
+    },
+    mentionIds = try {
+        gson.fromJson(mentionIds, Array<Long>::class.java).toList()
+    } catch (e: Exception) {
+        emptyList()
+    },
+    mentionedMe = false
 )
 
-fun PostEntity.toDto(): PostDto = PostDto(
+fun Post.toDto(): PostDto = PostDto(
     id = id,
     authorId = authorId,
     author = author,
@@ -59,22 +68,20 @@ fun PostEntity.toDto(): PostDto = PostDto(
     authorJob = authorJob,
     content = content,
     published = published,
-    coords = try {
-        gson.fromJson(coords, CoordinatesDto::class.java)
-    } catch (e: Exception) { null },
+    coords = coords?.let { CoordinatesDto(it.lat.toString(), it.long.toString()) },
     link = link,
-    mentionIds = try {
-        gson.fromJson(mentionIds, Array<Long>::class.java).toList()
-    } catch (e: Exception) { emptyList() },
+    mentionIds = mentionIds,
     mentionedMe = false,
-    likeOwnerIds = try {
-        gson.fromJson(likeOwnerIds, Array<Long>::class.java).toList()
-    } catch (e: Exception) { emptyList() },
+    likeOwnerIds = likeOwnerIds,
     likedByMe = likedByMe,
-    attachment = attachmentUrl?.let { url ->
+    attachment = attachment?.let {
         AttachmentDto(
-            url = url,
-            type = AttachmentTypeDto.valueOf(attachmentType ?: "IMAGE")
+            it.url,
+            when (it.type) {
+                Post.AttachmentType.IMAGE -> AttachmentTypeDto.IMAGE
+                Post.AttachmentType.VIDEO -> AttachmentTypeDto.VIDEO
+                Post.AttachmentType.AUDIO -> AttachmentTypeDto.AUDIO
+            }
         )
     },
     users = emptyMap()

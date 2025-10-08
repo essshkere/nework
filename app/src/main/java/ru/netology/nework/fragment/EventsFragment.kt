@@ -4,7 +4,6 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
@@ -13,7 +12,6 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import ru.netology.nework.R
 import ru.netology.nework.adapter.EventAdapter
@@ -59,17 +57,10 @@ class EventsFragment : Fragment() {
         }
 
         eventAdapter.onEventClicked = { eventId ->
-
-//             val action = EventsFragmentDirections.actionEventsFragmentToEventDetailsFragment(eventId)
-            //             findNavController().navigate(action)
             val bundle = Bundle().apply {
                 putLong("eventId", eventId)
             }
             findNavController().navigate(R.id.eventDetailsFragment, bundle)
-
-
-
-            Toast.makeText(requireContext(), "Event ID: $eventId", Toast.LENGTH_SHORT).show()
         }
 
         eventAdapter.onLikeClicked = { eventId ->
@@ -83,16 +74,20 @@ class EventsFragment : Fragment() {
                 findNavController().navigate(R.id.loginFragment)
             }
         }
+
+        eventAdapter.onSpeakerClicked = { userId ->
+            val bundle = Bundle().apply {
+                putLong("userId", userId)
+            }
+            findNavController().navigate(R.id.userProfileFragment, bundle)
+        }
     }
 
     private fun setupSwipeRefresh() {
         binding.swipeRefreshLayout.setOnRefreshListener {
-
-            binding.swipeRefreshLayout.isRefreshing = false
-
             viewLifecycleOwner.lifecycleScope.launch {
-                viewModel.data.collectLatest { pagingData ->
-
+                viewModel.data.collect {
+                    binding.swipeRefreshLayout.isRefreshing = false
                 }
             }
         }
@@ -111,14 +106,8 @@ class EventsFragment : Fragment() {
     private fun observeEvents() {
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-
-//                 viewModel.data.collectLatest { pagingData ->
-//                     eventAdapter.submitData(pagingData)
-//                 }
-
-
-                viewModel.data.collectLatest {
-
+                viewModel.data.collect { pagingData ->
+                    eventAdapter.submitData(pagingData)
                 }
             }
         }

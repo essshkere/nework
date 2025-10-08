@@ -5,6 +5,7 @@ import android.view.ViewGroup
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
+import com.bumptech.glide.Glide
 import ru.netology.nework.databinding.ItemUserBinding
 import ru.netology.nework.data.User
 
@@ -28,6 +29,16 @@ class UserAdapter : ListAdapter<User, UserAdapter.ViewHolder>(DiffCallback) {
             binding.apply {
                 userNameTextView.text = user.name
                 userLoginTextView.text = user.login
+
+                user.avatar?.let { avatarUrl ->
+                    Glide.with(avatarImageView)
+                        .load(avatarUrl)
+                        .placeholder(ru.netology.nework.R.drawable.ic_account_circle)
+                        .circleCrop()
+                        .into(avatarImageView)
+                } ?: run {
+                    avatarImageView.setImageResource(ru.netology.nework.R.drawable.ic_account_circle)
+                }
 
                 root.setOnClickListener {
                     onUserClicked?.invoke(user.id)

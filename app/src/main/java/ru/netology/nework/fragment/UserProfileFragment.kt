@@ -90,6 +90,8 @@ class UserProfileFragment : Fragment() {
                     .load(avatarUrl)
                     .placeholder(R.drawable.ic_account_circle)
                     .into(avatarImageView)
+            } ?: run {
+                avatarImageView.setImageResource(R.drawable.ic_account_circle)
             }
         }
     }
@@ -132,8 +134,8 @@ class UserWallFragment : Fragment() {
     private var _binding: ru.netology.nework.databinding.FragmentPostsBinding? = null
     private val binding get() = _binding!!
 
-    private val viewModel: PostsViewModel by viewModels()
     private val usersViewModel: UsersViewModel by viewModels()
+    private val postsViewModel: PostsViewModel by viewModels()
 
     private lateinit var postAdapter: PostAdapter
 
@@ -176,16 +178,13 @@ class UserWallFragment : Fragment() {
     private fun setupRecyclerView() {
         postAdapter = PostAdapter().apply {
             onPostClicked = { postId ->
-//                val action = UserWallFragmentDirections.actionUserWallFragmentToPostDetailsFragment(postId)
-//                findNavController().navigate(action)
                 val bundle = Bundle().apply {
                     putLong("postId", postId)
                 }
                 findNavController().navigate(R.id.postDetailsFragment, bundle)
-
             }
             onLikeClicked = { postId ->
-                viewModel.likeById(postId)
+                postsViewModel.likeById(postId)
             }
         }
 

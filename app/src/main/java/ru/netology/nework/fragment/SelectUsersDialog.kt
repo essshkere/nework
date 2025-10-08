@@ -47,7 +47,6 @@ class SelectUsersDialog : DialogFragment() {
         observeUsers()
     }
 
-
     private fun setupRecyclerView() {
         binding.usersRecyclerView.apply {
             layoutManager = LinearLayoutManager(requireContext())
@@ -92,8 +91,10 @@ class SelectUsersDialog : DialogFragment() {
 
         binding.confirmButton.setOnClickListener {
             if (multiSelect) {
-//                val selectedUsers = participantAdapter.getSelectedUsers()
-//                onUsersSelected?.invoke(selectedUsers)
+                val selectedUsers = participantAdapter.currentList.filter { user ->
+                    participantAdapter.selectedUserIds.contains(user.id)
+                }
+                onUsersSelected?.invoke(selectedUsers)
             }
             dismiss()
         }

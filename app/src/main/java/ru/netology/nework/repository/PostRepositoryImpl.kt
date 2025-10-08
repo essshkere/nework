@@ -14,8 +14,10 @@ import ru.netology.nework.dto.PostDto
 import ru.netology.nework.mapper.toEntity
 import ru.netology.nework.mapper.toModel
 import javax.inject.Inject
+import javax.inject.Singleton
 
 @OptIn(ExperimentalPagingApi::class)
+@Singleton
 class PostRepositoryImpl @Inject constructor(
     private val postApi: PostApi,
     private val postDao: PostDao
@@ -39,7 +41,7 @@ class PostRepositoryImpl @Inject constructor(
                 }
             }
         } catch (e: Exception) {
-
+            e.printStackTrace()
         }
     }
 
@@ -129,7 +131,6 @@ class PostRepositoryImpl @Inject constructor(
             if (cachedPost != null) {
                 return cachedPost
             }
-
 
             val response = postApi.getById(id)
             if (response.isSuccessful) {

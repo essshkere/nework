@@ -53,8 +53,6 @@ class UsersFragment : Fragment() {
         }
 
         userAdapter.onUserClicked = { userId ->
-//            val action = UsersFragmentDirections.actionUsersFragmentToUserProfileFragment(userId)
-//            findNavController().navigate(action)
             val bundle = Bundle().apply {
                 putLong("userId", userId)
             }
@@ -65,8 +63,7 @@ class UsersFragment : Fragment() {
     private fun observeUsers() {
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-//                viewModel.users.collectLatest { users ->
-                    viewModel.usersFlow.collect { users ->
+                viewModel.usersFlow.collect { users ->
                     userAdapter.submitList(users)
                 }
             }

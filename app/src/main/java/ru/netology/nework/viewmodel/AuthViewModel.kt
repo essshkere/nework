@@ -22,7 +22,6 @@ class AuthViewModel @Inject constructor(
             _authState.value = AuthState.Loading
             try {
                 val response = authRepository.signIn(login, password)
-                authRepository.saveToken(response.token)
                 _authState.value = AuthState.Success
             } catch (e: Exception) {
                 _authState.value = AuthState.Error(e.message ?: "Unknown error")
@@ -30,12 +29,11 @@ class AuthViewModel @Inject constructor(
         }
     }
 
-    fun signUp(login: String, password: String, name: String) {
+    fun signUp(login: String, password: String, name: String, avatarUri: String? = null) {
         viewModelScope.launch {
             _authState.value = AuthState.Loading
             try {
-                val response = authRepository.signUp(login, password, name)
-                authRepository.saveToken(response.token)
+                val response = authRepository.signUp(login, password, name, avatarUri)
                 _authState.value = AuthState.Success
             } catch (e: Exception) {
                 _authState.value = AuthState.Error(e.message ?: "Unknown error")
@@ -52,6 +50,10 @@ class AuthViewModel @Inject constructor(
 
     fun isAuthenticated(): Boolean {
         return authRepository.getToken() != null
+    }
+
+    fun getUserId(): Long {
+        return authRepository.getUserId()
     }
 
     sealed class AuthState {

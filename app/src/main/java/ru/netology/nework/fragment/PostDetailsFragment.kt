@@ -19,10 +19,11 @@ import kotlinx.coroutines.launch
 import ru.netology.nework.R
 import ru.netology.nework.adapter.ParticipantAdapter
 import ru.netology.nework.databinding.FragmentPostDetailsBinding
-import ru.netology.nework.data.Post
 import ru.netology.nework.viewmodel.AuthViewModel
 import ru.netology.nework.viewmodel.PostsViewModel
 import ru.netology.nework.viewmodel.UsersViewModel
+import java.text.SimpleDateFormat
+import java.util.Locale
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -51,6 +52,7 @@ class PostDetailsFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
         postId = arguments?.getLong("postId") ?: 0
 
         setupRecyclerView()
@@ -65,39 +67,29 @@ class PostDetailsFragment : Fragment() {
         }
 
         participantAdapter.onUserClicked = { userId ->
-
-//             val action = PostDetailsFragmentDirections.actionPostDetailsFragmentToUserProfileFragment(userId)
-//             findNavController().navigate(action)
             val bundle = Bundle().apply {
                 putLong("userId", userId)
             }
             findNavController().navigate(R.id.userProfileFragment, bundle)
-
         }
     }
 
     private fun observePost() {
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-
-                 postsViewModel.getPostById(postId)?.let { post ->
-                     bindPost(post)
-                     loadAuthorJob(post.authorId)
-                     loadMentionedUsers(post.mentionIds)
-                 }
-
-
-                postsViewModel.data.collect { pagingData ->
-
+                postsViewModel.getPostById(postId)?.let { post ->
+                    bindPost(post)
+                    loadAuthorJob(post.authorId)
+                    loadMentionedUsers(post.mentionIds)
                 }
             }
         }
     }
 
-    private fun bindPost(post: Post) {
+    private fun bindPost(post: ru.netology.nework.data.Post) {
         binding.apply {
             authorNameTextView.text = post.author
-            publishedDateTextView.text = post.published
+            publishedDateTextView.text = formatDate(post.published)
             contentTextView.text = post.content
             likesCountTextView.text = post.likeOwnerIds.size.toString()
 
@@ -106,18 +98,26 @@ class PostDetailsFragment : Fragment() {
                     .load(avatarUrl)
                     .placeholder(R.drawable.ic_account_circle)
                     .into(authorAvatarImageView)
+            } ?: run {
+                authorAvatarImageView.setImageResource(R.drawable.ic_account_circle)
             }
 
             post.attachment?.let { attachment ->
                 when (attachment.type) {
-                    Post.AttachmentType.IMAGE -> {
+                    ru.netology.nework.data.Post.AttachmentType.IMAGE -> {
                         attachmentImageView.visibility = View.VISIBLE
                         Glide.with(attachmentImageView)
                             .load(attachment.url)
+                            .centerCrop()
                             .into(attachmentImageView)
                     }
-                    else -> {
-                        attachmentImageView.visibility = View.GONE
+                    ru.netology.nework.data.Post.AttachmentType.VIDEO -> {
+                        attachmentImageView.visibility = View.VISIBLE
+                        attachmentImageView.setImageResource(R.drawable.ic_video)
+                    }
+                    ru.netology.nework.data.Post.AttachmentType.AUDIO -> {
+                        attachmentImageView.visibility = View.VISIBLE
+                        attachmentImageView.setImageResource(R.drawable.ic_audio)
                     }
                 }
             } ?: run {
@@ -137,6 +137,7 @@ class PostDetailsFragment : Fragment() {
 
             post.coords?.let { coords ->
                 locationCardView.visibility = View.VISIBLE
+                locationTextView.text = "Координаты: ${coords.lat}, ${coords.long}"
             } ?: run {
                 locationCardView.visibility = View.GONE
             }
@@ -185,9 +186,20 @@ class PostDetailsFragment : Fragment() {
                     val bundle = Bundle().apply {
                         putLong("userId", authorId)
                     }
-                    findNavController().navigate(R.id.action_postDetailsFragment_to_userProfileFragment, bundle)
+                    findNavController().navigate(R.id.userProfileFragment, bundle)
                 }
             }
+        }
+    }
+
+    private fun formatDate(dateString: String): String {
+        return try {
+            val inputFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX", Locale.getDefault())
+            val outputFormat = SimpleDateFormat("dd.MM.yyyy HH:mm", Locale.getDefault())
+            val date = inputFormat.parse(dateString)
+            outputFormat.format(date!!)
+        } catch (e: Exception) {
+            dateString
         }
     }
 

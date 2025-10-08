@@ -1,5 +1,7 @@
 package ru.netology.nework.fragment
 
+import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -17,10 +19,11 @@ import kotlinx.coroutines.launch
 import ru.netology.nework.R
 import ru.netology.nework.adapter.ParticipantAdapter
 import ru.netology.nework.databinding.FragmentEventDetailsBinding
-import ru.netology.nework.data.Event
 import ru.netology.nework.viewmodel.AuthViewModel
 import ru.netology.nework.viewmodel.EventsViewModel
 import ru.netology.nework.viewmodel.UsersViewModel
+import java.text.SimpleDateFormat
+import java.util.Locale
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -35,8 +38,10 @@ class EventDetailsFragment : Fragment() {
 
     @Inject
     lateinit var speakersAdapter: ParticipantAdapter
+
     @Inject
     lateinit var participantsAdapter: ParticipantAdapter
+
     private var eventId: Long = 0
 
     override fun onCreateView(
@@ -50,7 +55,6 @@ class EventDetailsFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
 
         eventId = arguments?.getLong("eventId") ?: 0
 
@@ -71,50 +75,41 @@ class EventDetailsFragment : Fragment() {
         }
 
         speakersAdapter.onUserClicked = { userId ->
-
-//             val action = EventDetailsFragmentDirections.actionEventDetailsFragmentToUserProfileFragment(userId)
-//             findNavController().navigate(action)
             val bundle = Bundle().apply {
                 putLong("userId", userId)
             }
             findNavController().navigate(R.id.userProfileFragment, bundle)
-
         }
 
         participantsAdapter.onUserClicked = { userId ->
-
-//             val action = EventDetailsFragmentDirections.actionEventDetailsFragmentToUserProfileFragment(userId)
-//             findNavController().navigate(action)
             val bundle = Bundle().apply {
                 putLong("userId", userId)
             }
             findNavController().navigate(R.id.userProfileFragment, bundle)
-
         }
     }
 
     private fun observeEvent() {
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                val event = eventsViewModel.getById(eventId)
-                event?.let {
-                    bindEvent(it)
-                    loadAuthorJob(it.authorId)
-                    loadSpeakers(it.speakerIds)
-                    loadParticipants(it.participantsIds)
+                eventsViewModel.getById(eventId)?.let { event ->
+                    bindEvent(event)
+                    loadAuthorJob(event.authorId)
+                    loadSpeakers(event.speakerIds)
+                    loadParticipants(event.participantsIds)
                 }
             }
         }
     }
 
-    private fun bindEvent(event: Event) {
+    private fun bindEvent(event: ru.netology.nework.data.Event) {
         binding.apply {
             authorNameTextView.text = event.author
-            publishedDateTextView.text = event.published
-            eventDateTimeTextView.text = "Дата проведения: ${event.datetime}"
+            publishedDateTextView.text = formatDate(event.published)
+            eventDateTimeTextView.text = "Когда: ${formatDate(event.datetime)}"
             eventTypeTextView.text = when (event.type) {
-                Event.EventType.ONLINE -> "Онлайн"
-                Event.EventType.OFFLINE -> "Офлайн"
+                ru.netology.nework.data.Event.EventType.ONLINE -> "Онлайн"
+                ru.netology.nework.data.Event.EventType.OFFLINE -> "Офлайн"
             }
             contentTextView.text = event.content
             likesCountTextView.text = event.likeOwnerIds.size.toString()
@@ -123,19 +118,28 @@ class EventDetailsFragment : Fragment() {
                 Glide.with(authorAvatarImageView)
                     .load(avatarUrl)
                     .placeholder(R.drawable.ic_account_circle)
+                    .circleCrop()
                     .into(authorAvatarImageView)
+            } ?: run {
+                authorAvatarImageView.setImageResource(R.drawable.ic_account_circle)
             }
 
             event.attachment?.let { attachment ->
                 when (attachment.type) {
-                    Event.AttachmentType.IMAGE -> {
+                    ru.netology.nework.data.Event.AttachmentType.IMAGE -> {
                         attachmentImageView.visibility = View.VISIBLE
                         Glide.with(attachmentImageView)
                             .load(attachment.url)
+                            .centerCrop()
                             .into(attachmentImageView)
                     }
-                    else -> {
-                        attachmentImageView.visibility = View.GONE
+                    ru.netology.nework.data.Event.AttachmentType.VIDEO -> {
+                        attachmentImageView.visibility = View.VISIBLE
+                        attachmentImageView.setImageResource(R.drawable.ic_video)
+                    }
+                    ru.netology.nework.data.Event.AttachmentType.AUDIO -> {
+                        attachmentImageView.visibility = View.VISIBLE
+                        attachmentImageView.setImageResource(R.drawable.ic_audio)
                     }
                 }
             } ?: run {
@@ -146,6 +150,8 @@ class EventDetailsFragment : Fragment() {
                 linkTextView.visibility = View.VISIBLE
                 linkTextView.text = link
                 linkTextView.setOnClickListener {
+                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse(link))
+                    startActivity(intent)
                 }
             } ?: run {
                 linkTextView.visibility = View.GONE
@@ -153,6 +159,7 @@ class EventDetailsFragment : Fragment() {
 
             event.coords?.let { coords ->
                 locationCardView.visibility = View.VISIBLE
+                locationTextView.text = "Координаты: ${coords.lat}, ${coords.long}"
             } ?: run {
                 locationCardView.visibility = View.GONE
             }
@@ -187,6 +194,9 @@ class EventDetailsFragment : Fragment() {
         viewLifecycleOwner.lifecycleScope.launch {
             usersViewModel.getJobs(authorId).let { jobs ->
                 val currentJob = jobs.firstOrNull { it.finish == null }
+                binding.authorJobTextView.text = currentJob?.let {
+                    "${it.position} в ${it.name}"
+                } ?: "В поиске работы"
             }
         }
     }
@@ -218,9 +228,20 @@ class EventDetailsFragment : Fragment() {
                     val bundle = Bundle().apply {
                         putLong("userId", authorId)
                     }
-                    findNavController().navigate(R.id.action_eventDetailsFragment_to_userProfileFragment, bundle)
+                    findNavController().navigate(R.id.userProfileFragment, bundle)
                 }
             }
+        }
+    }
+
+    private fun formatDate(dateString: String): String {
+        return try {
+            val inputFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX", Locale.getDefault())
+            val outputFormat = SimpleDateFormat("dd.MM.yyyy HH:mm", Locale.getDefault())
+            val date = inputFormat.parse(dateString)
+            outputFormat.format(date!!)
+        } catch (e: Exception) {
+            dateString
         }
     }
 

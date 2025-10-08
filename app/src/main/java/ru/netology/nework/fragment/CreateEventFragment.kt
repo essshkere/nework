@@ -28,7 +28,6 @@ import ru.netology.nework.R
 import ru.netology.nework.databinding.FragmentCreateEventBinding
 import ru.netology.nework.data.Event
 import ru.netology.nework.viewmodel.EventsViewModel
-import ru.netology.nework.viewmodel.UsersViewModel
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
@@ -41,7 +40,6 @@ class CreateEventFragment : Fragment(), MenuProvider {
     private val binding get() = _binding!!
 
     private val eventsViewModel: EventsViewModel by viewModels()
-    private val usersViewModel: UsersViewModel by viewModels()
 
     private var attachmentUri: Uri? = null
     private var attachmentType: Event.AttachmentType? = null
@@ -175,6 +173,7 @@ class CreateEventFragment : Fragment(), MenuProvider {
     private fun observeEventCreation() {
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                // Observe event creation state if needed
             }
         }
     }

@@ -6,8 +6,7 @@ data class UserDto(
     @SerializedName("id") val id: Long,
     @SerializedName("login") val login: String,
     @SerializedName("name") val name: String,
-    @SerializedName("avatar") val avatar: String? = null,
-    @SerializedName("lastName") val lastName: String? = null
+    @SerializedName("avatar") val avatar: String? = null
 )
 
 data class UserPreviewDto(
