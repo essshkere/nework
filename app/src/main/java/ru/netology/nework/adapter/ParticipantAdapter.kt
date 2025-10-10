@@ -10,10 +10,10 @@ import ru.netology.nework.databinding.ItemParticipantBinding
 import ru.netology.nework.data.User
 
 class ParticipantAdapter : ListAdapter<User, ParticipantAdapter.ViewHolder>(DiffCallback) {
-
     var onUserClicked: ((Long) -> Unit)? = null
-    var showCheckbox: Boolean = false
-    val selectedUserIds = mutableSetOf<Long>()
+    var onSelectionChanged: ((Int) -> Unit)? = null
+    var showCheckbox: Boolean = true
+    private val selectedUserIds = mutableSetOf<Long>()
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         val binding = ItemParticipantBinding.inflate(LayoutInflater.from(parent.context), parent, false)
@@ -30,7 +30,7 @@ class ParticipantAdapter : ListAdapter<User, ParticipantAdapter.ViewHolder>(Diff
         fun bind(user: User) {
             binding.apply {
                 userNameTextView.text = user.name
-
+                userLoginTextView.text = "@${user.login}"
                 user.avatar?.let { avatarUrl ->
                     Glide.with(avatarImageView)
                         .load(avatarUrl)
@@ -41,11 +41,63 @@ class ParticipantAdapter : ListAdapter<User, ParticipantAdapter.ViewHolder>(Diff
                     avatarImageView.setImageResource(ru.netology.nework.R.drawable.ic_account_circle)
                 }
 
-                root.setOnClickListener {
-                    onUserClicked?.invoke(user.id)
+                if (showCheckbox) {
+                    checkbox.visibility = View.VISIBLE
+                    checkbox.isChecked = selectedUserIds.contains(user.id)
+                    checkbox.setOnCheckedChangeListener { _, isChecked ->
+                        if (isChecked) {
+                            selectedUserIds.add(user.id)
+                        } else {
+                            selectedUserIds.remove(user.id)
+                        }
+                        onSelectionChanged?.invoke(selectedUserIds.size)
+                    }
+                    root.setOnClickListener {
+                        checkbox.isChecked = !checkbox.isChecked
+                    }
+                } else {
+                    checkbox.visibility = View.GONE
+
+                    root.setOnClickListener {
+                        selectedUserIds.clear()
+                        selectedUserIds.add(user.id)
+                        onSelectionChanged?.invoke(1)
+                        onUserClicked?.invoke(user.id)
+                    }
+
+
+                    root.isSelected = selectedUserIds.contains(user.id)
                 }
             }
         }
+    }
+
+    fun getSelectedUsers(): List<User> {
+        return currentList.filter { user ->
+            selectedUserIds.contains(user.id)
+        }
+    }
+
+    fun getSelectedUserIds(): List<Long> {
+        return selectedUserIds.toList()
+    }
+
+    fun setInitiallySelectedUsers(userIds: Set<Long>) {
+        selectedUserIds.clear()
+        selectedUserIds.addAll(userIds)
+    }
+
+    fun clearSelection() {
+        selectedUserIds.clear()
+        onSelectionChanged?.invoke(0)
+        notifyDataSetChanged()
+    }
+
+    fun selectAll() {
+        selectedUserIds.clear()
+        selectedUserIds.addAll(currentList.map { it.id })
+        onSelectionChanged?.invoke(selectedUserIds.size)
+        notifyDataSetChanged()
     }
 
     companion object {

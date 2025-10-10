@@ -23,16 +23,16 @@ import kotlinx.coroutines.launch
 import ru.netology.nework.R
 import ru.netology.nework.databinding.FragmentRegisterBinding
 import ru.netology.nework.viewmodel.AuthViewModel
+import java.io.File
 
 @AndroidEntryPoint
 class RegisterFragment : Fragment() {
 
     private var _binding: FragmentRegisterBinding? = null
     private val binding get() = _binding!!
-
     private val viewModel: AuthViewModel by viewModels()
-
     private var avatarUri: Uri? = null
+    private var avatarFile: File? = null
 
     private val pickImageLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
@@ -40,10 +40,13 @@ class RegisterFragment : Fragment() {
         if (result.resultCode == android.app.Activity.RESULT_OK) {
             result.data?.data?.let { uri ->
                 avatarUri = uri
+                avatarFile = createTempFileFromUri(uri)
                 Glide.with(this)
                     .load(uri)
                     .circleCrop()
+                    .placeholder(R.drawable.ic_account_circle)
                     .into(binding.avatarImageView)
+                binding.removeAvatarButton.visibility = View.VISIBLE
             }
         }
     }
@@ -87,6 +90,10 @@ class RegisterFragment : Fragment() {
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
             override fun afterTextChanged(s: Editable?) {
                 validatePassword(s.toString())
+                validatePasswordConfirmation(
+                    binding.passwordEditText.text.toString(),
+                    binding.passwordConfirmEditText.text.toString()
+                )
             }
         })
 
@@ -111,17 +118,20 @@ class RegisterFragment : Fragment() {
             pickImageFromGallery()
         }
 
+        binding.removeAvatarButton.setOnClickListener {
+            removeAvatar()
+        }
+
         binding.signUpButton.setOnClickListener {
             if (validateForm()) {
                 val login = binding.loginEditText.text.toString().trim()
                 val password = binding.passwordEditText.text.toString()
                 val name = binding.nameEditText.text.toString().trim()
-
-                viewModel.signUp(login, password, name, avatarUri?.toString())
+                val avatarUriString = avatarUri?.toString()
+                viewModel.signUp(login, password, name, avatarUriString)
             }
         }
     }
-
     private fun observeAuthState() {
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
@@ -132,6 +142,7 @@ class RegisterFragment : Fragment() {
                         }
                         AuthViewModel.AuthState.Success -> {
                             showLoading(false)
+                            Snackbar.make(binding.root, "Регистрация успешна!", Snackbar.LENGTH_SHORT).show()
                             findNavController().navigate(R.id.postsFragment)
                         }
                         is AuthViewModel.AuthState.Error -> {
@@ -154,46 +165,92 @@ class RegisterFragment : Fragment() {
         pickImageLauncher.launch(intent)
     }
 
+    private fun removeAvatar() {
+        avatarUri = null
+        avatarFile = null
+        binding.avatarImageView.setImageResource(R.drawable.ic_account_circle)
+        binding.removeAvatarButton.visibility = View.GONE
+        avatarFile?.delete()
+        avatarFile = null
+    }
+
+    private fun createTempFileFromUri(uri: Uri): File {
+        val file = File.createTempFile("avatar_preview", ".jpg", requireContext().cacheDir)
+        file.deleteOnExit()
+
+        requireContext().contentResolver.openInputStream(uri)?.use { inputStream ->
+            FileOutputStream(file).use { outputStream ->
+                inputStream.copyTo(outputStream)
+            }
+        }
+
+        return file
+    }
     private fun validateLogin(login: String): Boolean {
-        return if (login.isBlank()) {
-            binding.loginEditText.error = "Логин не может быть пустым"
-            false
-        } else {
-            binding.loginEditText.error = null
-            true
+        return when {
+            login.isBlank() -> {
+                binding.loginEditText.error = "Логин не может быть пустым"
+                false
+            }
+            login.length < 3 -> {
+                binding.loginEditText.error = "Логин должен содержать минимум 3 символа"
+                false
+            }
+            !login.matches(Regex("^[a-zA-Z0-9_.-]+$")) -> {
+                binding.loginEditText.error = "Логин может содержать только буквы, цифры, точки, дефисы и подчеркивания"
+                false
+            }
+            else -> {
+                binding.loginEditText.error = null
+                true
+            }
         }
     }
 
     private fun validateName(name: String): Boolean {
-        return if (name.isBlank()) {
-            binding.nameEditText.error = "Имя не может быть пустым"
-            false
-        } else {
-            binding.nameEditText.error = null
-            true
+        return when {
+            name.isBlank() -> {
+                binding.nameEditText.error = "Имя не может быть пустым"
+                false
+            }
+            name.length < 2 -> {
+                binding.nameEditText.error = "Имя должно содержать минимум 2 символа"
+                false
+            }
+            else -> {
+                binding.nameEditText.error = null
+                true
+            }
         }
     }
 
     private fun validatePassword(password: String): Boolean {
-        return if (password.isBlank()) {
-            binding.passwordEditText.error = "Пароль не может быть пустым"
-            false
-        } else if (password.length < 6) {
-            binding.passwordEditText.error = "Пароль должен содержать минимум 6 символов"
-            false
-        } else {
-            binding.passwordEditText.error = null
-            true
+        return when {
+            password.isBlank() -> {
+                binding.passwordEditText.error = "Пароль не может быть пустым"
+                false
+            }
+            password.length < 6 -> {
+                binding.passwordEditText.error = "Пароль должен содержать минимум 6 символов"
+                false
+            }
+            else -> {
+                binding.passwordEditText.error = null
+                true
+            }
         }
     }
 
     private fun validatePasswordConfirmation(password: String, confirmation: String): Boolean {
-        return if (confirmation != password) {
-            binding.passwordConfirmEditText.error = "Пароли не совпадают"
-            false
-        } else {
-            binding.passwordConfirmEditText.error = null
-            true
+        return when {
+            confirmation != password -> {
+                binding.passwordConfirmEditText.error = "Пароли не совпадают"
+                false
+            }
+            else -> {
+                binding.passwordConfirmEditText.error = null
+                true
+            }
         }
     }
 
@@ -206,34 +263,44 @@ class RegisterFragment : Fragment() {
         val name = binding.nameEditText.text.toString().trim()
         val password = binding.passwordEditText.text.toString()
         val passwordConfirmation = binding.passwordConfirmEditText.text.toString()
-
         val isLoginValid = validateLogin(login)
         val isNameValid = validateName(name)
         val isPasswordValid = validatePassword(password)
         val isPasswordConfirmationValid = validatePasswordConfirmation(password, passwordConfirmation)
         val isAvatarValid = validateAvatar()
-
-        return isLoginValid && isNameValid && isPasswordValid && isPasswordConfirmationValid && isAvatarValid
+        val isValid = isLoginValid && isNameValid && isPasswordValid &&
+                isPasswordConfirmationValid && isAvatarValid
+        if (!isValid) {
+            Snackbar.make(binding.root, "Заполните все обязательные поля правильно", Snackbar.LENGTH_LONG).show()
+        }
+        return isValid
     }
 
     private fun showLoading(isLoading: Boolean) {
         binding.progressBar.visibility = if (isLoading) View.VISIBLE else View.GONE
         binding.signUpButton.isEnabled = !isLoading
         binding.selectAvatarButton.isEnabled = !isLoading
+        binding.removeAvatarButton.isEnabled = !isLoading
+
+        binding.loginEditText.isEnabled = !isLoading
+        binding.nameEditText.isEnabled = !isLoading
+        binding.passwordEditText.isEnabled = !isLoading
+        binding.passwordConfirmEditText.isEnabled = !isLoading
     }
 
     private fun showError(message: String) {
         val errorMessage = when {
-            message.contains("400") -> "Пользователь с таким логином уже зарегистрирован"
-            message.contains("network", ignoreCase = true) -> "Ошибка сети. Проверьте подключение"
+            message.contains("403") -> "Пользователь с таким логином уже зарегистрирован"
+            message.contains("415") -> "Неправильный формат изображения. Используйте JPG или PNG"
+            message.contains("network", ignoreCase = true) -> "Ошибка сети. Проверьте подключение к интернету"
             else -> "Ошибка: $message"
         }
-
         Snackbar.make(binding.root, errorMessage, Snackbar.LENGTH_LONG).show()
     }
 
     override fun onDestroyView() {
         super.onDestroyView()
+        avatarFile?.delete()
         _binding = null
     }
 }

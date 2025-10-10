@@ -16,8 +16,9 @@ class EventAdapter : ListAdapter<Event, EventAdapter.ViewHolder>(DiffCallback) {
 
     var onEventClicked: ((Long) -> Unit)? = null
     var onLikeClicked: ((Long) -> Unit)? = null
-    var onParticipateClicked: ((Long) -> Unit)? = null
+    var onParticipateClicked: ((Event) -> Unit)? = null
     var onSpeakerClicked: ((Long) -> Unit)? = null
+    var onAuthorClicked: ((Long) -> Unit)? = null
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         val binding = ItemEventBinding.inflate(LayoutInflater.from(parent.context), parent, false)
@@ -35,14 +36,14 @@ class EventAdapter : ListAdapter<Event, EventAdapter.ViewHolder>(DiffCallback) {
             binding.apply {
                 authorNameTextView.text = event.author
                 publishedDateTextView.text = formatDate(event.published)
-                eventDateTimeTextView.text = "Когда: ${formatDate(event.datetime)}"
+                eventDateTimeTextView.text = "📅 ${formatDate(event.datetime)}"
                 eventTypeTextView.text = when (event.type) {
-                    Event.EventType.ONLINE -> "Онлайн"
-                    Event.EventType.OFFLINE -> "Офлайн"
+                    Event.EventType.ONLINE -> "🌐 Онлайн"
+                    Event.EventType.OFFLINE -> "📍 Офлайн"
                 }
                 contentTextView.text = event.content
                 likesCountTextView.text = event.likeOwnerIds.size.toString()
-                participantsCountTextView.text = "Участников: ${event.participantsIds.size}"
+                participantsCountTextView.text = "👥 ${event.participantsIds.size}"
 
                 event.authorAvatar?.let { avatarUrl ->
                     Glide.with(authorAvatarImageView)
@@ -61,6 +62,7 @@ class EventAdapter : ListAdapter<Event, EventAdapter.ViewHolder>(DiffCallback) {
                             Glide.with(attachmentImageView)
                                 .load(attachment.url)
                                 .centerCrop()
+                                .placeholder(ru.netology.nework.R.drawable.ic_image)
                                 .into(attachmentImageView)
                         }
                         Event.AttachmentType.VIDEO -> {
@@ -76,15 +78,42 @@ class EventAdapter : ListAdapter<Event, EventAdapter.ViewHolder>(DiffCallback) {
                     attachmentImageView.visibility = android.view.View.GONE
                 }
 
+                event.link?.let { link ->
+                    linkTextView.visibility = android.view.View.VISIBLE
+                    linkTextView.text = "🔗 $link"
+                } ?: run {
+                    linkTextView.visibility = android.view.View.GONE
+                }
+
                 val likeIcon = if (event.likedByMe) {
-                    ru.netology.nework.R.drawable.ic_favorite
+                    ru.netology.nework.R.drawable.ic_favorite_filled
                 } else {
                     ru.netology.nework.R.drawable.ic_favorite_border
                 }
                 likeButton.setImageResource(likeIcon)
 
-                participateButton.text = if (event.participatedByMe) "Отказаться" else "Участвовать"
+                participateButton.text = if (event.participatedByMe) {
+                    "❌ Отказаться"
+                } else {
+                    "✅ Участвовать"
+                }
 
+                participateButton.setBackgroundColor(
+                    if (event.participatedByMe) {
+                        participateButton.context.getColor(ru.netology.nework.R.color.participation_active)
+                    } else {
+                        participateButton.context.getColor(ru.netology.nework.R.color.participation_inactive)
+                    }
+                )
+
+                setupClickListeners(event)
+
+                menuButton.visibility = android.view.View.GONE
+            }
+        }
+
+        private fun setupClickListeners(event: Event) {
+            binding.apply {
                 root.setOnClickListener {
                     onEventClicked?.invoke(event.id)
                 }
@@ -94,14 +123,26 @@ class EventAdapter : ListAdapter<Event, EventAdapter.ViewHolder>(DiffCallback) {
                 }
 
                 participateButton.setOnClickListener {
-                    onParticipateClicked?.invoke(event.id)
+                    onParticipateClicked?.invoke(event)
                 }
 
                 authorAvatarImageView.setOnClickListener {
-                    // TODO: Navigate to user profile
+                    onAuthorClicked?.invoke(event.authorId)
                 }
 
-                menuButton.visibility = android.view.View.GONE
+                // Клик по спикерам (если есть)
+                if (event.speakerIds.isNotEmpty()) {
+                    speakersTextView.visibility = android.view.View.VISIBLE
+                    speakersTextView.text = "🎤 Спикеров: ${event.speakerIds.size}"
+                    speakersTextView.setOnClickListener {
+                        // Переход к первому спикеру (можно реализовать список)
+                        event.speakerIds.firstOrNull()?.let { speakerId ->
+                            onSpeakerClicked?.invoke(speakerId)
+                        }
+                    }
+                } else {
+                    speakersTextView.visibility = android.view.View.GONE
+                }
             }
         }
 
@@ -130,9 +171,16 @@ class EventAdapter : ListAdapter<Event, EventAdapter.ViewHolder>(DiffCallback) {
             override fun getChangePayload(oldItem: Event, newItem: Event): Any? {
                 return when {
                     oldItem.likedByMe != newItem.likedByMe ||
-                            oldItem.likeOwnerIds.size != newItem.likeOwnerIds.size -> "likes_changed"
+                            oldItem.likeOwnerIds.size != newItem.likeOwnerIds.size ->
+                        "likes_changed"
+
                     oldItem.participatedByMe != newItem.participatedByMe ||
-                            oldItem.participantsIds.size != newItem.participantsIds.size -> "participation_changed"
+                            oldItem.participantsIds.size != newItem.participantsIds.size ->
+                        "participation_changed"
+
+                    oldItem.speakerIds != newItem.speakerIds ->
+                        "speakers_changed"
+
                     else -> null
                 }
             }

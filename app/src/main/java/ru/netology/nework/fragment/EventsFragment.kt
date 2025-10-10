@@ -11,6 +11,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.google.android.material.snackbar.Snackbar
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import ru.netology.nework.R
@@ -22,13 +23,10 @@ import javax.inject.Inject
 
 @AndroidEntryPoint
 class EventsFragment : Fragment() {
-
     private var _binding: FragmentEventsBinding? = null
     private val binding get() = _binding!!
-
-    private val viewModel: EventsViewModel by viewModels()
+    private val eventsViewModel: EventsViewModel by viewModels()
     private val authViewModel: AuthViewModel by viewModels()
-
     @Inject
     lateinit var eventAdapter: EventAdapter
 
@@ -48,6 +46,7 @@ class EventsFragment : Fragment() {
         setupSwipeRefresh()
         setupFab()
         observeEvents()
+        observeEventsState()
     }
 
     private fun setupRecyclerView() {
@@ -57,48 +56,47 @@ class EventsFragment : Fragment() {
         }
 
         eventAdapter.onEventClicked = { eventId ->
-            val bundle = Bundle().apply {
-                putLong("eventId", eventId)
-            }
-            findNavController().navigate(R.id.eventDetailsFragment, bundle)
+            navigateToEventDetails(eventId)
         }
 
         eventAdapter.onLikeClicked = { eventId ->
-            viewModel.likeById(eventId)
+            eventsViewModel.likeById(eventId)
         }
 
-        eventAdapter.onParticipateClicked = { eventId ->
-            if (authViewModel.isAuthenticated()) {
-                viewModel.participate(eventId)
-            } else {
-                findNavController().navigate(R.id.loginFragment)
-            }
+        eventAdapter.onParticipateClicked = { event ->
+            handleParticipation(event)
         }
 
         eventAdapter.onSpeakerClicked = { userId ->
-            val bundle = Bundle().apply {
-                putLong("userId", userId)
-            }
-            findNavController().navigate(R.id.userProfileFragment, bundle)
+            navigateToUserProfile(userId)
+        }
+
+        eventAdapter.onAuthorClicked = { authorId ->
+            navigateToUserProfile(authorId)
+        }
+    }
+
+    private fun handleParticipation(event: ru.netology.nework.data.Event) {
+        if (authViewModel.isAuthenticated()) {
+            eventsViewModel.toggleParticipation(event)
+        } else {
+            showAuthenticationRequired()
         }
     }
 
     private fun setupSwipeRefresh() {
         binding.swipeRefreshLayout.setOnRefreshListener {
-            viewLifecycleOwner.lifecycleScope.launch {
-                viewModel.data.collect {
-                    binding.swipeRefreshLayout.isRefreshing = false
-                }
-            }
+            eventsViewModel.refresh()
+            binding.swipeRefreshLayout.isRefreshing = false
         }
     }
 
     private fun setupFab() {
         binding.fab.setOnClickListener {
             if (authViewModel.isAuthenticated()) {
-                findNavController().navigate(R.id.createEventFragment)
+                navigateToCreateEvent()
             } else {
-                findNavController().navigate(R.id.loginFragment)
+                showAuthenticationRequired()
             }
         }
     }
@@ -106,11 +104,76 @@ class EventsFragment : Fragment() {
     private fun observeEvents() {
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.data.collect { pagingData ->
+                eventsViewModel.data.collect { pagingData ->
                     eventAdapter.submitData(pagingData)
                 }
             }
         }
+    }
+
+    private fun observeEventsState() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                eventsViewModel.eventsState.collect { state ->
+                    when (state) {
+                        is EventsViewModel.EventsState.Loading -> {
+                            showLoading(true)
+                        }
+                        is EventsViewModel.EventsState.Success -> {
+                            showLoading(false)
+                            showSuccess(state.message)
+                            eventsViewModel.clearState()
+                        }
+                        is EventsViewModel.EventsState.Error -> {
+                            showLoading(false)
+                            showError(state.message)
+                            eventsViewModel.clearState()
+                        }
+                        EventsViewModel.EventsState.Idle -> {
+                            showLoading(false)
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private fun navigateToEventDetails(eventId: Long) {
+        val bundle = Bundle().apply {
+            putLong("eventId", eventId)
+        }
+        findNavController().navigate(R.id.eventDetailsFragment, bundle)
+    }
+
+    private fun navigateToUserProfile(userId: Long) {
+        val bundle = Bundle().apply {
+            putLong("userId", userId)
+        }
+        findNavController().navigate(R.id.userProfileFragment, bundle)
+    }
+
+    private fun navigateToCreateEvent() {
+        findNavController().navigate(R.id.createEventFragment)
+    }
+
+    private fun showAuthenticationRequired() {
+        Snackbar.make(binding.root, "Для этого действия необходимо авторизоваться", Snackbar.LENGTH_LONG)
+            .setAction("Войти") {
+                findNavController().navigate(R.id.loginFragment)
+            }
+            .show()
+    }
+
+    private fun showLoading(isLoading: Boolean) {
+        binding.progressBar.visibility = if (isLoading) View.VISIBLE else View.GONE
+    }
+
+    private fun showSuccess(message: String) {
+        Snackbar.make(binding.root, message, Snackbar.LENGTH_SHORT).show()
+    }
+
+    private fun showError(message: String) {
+        Snackbar.make(binding.root, message, Snackbar.LENGTH_LONG).show()
     }
 
     override fun onDestroyView() {

@@ -1,12 +1,14 @@
 package ru.netology.nework.api
 
 import retrofit2.Response
-import retrofit2.http.*
+import retrofit2.http.GET
+import retrofit2.http.Path
 import ru.netology.nework.dto.JobDto
 import ru.netology.nework.dto.PostDto
 import ru.netology.nework.dto.UserDto
 
 interface UserApi {
+
     @GET("api/users")
     suspend fun getAll(): Response<List<UserDto>>
 
