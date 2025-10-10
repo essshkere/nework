@@ -10,6 +10,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
@@ -24,16 +25,15 @@ import ru.netology.nework.R
 import ru.netology.nework.databinding.FragmentRegisterBinding
 import ru.netology.nework.viewmodel.AuthViewModel
 import java.io.File
+import java.io.FileOutputStream
 
 @AndroidEntryPoint
 class RegisterFragment : Fragment() {
-
     private var _binding: FragmentRegisterBinding? = null
     private val binding get() = _binding!!
-    private val viewModel: AuthViewModel by viewModels()
+    private val authViewModel: AuthViewModel by viewModels()
     private var avatarUri: Uri? = null
     private var avatarFile: File? = null
-
     private val pickImageLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
     ) { result ->
@@ -46,7 +46,8 @@ class RegisterFragment : Fragment() {
                     .circleCrop()
                     .placeholder(R.drawable.ic_account_circle)
                     .into(binding.avatarImageView)
-                binding.removeAvatarButton.visibility = View.VISIBLE
+                binding.removeAvatarButton.isVisible = true
+                binding.avatarErrorTextView.isVisible = false
             }
         }
     }
@@ -66,6 +67,7 @@ class RegisterFragment : Fragment() {
         setupTextWatchers()
         setupClickListeners()
         observeAuthState()
+        observeUiState()
     }
 
     private fun setupTextWatchers() {
@@ -74,6 +76,7 @@ class RegisterFragment : Fragment() {
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
             override fun afterTextChanged(s: Editable?) {
                 validateLogin(s.toString())
+                updateSubmitButtonState()
             }
         })
 
@@ -82,6 +85,7 @@ class RegisterFragment : Fragment() {
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
             override fun afterTextChanged(s: Editable?) {
                 validateName(s.toString())
+                updateSubmitButtonState()
             }
         })
 
@@ -94,6 +98,7 @@ class RegisterFragment : Fragment() {
                     binding.passwordEditText.text.toString(),
                     binding.passwordConfirmEditText.text.toString()
                 )
+                updateSubmitButtonState()
             }
         })
 
@@ -105,6 +110,7 @@ class RegisterFragment : Fragment() {
                     binding.passwordEditText.text.toString(),
                     s.toString()
                 )
+                updateSubmitButtonState()
             }
         })
     }
@@ -128,29 +134,51 @@ class RegisterFragment : Fragment() {
                 val password = binding.passwordEditText.text.toString()
                 val name = binding.nameEditText.text.toString().trim()
                 val avatarUriString = avatarUri?.toString()
-                viewModel.signUp(login, password, name, avatarUriString)
+                authViewModel.signUp(login, password, name, avatarUriString)
+            }
+        }
+
+        binding.retryButton.setOnClickListener {
+            if (validateForm()) {
+                val login = binding.loginEditText.text.toString().trim()
+                val password = binding.passwordEditText.text.toString()
+                val name = binding.nameEditText.text.toString().trim()
+                val avatarUriString = avatarUri?.toString()
+                authViewModel.signUp(login, password, name, avatarUriString)
+            }
+        }
+
+        listOf(
+            binding.loginEditText,
+            binding.nameEditText,
+            binding.passwordEditText,
+            binding.passwordConfirmEditText
+        ).forEach { editText ->
+            editText.setOnFocusChangeListener { _, hasFocus ->
+                if (hasFocus) {
+                    clearFieldErrors()
+                }
             }
         }
     }
+
     private fun observeAuthState() {
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.authState.collect { state ->
+                authViewModel.authState.collect { state ->
                     when (state) {
                         AuthViewModel.AuthState.Loading -> {
-                            showLoading(true)
                         }
+
                         AuthViewModel.AuthState.Success -> {
-                            showLoading(false)
-                            Snackbar.make(binding.root, "Регистрация успешна!", Snackbar.LENGTH_SHORT).show()
-                            findNavController().navigate(R.id.postsFragment)
+                            navigateToPosts()
                         }
+
                         is AuthViewModel.AuthState.Error -> {
-                            showLoading(false)
-                            showError(state.message)
                         }
+
                         AuthViewModel.AuthState.Idle -> {
-                            showLoading(false)
+
                         }
                     }
                 }
@@ -158,10 +186,48 @@ class RegisterFragment : Fragment() {
         }
     }
 
-    private fun pickImageFromGallery() {
-        val intent = Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI).apply {
-            type = "image/*"
+    private fun observeUiState() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                authViewModel.uiState.collect { uiState ->
+                    updateUi(uiState)
+                }
+            }
         }
+    }
+
+    private fun updateUi(uiState: AuthViewModel.AuthUiState) {
+        with(binding) {
+            progressBar.isVisible = uiState.isLoading
+            loadingOverlay.isVisible = uiState.isLoading
+            loginEditText.isEnabled = !uiState.isLoading
+            nameEditText.isEnabled = !uiState.isLoading
+            passwordEditText.isEnabled = !uiState.isLoading
+            passwordConfirmEditText.isEnabled = !uiState.isLoading
+            signUpButton.isEnabled = !uiState.isLoading && isFormValid()
+            selectAvatarButton.isEnabled = !uiState.isLoading
+            removeAvatarButton.isEnabled = !uiState.isLoading
+
+            if (uiState.showError && uiState.error != null) {
+                showError(uiState.error)
+                authViewModel.clearError()
+            }
+
+            updateAuthState(uiState.isAuthenticated)
+        }
+    }
+
+    private fun updateAuthState(isAuthenticated: Boolean) {
+        if (isAuthenticated) {
+            navigateToPosts()
+        }
+    }
+
+    private fun pickImageFromGallery() {
+        val intent =
+            Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI).apply {
+                type = "image/*"
+            }
         pickImageLauncher.launch(intent)
     }
 
@@ -169,7 +235,7 @@ class RegisterFragment : Fragment() {
         avatarUri = null
         avatarFile = null
         binding.avatarImageView.setImageResource(R.drawable.ic_account_circle)
-        binding.removeAvatarButton.visibility = View.GONE
+        binding.removeAvatarButton.isVisible = false
         avatarFile?.delete()
         avatarFile = null
     }
@@ -186,20 +252,25 @@ class RegisterFragment : Fragment() {
 
         return file
     }
+
     private fun validateLogin(login: String): Boolean {
         return when {
             login.isBlank() -> {
                 binding.loginEditText.error = "Логин не может быть пустым"
                 false
             }
+
             login.length < 3 -> {
                 binding.loginEditText.error = "Логин должен содержать минимум 3 символа"
                 false
             }
+
             !login.matches(Regex("^[a-zA-Z0-9_.-]+$")) -> {
-                binding.loginEditText.error = "Логин может содержать только буквы, цифры, точки, дефисы и подчеркивания"
+                binding.loginEditText.error =
+                    "Логин может содержать только буквы, цифры, точки, дефисы и подчеркивания"
                 false
             }
+
             else -> {
                 binding.loginEditText.error = null
                 true
@@ -213,10 +284,12 @@ class RegisterFragment : Fragment() {
                 binding.nameEditText.error = "Имя не может быть пустым"
                 false
             }
+
             name.length < 2 -> {
                 binding.nameEditText.error = "Имя должно содержать минимум 2 символа"
                 false
             }
+
             else -> {
                 binding.nameEditText.error = null
                 true
@@ -230,10 +303,12 @@ class RegisterFragment : Fragment() {
                 binding.passwordEditText.error = "Пароль не может быть пустым"
                 false
             }
+
             password.length < 6 -> {
                 binding.passwordEditText.error = "Пароль должен содержать минимум 6 символов"
                 false
             }
+
             else -> {
                 binding.passwordEditText.error = null
                 true
@@ -247,6 +322,7 @@ class RegisterFragment : Fragment() {
                 binding.passwordConfirmEditText.error = "Пароли не совпадают"
                 false
             }
+
             else -> {
                 binding.passwordConfirmEditText.error = null
                 true
@@ -263,44 +339,76 @@ class RegisterFragment : Fragment() {
         val name = binding.nameEditText.text.toString().trim()
         val password = binding.passwordEditText.text.toString()
         val passwordConfirmation = binding.passwordConfirmEditText.text.toString()
+
         val isLoginValid = validateLogin(login)
         val isNameValid = validateName(name)
         val isPasswordValid = validatePassword(password)
-        val isPasswordConfirmationValid = validatePasswordConfirmation(password, passwordConfirmation)
+        val isPasswordConfirmationValid =
+            validatePasswordConfirmation(password, passwordConfirmation)
         val isAvatarValid = validateAvatar()
+
         val isValid = isLoginValid && isNameValid && isPasswordValid &&
                 isPasswordConfirmationValid && isAvatarValid
+
         if (!isValid) {
-            Snackbar.make(binding.root, "Заполните все обязательные поля правильно", Snackbar.LENGTH_LONG).show()
+            showFormError("Заполните все обязательные поля правильно")
         }
+
         return isValid
     }
 
-    private fun showLoading(isLoading: Boolean) {
-        binding.progressBar.visibility = if (isLoading) View.VISIBLE else View.GONE
-        binding.signUpButton.isEnabled = !isLoading
-        binding.selectAvatarButton.isEnabled = !isLoading
-        binding.removeAvatarButton.isEnabled = !isLoading
+    private fun isFormValid(): Boolean {
+        val login = binding.loginEditText.text.toString().trim()
+        val name = binding.nameEditText.text.toString().trim()
+        val password = binding.passwordEditText.text.toString()
+        val passwordConfirmation = binding.passwordConfirmEditText.text.toString()
 
-        binding.loginEditText.isEnabled = !isLoading
-        binding.nameEditText.isEnabled = !isLoading
-        binding.passwordEditText.isEnabled = !isLoading
-        binding.passwordConfirmEditText.isEnabled = !isLoading
+        return login.isNotBlank() && name.isNotBlank() &&
+                password.isNotBlank() && passwordConfirmation.isNotBlank() &&
+                login.length >= 3 && name.length >= 2 &&
+                password.length >= 6 && password == passwordConfirmation
+    }
+
+    private fun updateSubmitButtonState() {
+        binding.signUpButton.isEnabled = isFormValid() && !authViewModel.uiState.value.isLoading
+    }
+
+    private fun clearFieldErrors() {
+        binding.loginEditText.error = null
+        binding.nameEditText.error = null
+        binding.passwordEditText.error = null
+        binding.passwordConfirmEditText.error = null
+        binding.avatarErrorTextView.isVisible = false
+        hideError()
     }
 
     private fun showError(message: String) {
-        val errorMessage = when {
-            message.contains("403") -> "Пользователь с таким логином уже зарегистрирован"
-            message.contains("415") -> "Неправильный формат изображения. Используйте JPG или PNG"
-            message.contains("network", ignoreCase = true) -> "Ошибка сети. Проверьте подключение к интернету"
-            else -> "Ошибка: $message"
+        with(binding) {
+            errorTextView.text = message
+            errorLayout.isVisible = true
+            retryButton.isVisible = message.contains("сети", ignoreCase = true)
+            if (message.contains("аватар", ignoreCase = true) ||
+                message.contains("изображен", ignoreCase = true)
+            ) {
+                avatarErrorTextView.text = message
+                avatarErrorTextView.isVisible = true
+            }
+            errorLayout.postDelayed({
+                hideError()
+            }, 5000)
         }
-        Snackbar.make(binding.root, errorMessage, Snackbar.LENGTH_LONG).show()
     }
 
-    override fun onDestroyView() {
-        super.onDestroyView()
-        avatarFile?.delete()
-        _binding = null
+    private fun showFormError(message: String) {
+        Snackbar.make(binding.root, message, Snackbar.LENGTH_LONG).show()
+    }
+
+    private fun hideError() {
+        binding.errorLayout.isVisible = false
+    }
+
+    private fun navigateToPosts() {
+        Snackbar.make(binding.root, "Регистрация успешна!", Snackbar.LENGTH_SHORT).show()
+        findNavController().navigate(R.id.postsFragment)
     }
 }

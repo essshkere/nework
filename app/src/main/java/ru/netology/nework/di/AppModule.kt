@@ -1,6 +1,7 @@
 package ru.netology.nework.di
 
 import android.content.Context
+import android.content.Intent
 import androidx.room.Room
 import dagger.Module
 import dagger.Provides
@@ -11,17 +12,19 @@ import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
+import ru.netology.nework.App
 import ru.netology.nework.api.*
 import ru.netology.nework.data.AppDatabase
 import ru.netology.nework.repository.*
 import javax.inject.Singleton
+import okhttp3.Interceptor
+import ru.netology.nework.viewmodel.AuthViewModel
+import kotlinx.coroutines.runBlocking
 
 @Module
 @InstallIn(SingletonComponent::class)
 object AppModule {
-
     private const val BASE_URL = "http://94.228.125.136:8080/"
-
     @Provides
     @Singleton
     fun provideOkHttpClient(authRepository: AuthRepository): OkHttpClient {
@@ -29,19 +32,41 @@ object AppModule {
             level = HttpLoggingInterceptor.Level.BODY
         }
 
-        return OkHttpClient.Builder()
-            .addInterceptor { chain ->
-                val originalRequest = chain.request()
-                val requestBuilder = originalRequest.newBuilder()
-                    .addHeader("Api-Key", "c1378193-bc0e-42c8-a502-b8d66d189617")
+        val authInterceptor = Interceptor { chain ->
+            val originalRequest = chain.request()
+            val requestBuilder = originalRequest.newBuilder()
+                .addHeader("Api-Key", "c1378193-bc0e-42c8-a502-b8d66d189617")
 
-                authRepository.getToken()?.let { token ->
-                    requestBuilder.addHeader("Authorization", "Bearer $token")
-                }
-
-                val request = requestBuilder.build()
-                chain.proceed(request)
+            authRepository.getToken()?.let { token ->
+                requestBuilder.addHeader("Authorization", "Bearer $token")
             }
+
+            val request = requestBuilder.build()
+            chain.proceed(request)
+        }
+
+        val tokenRefreshInterceptor = Interceptor { chain ->
+            val request = chain.request()
+            val response = chain.proceed(request)
+
+            if (response.code == 403) {
+                response.close()
+                runBlocking {
+                    authRepository.logout()
+                }
+                val newRequest = request.newBuilder()
+                    .removeHeader("Authorization")
+                    .build()
+
+                return@Interceptor chain.proceed(newRequest)
+            }
+
+            response
+        }
+
+        return OkHttpClient.Builder()
+            .addInterceptor(authInterceptor)
+            .addInterceptor(tokenRefreshInterceptor)
             .addInterceptor(loggingInterceptor)
             .build()
     }

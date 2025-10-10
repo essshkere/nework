@@ -4,8 +4,8 @@
 
     <item
         android:id="@+id/action_profile"
-        android:title="Мой профиль"
         android:icon="@drawable/ic_account_circle"
+        android:title="Мой профиль"
         app:showAsAction="ifRoom" />
 
     <item

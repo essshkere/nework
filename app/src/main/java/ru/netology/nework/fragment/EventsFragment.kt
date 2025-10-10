@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
@@ -45,7 +46,9 @@ class EventsFragment : Fragment() {
         setupRecyclerView()
         setupSwipeRefresh()
         setupFab()
+        setupEmptyState()
         observeEvents()
+        observeUiState()
         observeEventsState()
     }
 
@@ -74,25 +77,42 @@ class EventsFragment : Fragment() {
         eventAdapter.onAuthorClicked = { authorId ->
             navigateToUserProfile(authorId)
         }
-    }
-
-    private fun handleParticipation(event: ru.netology.nework.data.Event) {
-        if (authViewModel.isAuthenticated()) {
-            eventsViewModel.toggleParticipation(event)
-        } else {
-            showAuthenticationRequired()
+        eventAdapter.addLoadStateListener { loadState ->
+            val isEmpty = eventAdapter.itemCount == 0 &&
+                    loadState.source.refresh is androidx.paging.LoadState.NotLoading
+            binding.emptyStateLayout.isVisible = isEmpty && !eventsViewModel.uiState.value.isLoading
+            binding.eventsRecyclerView.isVisible = !isEmpty
         }
     }
 
     private fun setupSwipeRefresh() {
+        binding.swipeRefreshLayout.setColorSchemeResources(
+            R.color.design_default_color_primary,
+            R.color.design_default_color_primary_variant,
+            R.color.design_default_color_secondary
+        )
+
         binding.swipeRefreshLayout.setOnRefreshListener {
-            eventsViewModel.refresh()
-            binding.swipeRefreshLayout.isRefreshing = false
+            refreshData()
         }
+
+        // Показываем прогресс при первом запуске
+        binding.swipeRefreshLayout.isRefreshing = true
     }
 
     private fun setupFab() {
         binding.fab.setOnClickListener {
+            if (authViewModel.isAuthenticated()) {
+                navigateToCreateEvent()
+            } else {
+                showAuthenticationRequired()
+            }
+        }
+    }
+
+    private fun setupEmptyState() {
+        binding.emptyStateTextView.text = "Пока нет событий\nСоздайте первое мероприятие!"
+        binding.emptyStateButton.setOnClickListener {
             if (authViewModel.isAuthenticated()) {
                 navigateToCreateEvent()
             } else {
@@ -111,30 +131,83 @@ class EventsFragment : Fragment() {
         }
     }
 
+    private fun observeUiState() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                eventsViewModel.uiState.collect { uiState ->
+                    updateUi(uiState)
+                }
+            }
+        }
+    }
+
     private fun observeEventsState() {
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 eventsViewModel.eventsState.collect { state ->
                     when (state) {
-                        is EventsViewModel.EventsState.Loading -> {
-                            showLoading(true)
-                        }
                         is EventsViewModel.EventsState.Success -> {
-                            showLoading(false)
                             showSuccess(state.message)
                             eventsViewModel.clearState()
                         }
                         is EventsViewModel.EventsState.Error -> {
-                            showLoading(false)
                             showError(state.message)
                             eventsViewModel.clearState()
                         }
-                        EventsViewModel.EventsState.Idle -> {
-                            showLoading(false)
-                        }
+                        else -> {}
                     }
                 }
             }
+        }
+    }
+
+    private fun updateUi(uiState: EventsViewModel.EventsUiState) {
+        with(binding) {
+            progressBar.isVisible = uiState.isLoading && !uiState.isRefreshing
+            swipeRefreshLayout.isRefreshing = uiState.isRefreshing
+            eventsRecyclerView.isEnabled = !uiState.isLoading
+            fab.isEnabled = !uiState.isLoading
+            if (uiState.showError && uiState.error != null) {
+                showError(uiState.error)
+                eventsViewModel.clearError()
+            }
+            updateEmptyState(uiState)
+            updateOperationState(uiState.currentOperation)
+        }
+    }
+
+    private fun updateEmptyState(uiState: EventsViewModel.EventsUiState) {
+        val isEmpty = eventAdapter.itemCount == 0 && !uiState.isLoading && !uiState.isRefreshing
+        binding.emptyStateLayout.isVisible = isEmpty
+        binding.eventsRecyclerView.isVisible = !isEmpty || uiState.isLoading
+    }
+
+    private fun updateOperationState(operation: String?) {
+        operation?.let {
+            when (it) {
+                "like" -> showShortMessage("Ставим лайк...")
+                "dislike" -> showShortMessage("Убираем лайк...")
+                "participate" -> showShortMessage("Присоединяемся к событию...")
+                "unparticipate" -> showShortMessage("Отказываемся от участия...")
+                "create" -> showShortMessage("Создаем событие...")
+                "edit" -> showShortMessage("Редактируем событие...")
+                "delete" -> showShortMessage("Удаляем событие...")
+            }
+        }
+    }
+
+    private fun refreshData() {
+        eventsViewModel.refresh()
+        binding.swipeRefreshLayout.postDelayed({
+            binding.swipeRefreshLayout.isRefreshing = false
+        }, 3000)
+    }
+
+    private fun handleParticipation(event: ru.netology.nework.data.Event) {
+        if (authViewModel.isAuthenticated()) {
+            eventsViewModel.toggleParticipation(event)
+        } else {
+            showAuthenticationRequired()
         }
     }
 
@@ -164,16 +237,29 @@ class EventsFragment : Fragment() {
             .show()
     }
 
-    private fun showLoading(isLoading: Boolean) {
-        binding.progressBar.visibility = if (isLoading) View.VISIBLE else View.GONE
-    }
-
     private fun showSuccess(message: String) {
         Snackbar.make(binding.root, message, Snackbar.LENGTH_SHORT).show()
     }
 
     private fun showError(message: String) {
-        Snackbar.make(binding.root, message, Snackbar.LENGTH_LONG).show()
+        Snackbar.make(binding.root, message, Snackbar.LENGTH_LONG)
+            .setAction("Повторить") {
+                refreshData()
+            }
+            .show()
+
+        binding.swipeRefreshLayout.isRefreshing = false
+    }
+
+    private fun showShortMessage(message: String) {
+        Snackbar.make(binding.root, message, Snackbar.LENGTH_SHORT).show()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        if (eventAdapter.itemCount == 0) {
+            refreshData()
+        }
     }
 
     override fun onDestroyView() {

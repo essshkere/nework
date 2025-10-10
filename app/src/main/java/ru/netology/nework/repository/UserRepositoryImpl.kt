@@ -19,6 +19,8 @@ class UserRepositoryImpl @Inject constructor(
     private val userDao: UserDao
 ) : UserRepository {
 
+    private val userCache = mutableMapOf<Long, User>()
+
     override fun getUsers(): Flow<List<User>> {
         return userDao.getAll().map { users ->
             users.map { it.toModel() }
@@ -26,8 +28,10 @@ class UserRepositoryImpl @Inject constructor(
     }
 
     override suspend fun getUserById(id: Long): User? {
+        userCache[id]?.let { return it }
         val cachedUser = userDao.getById(id)?.toModel()
         if (cachedUser != null) {
+            userCache[id] = cachedUser
             return cachedUser
         }
 
@@ -36,6 +40,7 @@ class UserRepositoryImpl @Inject constructor(
             if (response.isSuccessful) {
                 response.body()?.let { userDto ->
                     val user = userDto.toEntity().toModel()
+                    userCache[id] = user
                     userDao.insert(userDto.toEntity())
                     user
                 }
@@ -43,6 +48,7 @@ class UserRepositoryImpl @Inject constructor(
                 null
             }
         } catch (e: Exception) {
+            e.printStackTrace()
             null
         }
     }
@@ -56,6 +62,7 @@ class UserRepositoryImpl @Inject constructor(
                 emptyList()
             }
         } catch (e: Exception) {
+            e.printStackTrace()
             emptyList()
         }
     }
@@ -69,6 +76,7 @@ class UserRepositoryImpl @Inject constructor(
                 emptyList()
             }
         } catch (e: Exception) {
+            e.printStackTrace()
             emptyList()
         }
     }
@@ -82,11 +90,23 @@ class UserRepositoryImpl @Inject constructor(
                 emptyList()
             }
         } catch (e: Exception) {
+            e.printStackTrace()
             emptyList()
         }
     }
 
     override suspend fun saveUser(user: User) {
         userDao.insert(user.toDto().toEntity())
+        userCache[user.id] = user
+    }
+
+    fun clearCache() {
+        userCache.clear()
+    }
+
+    fun preloadUsers(users: List<User>) {
+        users.forEach { user ->
+            userCache[user.id] = user
+        }
     }
 }
