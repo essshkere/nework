@@ -24,3 +24,8 @@ data class CoordinatesDto(
     @SerializedName("lat") val lat: String,
     @SerializedName("long") val long: String
 )
+
+data class UserPreviewDto(
+    @SerializedName("name") val name: String,
+    @SerializedName("avatar") val avatar: String?
+)

@@ -34,7 +34,6 @@ interface EventApi {
 
     @GET("api/events/{id}/newer")
     suspend fun getNewer(@Path("id") id: Long): Response<List<EventDto>>
-
     @GET("api/events/{id}/before")
     suspend fun getBefore(
         @Path("id") id: Long,

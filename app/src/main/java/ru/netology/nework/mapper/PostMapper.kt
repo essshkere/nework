@@ -24,7 +24,8 @@ fun PostDto.toEntity(): PostEntity = PostEntity(
     likedByMe = likedByMe,
     attachmentUrl = attachment?.url,
     attachmentType = attachment?.type?.name,
-    mentionIds = gson.toJson(mentionIds)
+    mentionIds = gson.toJson(mentionIds),
+    users = gson.toJson(users)
 )
 
 fun PostEntity.toModel(): Post = Post(
@@ -57,7 +58,12 @@ fun PostEntity.toModel(): Post = Post(
     } catch (e: Exception) {
         emptyList()
     },
-    mentionedMe = false
+    mentionedMe = false,
+    users = try {
+        gson.fromJson(users, Map::class.java) as? Map<Long, Post.UserPreview> ?: emptyMap()
+    } catch (e: Exception) {
+        emptyMap()
+    }
 )
 
 fun Post.toDto(): PostDto = PostDto(
@@ -84,5 +90,10 @@ fun Post.toDto(): PostDto = PostDto(
             }
         )
     },
-    users = emptyMap()
+    users = users.mapValues { (_, userPreview) ->
+        ru.netology.nework.dto.UserPreviewDto(
+            name = userPreview.name,
+            avatar = userPreview.avatar
+        )
+    }
 )

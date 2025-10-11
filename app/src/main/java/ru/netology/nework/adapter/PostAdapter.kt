@@ -17,6 +17,7 @@ class PostAdapter : ListAdapter<Post, PostAdapter.ViewHolder>(DiffCallback) {
     var onPostClicked: ((Long) -> Unit)? = null
     var onLikeClicked: ((Long) -> Unit)? = null
     var onMentionClicked: ((Long) -> Unit)? = null
+    var onAuthorClicked: ((Long) -> Unit)? = null
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         val binding = ItemPostBinding.inflate(LayoutInflater.from(parent.context), parent, false)
@@ -79,7 +80,12 @@ class PostAdapter : ListAdapter<Post, PostAdapter.ViewHolder>(DiffCallback) {
                 val mentionIds = post.mentionIds
                 if (mentionIds.isNotEmpty()) {
                     mentionedUsersTextView.visibility = android.view.View.VISIBLE
-                    mentionedUsersTextView.text = "Упомянуто: ${mentionIds.size} пользователей"
+                    val mentionedUsersText = if (mentionIds.size == 1) {
+                        "Упомянут 1 пользователь"
+                    } else {
+                        "Упомянуто ${mentionIds.size} пользователей"
+                    }
+                    mentionedUsersTextView.text = mentionedUsersText
                 } else {
                     mentionedUsersTextView.visibility = android.view.View.GONE
                 }
@@ -103,6 +109,10 @@ class PostAdapter : ListAdapter<Post, PostAdapter.ViewHolder>(DiffCallback) {
                     if (mentionIds.isNotEmpty()) {
                         onMentionClicked?.invoke(mentionIds.first())
                     }
+                }
+
+                authorAvatarImageView.setOnClickListener {
+                    onAuthorClicked?.invoke(post.authorId)
                 }
 
                 menuButton.visibility = android.view.View.GONE

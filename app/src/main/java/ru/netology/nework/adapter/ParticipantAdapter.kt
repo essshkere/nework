@@ -1,6 +1,7 @@
 package ru.netology.nework.adapter
 
 import android.view.LayoutInflater
+import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
@@ -10,9 +11,10 @@ import ru.netology.nework.databinding.ItemParticipantBinding
 import ru.netology.nework.data.User
 
 class ParticipantAdapter : ListAdapter<User, ParticipantAdapter.ViewHolder>(DiffCallback) {
+
     var onUserClicked: ((Long) -> Unit)? = null
     var onSelectionChanged: ((Int) -> Unit)? = null
-    var showCheckbox: Boolean = true
+    var showCheckbox: Boolean = false
     private val selectedUserIds = mutableSetOf<Long>()
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
@@ -31,6 +33,7 @@ class ParticipantAdapter : ListAdapter<User, ParticipantAdapter.ViewHolder>(Diff
             binding.apply {
                 userNameTextView.text = user.name
                 userLoginTextView.text = "@${user.login}"
+
                 user.avatar?.let { avatarUrl ->
                     Glide.with(avatarImageView)
                         .load(avatarUrl)
@@ -44,6 +47,7 @@ class ParticipantAdapter : ListAdapter<User, ParticipantAdapter.ViewHolder>(Diff
                 if (showCheckbox) {
                     checkbox.visibility = View.VISIBLE
                     checkbox.isChecked = selectedUserIds.contains(user.id)
+
                     checkbox.setOnCheckedChangeListener { _, isChecked ->
                         if (isChecked) {
                             selectedUserIds.add(user.id)
@@ -52,21 +56,15 @@ class ParticipantAdapter : ListAdapter<User, ParticipantAdapter.ViewHolder>(Diff
                         }
                         onSelectionChanged?.invoke(selectedUserIds.size)
                     }
+
                     root.setOnClickListener {
                         checkbox.isChecked = !checkbox.isChecked
                     }
                 } else {
                     checkbox.visibility = View.GONE
-
                     root.setOnClickListener {
-                        selectedUserIds.clear()
-                        selectedUserIds.add(user.id)
-                        onSelectionChanged?.invoke(1)
                         onUserClicked?.invoke(user.id)
                     }
-
-
-                    root.isSelected = selectedUserIds.contains(user.id)
                 }
             }
         }
@@ -85,6 +83,7 @@ class ParticipantAdapter : ListAdapter<User, ParticipantAdapter.ViewHolder>(Diff
     fun setInitiallySelectedUsers(userIds: Set<Long>) {
         selectedUserIds.clear()
         selectedUserIds.addAll(userIds)
+        notifyDataSetChanged()
     }
 
     fun clearSelection() {

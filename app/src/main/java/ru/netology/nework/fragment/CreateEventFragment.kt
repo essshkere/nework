@@ -1,5 +1,7 @@
 package ru.netology.nework.fragment
 
+import android.app.DatePickerDialog
+import android.app.TimePickerDialog
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
@@ -26,6 +28,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import ru.netology.nework.R
 import ru.netology.nework.data.Event
+import ru.netology.nework.data.User
 import ru.netology.nework.databinding.FragmentCreateEventBinding
 import ru.netology.nework.viewmodel.EventsViewModel
 import java.text.SimpleDateFormat
@@ -71,28 +74,6 @@ class CreateEventFragment : Fragment(), MenuProvider {
         if (result.resultCode == android.app.Activity.RESULT_OK) {
             result.data?.data?.let { uri ->
                 handleMediaSelection(uri, Event.AttachmentType.AUDIO)
-            }
-        }
-    }
-
-    private val dateTimePickerLauncher = registerForActivityResult(
-        ActivityResultContracts.StartActivityForResult()
-    ) { result ->
-        if (result.resultCode == android.app.Activity.RESULT_OK) {
-            result.data?.getSerializableExtra("selectedDateTime")?.let { date ->
-                eventDateTime = date as Date
-                updateSelectedDateTimeText()
-            }
-        }
-    }
-
-    private val speakersPickerLauncher = registerForActivityResult(
-        ActivityResultContracts.StartActivityForResult()
-    ) { result ->
-        if (result.resultCode == android.app.Activity.RESULT_OK) {
-            result.data?.getLongArrayExtra("selectedUserIds")?.let { ids ->
-                speakerIds = ids.toList()
-                updateSelectedSpeakersText()
             }
         }
     }
@@ -149,7 +130,7 @@ class CreateEventFragment : Fragment(), MenuProvider {
 
     private fun setupClickListeners() {
         binding.selectDateTimeButton.setOnClickListener {
-            openDateTimePicker()
+            showDateTimePicker()
         }
 
         binding.selectLocationButton.setOnClickListener {
@@ -203,6 +184,7 @@ class CreateEventFragment : Fragment(), MenuProvider {
     private fun observeEventCreation() {
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                // Можно добавить наблюдение за состоянием создания события
             }
         }
     }
@@ -319,25 +301,86 @@ class CreateEventFragment : Fragment(), MenuProvider {
         pickAudioLauncher.launch(intent)
     }
 
-    private fun openDateTimePicker() {
-        Snackbar.make(binding.root, "Выбор даты и времени будет реализован в следующем обновлении", Snackbar.LENGTH_SHORT).show()
-
+    private fun showDateTimePicker() {
         val calendar = Calendar.getInstance()
-        calendar.add(Calendar.DAY_OF_YEAR, 1)
-        calendar.set(Calendar.HOUR_OF_DAY, 18)
-        calendar.set(Calendar.MINUTE, 0)
-        eventDateTime = calendar.time
-        updateSelectedDateTimeText()
+        val currentDate = eventDateTime ?: calendar.time
+
+        val datePicker = DatePickerDialog(
+            requireContext(),
+            { _, year, month, day ->
+                val timePicker = TimePickerDialog(
+                    requireContext(),
+                    { _, hour, minute ->
+                        val selectedCalendar = Calendar.getInstance().apply {
+                            set(year, month, day, hour, minute, 0)
+                        }
+                        eventDateTime = selectedCalendar.time
+                        updateSelectedDateTimeText()
+                    },
+                    calendar.get(Calendar.HOUR_OF_DAY),
+                    calendar.get(Calendar.MINUTE),
+                    true
+                )
+                timePicker.show()
+            },
+            calendar.get(Calendar.YEAR),
+            calendar.get(Calendar.MONTH),
+            calendar.get(Calendar.DAY_OF_MONTH)
+        )
+        datePicker.datePicker.minDate = System.currentTimeMillis() - 1000
+        datePicker.show()
     }
 
     private fun openSpeakersPicker() {
+        val dialog = SelectUsersDialog.newInstance(
+            initiallySelectedUserIds = speakerIds.toSet(),
+            multiSelect = true
+        )
 
-        Snackbar.make(binding.root, "Выбор спикеров будет реализован в следующем обновлении", Snackbar.LENGTH_SHORT).show()
+        dialog.onUsersSelected = { selectedUsers ->
+            handleSpeakersSelection(selectedUsers)
+        }
 
-        speakerIds = listOf(1L, 2L)
-        updateSelectedSpeakersText()
+        dialog.show(parentFragmentManager, SelectUsersDialog.TAG)
     }
 
+    private fun handleSpeakersSelection(selectedUsers: List<User>) {
+        speakerIds = selectedUsers.map { it.id }
+        updateSelectedSpeakersText(selectedUsers)
+    }
+
+    private fun updateSelectedSpeakersText(selectedUsers: List<User>) {
+        if (selectedUsers.isNotEmpty()) {
+            binding.selectedSpeakersText.visibility = View.VISIBLE
+
+            val speakersText = when (selectedUsers.size) {
+                1 -> "🎤 Спикер: ${selectedUsers.first().name}"
+                2, 3, 4 -> "🎤 Спикеры: ${selectedUsers.joinToString { it.name }}"
+                else -> "🎤 Спикеров: ${selectedUsers.size}"
+            }
+
+            binding.selectedSpeakersText.text = speakersText
+
+            binding.selectedSpeakersText.setOnClickListener {
+                showSelectedSpeakersPreview(selectedUsers)
+            }
+        } else {
+            binding.selectedSpeakersText.visibility = View.GONE
+        }
+    }
+
+    private fun showSelectedSpeakersPreview(selectedUsers: List<User>) {
+        val speakerNames = selectedUsers.joinToString("\n") { "• ${it.name} (@${it.login})" }
+
+        androidx.appcompat.app.AlertDialog.Builder(requireContext())
+            .setTitle("Спикеры события")
+            .setMessage(speakerNames)
+            .setPositiveButton("Изменить") { _, _ ->
+                openSpeakersPicker()
+            }
+            .setNegativeButton("ОК", null)
+            .show()
+    }
 
     private fun updateSelectedDateTimeText() {
         eventDateTime?.let { dateTime ->
@@ -348,17 +391,6 @@ class CreateEventFragment : Fragment(), MenuProvider {
             binding.selectedDateTimeText.visibility = View.GONE
         }
     }
-
-
-    private fun updateSelectedSpeakersText() {
-        if (speakerIds.isNotEmpty()) {
-            binding.selectedSpeakersText.visibility = View.VISIBLE
-            binding.selectedSpeakersText.text = "🎤 Спикеров: ${speakerIds.size}"
-        } else {
-            binding.selectedSpeakersText.visibility = View.GONE
-        }
-    }
-
 
     private fun validateContent(content: String): Boolean {
         return if (content.isBlank()) {
@@ -373,7 +405,6 @@ class CreateEventFragment : Fragment(), MenuProvider {
         }
     }
 
-
     private fun validateDateTime(): Boolean {
         return if (eventDateTime == null) {
             Snackbar.make(binding.root, "Выберите дату и время события", Snackbar.LENGTH_SHORT).show()
@@ -385,30 +416,6 @@ class CreateEventFragment : Fragment(), MenuProvider {
             true
         }
     }
-
-    private fun showAttachmentPreview(uri: Uri) {
-        binding.attachmentPreview.visibility = View.VISIBLE
-        Glide.with(this)
-            .load(uri)
-            .centerCrop()
-            .into(binding.attachmentPreview)
-    }
-
-    private fun showAudioAttachment() {
-        binding.attachmentPreview.visibility = View.VISIBLE
-        binding.attachmentPreview.setImageResource(R.drawable.ic_audio)
-    }
-
-    private fun showDateTimePicker() {
-        val calendar = Calendar.getInstance()
-        calendar.add(Calendar.DAY_OF_YEAR, 1)
-
-        eventDateTime = calendar.time
-        updateSelectedDateTimeText()
-
-        Snackbar.make(binding.root, "Выбор даты и времени будет реализован позже", Snackbar.LENGTH_SHORT).show()
-    }
-
 
     private fun createEvent() {
         val content = binding.contentEditText.text.toString().trim()
@@ -507,14 +514,6 @@ class CreateEventFragment : Fragment(), MenuProvider {
         Snackbar.make(binding.root, "Локация удалена", Snackbar.LENGTH_SHORT).show()
     }
 
-    private fun validateLocation(): Boolean {
-        return if (eventType == Event.EventType.OFFLINE && coordinates == null) {
-            Snackbar.make(binding.root, "Для офлайн событий необходимо указать локацию", Snackbar.LENGTH_SHORT).show()
-            false
-        } else {
-            true
-        }
-    }
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null

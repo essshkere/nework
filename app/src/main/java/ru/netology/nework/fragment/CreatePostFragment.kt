@@ -159,10 +159,10 @@ class CreatePostFragment : Fragment(), MenuProvider {
     private fun observePostCreation() {
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                // Можно добавить наблюдение за состоянием создания поста
             }
         }
     }
-
 
     private fun openUsersPicker() {
         val dialog = SelectUsersDialog.newInstance(
@@ -360,7 +360,7 @@ class CreatePostFragment : Fragment(), MenuProvider {
             content = content,
             published = currentDate,
             coords = coordinates,
-            mentionIds = mentionedUserIds, // ИСПОЛЬЗУЕМ ВЫБРАННЫХ ПОЛЬЗОВАТЕЛЕЙ
+            mentionIds = mentionedUserIds,
             attachment = attachmentUri?.let { uri ->
                 Post.Attachment(
                     url = uri.toString(),
@@ -409,10 +409,6 @@ class CreatePostFragment : Fragment(), MenuProvider {
         _binding = null
     }
 
-
-    /**
-     * Launcher для выбора локации
-     */
     private val locationPickerLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
     ) { result ->
@@ -432,7 +428,6 @@ class CreatePostFragment : Fragment(), MenuProvider {
         Snackbar.make(binding.root, "Локация выбрана", Snackbar.LENGTH_SHORT).show()
     }
 
-
     private fun openLocationPicker() {
         val currentCoords = coordinates?.let {
             MapFragment.newInstance(it.lat, it.long)
@@ -441,14 +436,12 @@ class CreatePostFragment : Fragment(), MenuProvider {
         currentCoords.show(parentFragmentManager, MapFragment.TAG)
     }
 
-
     private fun updateSelectedLocationText() {
         coordinates?.let { coords ->
             binding.selectedLocationText.visibility = View.VISIBLE
             binding.selectedLocationText.text =
                 "📍 Координаты: ${String.format("%.6f", coords.lat)}, ${String.format("%.6f", coords.long)}"
 
-            // Добавляем возможность удаления локации
             binding.selectedLocationText.setOnClickListener {
                 showLocationOptions()
             }

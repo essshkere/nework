@@ -12,4 +12,5 @@ interface UserRepository {
     suspend fun getUserWall(userId: Long): List<Post>
     suspend fun getMyWall(): List<Post>
     suspend fun saveUser(user: User)
+
 }

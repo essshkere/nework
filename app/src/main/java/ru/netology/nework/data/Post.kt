@@ -14,7 +14,8 @@ data class Post(
     val likedByMe: Boolean = false,
     val attachment: Attachment? = null,
     val mentionIds: List<Long> = emptyList(),
-    val mentionedMe: Boolean = false
+    val mentionedMe: Boolean = false,
+    val users: Map<Long, UserPreview> = emptyMap()
 ) {
     data class Coordinates(
         val lat: Double,
@@ -24,6 +25,11 @@ data class Post(
     data class Attachment(
         val url: String,
         val type: AttachmentType
+    )
+
+    data class UserPreview(
+        val name: String,
+        val avatar: String?
     )
 
     enum class AttachmentType {

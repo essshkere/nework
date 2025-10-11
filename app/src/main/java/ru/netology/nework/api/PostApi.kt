@@ -28,7 +28,6 @@ interface PostApi {
 
     @GET("api/posts/{id}/newer")
     suspend fun getNewer(@Path("id") id: Long): Response<List<PostDto>>
-
     @GET("api/posts/{id}/before")
     suspend fun getBefore(
         @Path("id") id: Long,

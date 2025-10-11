@@ -12,4 +12,6 @@ interface PostRepository {
     suspend fun removeById(id: Long)
     suspend fun save(post: Post)
     suspend fun getById(id: Long): Post?
+    suspend fun getUserWall(userId: Long): List<Post>
+    suspend fun getMyWall(): List<Post>
 }

@@ -17,7 +17,8 @@ data class Event(
     val participantsIds: List<Long> = emptyList(),
     val participatedByMe: Boolean = false,
     val attachment: Attachment? = null,
-    val link: String? = null
+    val link: String? = null,
+    val users: Map<Long, UserPreview> = emptyMap()
 ) {
     data class Coordinates(
         val lat: Double,
@@ -27,6 +28,11 @@ data class Event(
     data class Attachment(
         val url: String,
         val type: AttachmentType
+    )
+
+    data class UserPreview(
+        val name: String,
+        val avatar: String?
     )
 
     enum class AttachmentType {

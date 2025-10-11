@@ -19,6 +19,7 @@ class EventAdapter : ListAdapter<Event, EventAdapter.ViewHolder>(DiffCallback) {
     var onParticipateClicked: ((Event) -> Unit)? = null
     var onSpeakerClicked: ((Long) -> Unit)? = null
     var onAuthorClicked: ((Long) -> Unit)? = null
+    var onParticipantClicked: ((Long) -> Unit)? = null
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         val binding = ItemEventBinding.inflate(LayoutInflater.from(parent.context), parent, false)
@@ -130,18 +131,28 @@ class EventAdapter : ListAdapter<Event, EventAdapter.ViewHolder>(DiffCallback) {
                     onAuthorClicked?.invoke(event.authorId)
                 }
 
-                // Клик по спикерам (если есть)
                 if (event.speakerIds.isNotEmpty()) {
                     speakersTextView.visibility = android.view.View.VISIBLE
                     speakersTextView.text = "🎤 Спикеров: ${event.speakerIds.size}"
                     speakersTextView.setOnClickListener {
-                        // Переход к первому спикеру (можно реализовать список)
                         event.speakerIds.firstOrNull()?.let { speakerId ->
                             onSpeakerClicked?.invoke(speakerId)
                         }
                     }
                 } else {
                     speakersTextView.visibility = android.view.View.GONE
+                }
+
+                if (event.participantsIds.isNotEmpty()) {
+                    participantsTextView.visibility = android.view.View.VISIBLE
+                    participantsTextView.text = "👥 Участников: ${event.participantsIds.size}"
+                    participantsTextView.setOnClickListener {
+                        event.participantsIds.firstOrNull()?.let { participantId ->
+                            onParticipantClicked?.invoke(participantId)
+                        }
+                    }
+                } else {
+                    participantsTextView.visibility = android.view.View.GONE
                 }
             }
         }

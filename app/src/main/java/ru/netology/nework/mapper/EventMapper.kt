@@ -29,7 +29,8 @@ fun EventDto.toEntity(): EventEntity = EventEntity(
     participatedByMe = participatedByMe,
     attachmentUrl = attachment?.url,
     attachmentType = attachment?.type?.name,
-    link = link
+    link = link,
+    users = gson.toJson(users)
 )
 
 fun EventEntity.toModel(): Event = Event(
@@ -63,7 +64,12 @@ fun EventEntity.toModel(): Event = Event(
             type = Event.AttachmentType.valueOf(attachmentType ?: "IMAGE")
         )
     },
-    link = link
+    link = link,
+    users = try {
+        gson.fromJson(users, Map::class.java) as? Map<Long, Event.UserPreview> ?: emptyMap()
+    } catch (e: Exception) {
+        emptyMap()
+    }
 )
 
 fun Event.toDto(): EventDto = EventDto(
@@ -86,5 +92,10 @@ fun Event.toDto(): EventDto = EventDto(
         AttachmentDto(it.url, AttachmentTypeDto.valueOf(it.type.name))
     },
     link = link,
-    users = emptyMap()
+    users = users.mapValues { (_, userPreview) ->
+        ru.netology.nework.dto.UserPreviewDto(
+            name = userPreview.name,
+            avatar = userPreview.avatar
+        )
+    }
 )

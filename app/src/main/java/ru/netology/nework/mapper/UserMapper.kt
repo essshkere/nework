@@ -35,7 +35,6 @@ fun JobDto.toModel(): Job = Job(
     finish = finish,
     link = link
 )
-
 fun Job.toDto(): JobDto = JobDto(
     id = id,
     name = name,

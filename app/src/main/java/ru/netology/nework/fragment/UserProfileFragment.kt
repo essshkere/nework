@@ -173,6 +173,7 @@ class UserWallFragment : Fragment() {
         setupRecyclerView()
         observeUserWall()
         binding.fab.visibility = View.GONE
+        binding.swipeRefreshLayout.isEnabled = false
     }
 
     private fun setupRecyclerView() {
@@ -185,6 +186,12 @@ class UserWallFragment : Fragment() {
             }
             onLikeClicked = { postId ->
                 postsViewModel.likeById(postId)
+            }
+            onAuthorClicked = { authorId ->
+                val bundle = Bundle().apply {
+                    putLong("userId", authorId)
+                }
+                findNavController().navigate(R.id.userProfileFragment, bundle)
             }
         }
 
@@ -199,6 +206,7 @@ class UserWallFragment : Fragment() {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 usersViewModel.getUserWall(userId).let { posts ->
                     postAdapter.submitList(posts)
+                    binding.emptyStateLayout.visibility = if (posts.isEmpty()) View.VISIBLE else View.GONE
                 }
             }
         }
@@ -268,6 +276,12 @@ class UserJobsFragment : Fragment() {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 usersViewModel.getJobs(userId).let { jobs ->
                     jobAdapter.submitList(jobs)
+                    if (jobs.isEmpty()) {
+                        binding.root.findViewById<android.widget.TextView>(R.id.emptyStateTextView)?.text = "Работы не добавлены"
+                        binding.root.findViewById<android.widget.LinearLayout>(R.id.emptyStateLayout)?.visibility = View.VISIBLE
+                    } else {
+                        binding.root.findViewById<android.widget.LinearLayout>(R.id.emptyStateLayout)?.visibility = View.GONE
+                    }
                 }
             }
         }

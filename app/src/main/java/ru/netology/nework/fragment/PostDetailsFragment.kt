@@ -176,6 +176,13 @@ class PostDetailsFragment : Fragment() {
             }
             participantAdapter.submitList(mentionedUsers)
             binding.mentionedUsersCardView.visibility = if (mentionedUsers.isNotEmpty()) View.VISIBLE else View.GONE
+
+            if (mentionedUsers.isNotEmpty()) {
+                binding.mentionedUsersTitle.text = when (mentionedUsers.size) {
+                    1 -> "Упомянут 1 пользователь"
+                    else -> "Упомянуто ${mentionedUsers.size} пользователей"
+                }
+            }
         }
     }
 

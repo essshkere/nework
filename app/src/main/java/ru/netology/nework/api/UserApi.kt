@@ -8,7 +8,6 @@ import ru.netology.nework.dto.PostDto
 import ru.netology.nework.dto.UserDto
 
 interface UserApi {
-
     @GET("api/users")
     suspend fun getAll(): Response<List<UserDto>>
 
@@ -20,7 +19,6 @@ interface UserApi {
 
     @GET("api/{authorId}/wall")
     suspend fun getWall(@Path("authorId") authorId: Long): Response<List<PostDto>>
-
     @GET("api/my/wall")
     suspend fun getMyWall(): Response<List<PostDto>>
 }

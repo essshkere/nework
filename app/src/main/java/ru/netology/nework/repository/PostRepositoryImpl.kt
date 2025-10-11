@@ -1,6 +1,5 @@
 package ru.netology.nework.repository
 
-import android.net.Uri
 import androidx.paging.ExperimentalPagingApi
 import androidx.paging.map
 import kotlinx.coroutines.Dispatchers
@@ -11,6 +10,7 @@ import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.asRequestBody
 import ru.netology.nework.api.MediaApi
 import ru.netology.nework.api.PostApi
+import ru.netology.nework.api.UserApi
 import ru.netology.nework.dao.PostDao
 import ru.netology.nework.data.Post
 import ru.netology.nework.mapper.toEntity
@@ -24,71 +24,13 @@ import javax.inject.Singleton
 @Singleton
 class PostRepositoryImpl @Inject constructor(
     private val postApi: PostApi,
+    private val userApi: UserApi,
     private val postDao: PostDao,
     private val mediaApi: MediaApi
 ) : PostRepository {
 
     override fun getPagingData() = postDao.pagingSource()
         .map { it.toModel() }
-
-    private fun createTempFileFromUri(uri: Uri): File {
-        val context = ru.netology.nework.App.applicationContext()
-        val file = File.createTempFile("media_upload", ".tmp", context.cacheDir)
-        file.deleteOnExit()
-
-        context.contentResolver.openInputStream(uri)?.use { inputStream ->
-            FileOutputStream(file).use { outputStream ->
-                inputStream.copyTo(outputStream)
-            }
-        } ?: throw Exception("Не удалось открыть файл")
-
-        return file
-    }
-
-    private suspend fun uploadMediaFile(
-        fileUri: Uri,
-        attachmentType: Post.AttachmentType
-    ): Post.Attachment = withContext(Dispatchers.IO) {
-        try {
-
-            val file = createTempFileFromUri(fileUri)
-
-            if (file.length() > 15 * 1024 * 1024) {
-                throw Exception("Размер файла превышает 15 МБ")
-            }
-
-            val mimeType = when (attachmentType) {
-                Post.AttachmentType.IMAGE -> "image/*"
-                Post.AttachmentType.VIDEO -> "video/*"
-                Post.AttachmentType.AUDIO -> "audio/*"
-            }
-
-            val requestFile = file.asRequestBody(mimeType.toMediaTypeOrNull())
-            val filePart = MultipartBody.Part.createFormData("file", file.name, requestFile)
-
-            val response = mediaApi.uploadMedia(filePart)
-            if (!response.isSuccessful) {
-                throw when (response.code()) {
-                    403 -> Exception("Нужно авторизоваться для загрузки медиа")
-                    415 -> Exception("Неподдерживаемый формат файла")
-                    else -> Exception("Ошибка загрузки медиа: ${response.code()}")
-                }
-            }
-
-            val mediaDto = response.body() ?: throw Exception("Пустой ответ при загрузке медиа")
-
-            file.delete()
-
-            return@withContext Post.Attachment(mediaDto.url, attachmentType)
-        } catch (e: Exception) {
-            throw when {
-                e.message?.contains("network", ignoreCase = true) == true ->
-                    Exception("Ошибка сети при загрузке медиа")
-                else -> Exception("Ошибка загрузки файла: ${e.message}")
-            }
-        }
-    }
-
 
     override suspend fun getAll() {
         try {
@@ -161,7 +103,7 @@ class PostRepositoryImpl @Inject constructor(
         try {
             val uploadedAttachment = post.attachment?.let { attachment ->
                 if (attachment.url.startsWith("content://") || attachment.url.startsWith("file://")) {
-                    uploadMediaFile(Uri.parse(attachment.url), attachment.type)
+                    uploadMediaFile(android.net.Uri.parse(attachment.url), attachment.type)
                 } else {
                     attachment
                 }
@@ -210,5 +152,124 @@ class PostRepositoryImpl @Inject constructor(
         } catch (e: Exception) {
             null
         }
+    }
+
+    override suspend fun getUserWall(userId: Long): List<Post> {
+        return try {
+            val response = userApi.getWall(userId)
+            if (response.isSuccessful) {
+                response.body()?.map { it.toEntity().toModel() } ?: emptyList()
+            } else {
+                emptyList()
+            }
+        } catch (e: Exception) {
+            emptyList()
+        }
+    }
+
+    override suspend fun getMyWall(): List<Post> {
+        return try {
+            val response = userApi.getMyWall()
+            if (response.isSuccessful) {
+                response.body()?.map { it.toEntity().toModel() } ?: emptyList()
+            } else {
+                emptyList()
+            }
+        } catch (e: Exception) {
+            emptyList()
+        }
+    }
+
+    private suspend fun uploadMediaFile(
+        fileUri: android.net.Uri,
+        attachmentType: Post.AttachmentType
+    ): Post.Attachment = withContext(Dispatchers.IO) {
+        try {
+            val file = createTempFileFromUri(fileUri)
+            if (file.length() > 15 * 1024 * 1024) {
+                throw Exception("Размер файла превышает 15 МБ")
+            }
+
+            val mimeType = when (attachmentType) {
+                Post.AttachmentType.IMAGE -> "image/*"
+                Post.AttachmentType.VIDEO -> "video/*"
+                Post.AttachmentType.AUDIO -> "audio/*"
+            }
+
+            val requestFile = file.asRequestBody(mimeType.toMediaTypeOrNull())
+            val filePart = MultipartBody.Part.createFormData("file", file.name, requestFile)
+
+            val response = mediaApi.uploadMedia(filePart)
+            if (!response.isSuccessful) {
+                throw when (response.code()) {
+                    403 -> Exception("Нужно авторизоваться для загрузки медиа")
+                    415 -> Exception("Неподдерживаемый формат файла")
+                    else -> Exception("Ошибка загрузки медиа: ${response.code()}")
+                }
+            }
+
+            val mediaDto = response.body() ?: throw Exception("Пустой ответ при загрузке медиа")
+            file.delete()
+            return@withContext Post.Attachment(mediaDto.url, attachmentType)
+        } catch (e: Exception) {
+            throw when {
+                e.message?.contains("network", ignoreCase = true) == true ->
+                    Exception("Ошибка сети при загрузке медиа")
+                else -> Exception("Ошибка загрузки файла: ${e.message}")
+            }
+        }
+    }
+
+    private fun createTempFileFromUri(uri: android.net.Uri): File {
+        val context = ru.netology.nework.App.applicationContext()
+        val file = File.createTempFile("media_upload", ".tmp", context.cacheDir)
+        file.deleteOnExit()
+
+        context.contentResolver.openInputStream(uri)?.use { inputStream ->
+            FileOutputStream(file).use { outputStream ->
+                inputStream.copyTo(outputStream)
+            }
+        } ?: throw Exception("Не удалось открыть файл")
+
+        return file
+    }
+
+    private fun createPostDto(post: Post, uploadedAttachment: Post.Attachment?): ru.netology.nework.dto.PostDto {
+        return ru.netology.nework.dto.PostDto(
+            id = post.id,
+            authorId = post.authorId,
+            author = post.author,
+            authorAvatar = post.authorAvatar,
+            authorJob = post.authorJob,
+            content = post.content,
+            published = post.published,
+            coords = post.coords?.let { coords ->
+                ru.netology.nework.dto.CoordinatesDto(
+                    lat = coords.lat.toString(),
+                    long = coords.long.toString()
+                )
+            },
+            link = post.link,
+            mentionIds = post.mentionIds,
+            mentionedMe = post.mentionedMe,
+            likeOwnerIds = post.likeOwnerIds,
+            likedByMe = post.likedByMe,
+            attachment = uploadedAttachment?.let { attachment ->
+                ru.netology.nework.dto.AttachmentDto(
+                    url = attachment.url,
+                    type = when (attachment.type) {
+                        Post.AttachmentType.IMAGE -> ru.netology.nework.dto.AttachmentTypeDto.IMAGE
+                        Post.AttachmentType.VIDEO -> ru.netology.nework.dto.AttachmentTypeDto.VIDEO
+                        Post.AttachmentType.AUDIO -> ru.netology.nework.dto.AttachmentTypeDto.AUDIO
+                    }
+                )
+            },
+            users = post.users.mapValues { (_, userPreview) ->
+                ru.netology.nework.dto.UserPreviewDto(
+                    name = userPreview.name,
+                    avatar = userPreview.avatar
+                )
+            }
+        )
     }
 }

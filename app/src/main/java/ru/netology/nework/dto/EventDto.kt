@@ -20,7 +20,7 @@ data class EventDto(
     @SerializedName("participatedByMe") val participatedByMe: Boolean = false,
     @SerializedName("attachment") val attachment: AttachmentDto? = null,
     @SerializedName("link") val link: String? = null,
-    @SerializedName("users") val users: Map<Long, UserPreviewDto> = emptyMap()
+    @SerializedName("users") val users: Map<Long, UserPreviewDto> = emptyMap(),
 )
 
 enum class EventTypeDto {

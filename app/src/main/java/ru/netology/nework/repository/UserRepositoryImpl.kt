@@ -103,7 +103,6 @@ class UserRepositoryImpl @Inject constructor(
     fun clearCache() {
         userCache.clear()
     }
-
     fun preloadUsers(users: List<User>) {
         users.forEach { user ->
             userCache[user.id] = user
