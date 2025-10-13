@@ -18,6 +18,7 @@ import com.yandex.mapkit.geometry.Point
 import com.yandex.mapkit.map.CameraPosition
 import com.yandex.mapkit.map.InputListener
 import com.yandex.mapkit.map.Map
+import com.yandex.mapkit.map.PlacemarkMapObject
 import com.yandex.mapkit.mapview.MapView
 import ru.netology.nework.R
 import ru.netology.nework.databinding.FragmentMapBinding
@@ -30,12 +31,26 @@ class MapFragment : Fragment() {
     private var selectedPoint: Point? = null
     private var initialLatitude: Double? = null
     private var initialLongitude: Double? = null
+    private var placemark: PlacemarkMapObject? = null
 
     companion object {
         private const val LOCATION_PERMISSION_REQUEST_CODE = 100
         private const val MOSCOW_LATITUDE = 55.7558
         private const val MOSCOW_LONGITUDE = 37.6173
         private const val DEFAULT_ZOOM = 15.0f
+        const val LOCATION_SELECTION_KEY = "location_selection"
+        const val LATITUDE_KEY = "latitude"
+        const val LONGITUDE_KEY = "longitude"
+        const val TAG = "MapFragment"
+
+        fun newInstance(latitude: Double? = null, longitude: Double? = null): MapFragment {
+            return MapFragment().apply {
+                arguments = Bundle().apply {
+                    latitude?.let { putDouble("latitude", it) }
+                    longitude?.let { putDouble("longitude", it) }
+                }
+            }
+        }
     }
 
     override fun onCreateView(
@@ -73,6 +88,7 @@ class MapFragment : Fragment() {
             Animation(Animation.Type.SMOOTH, 0.5f),
             null
         )
+
         mapView.map.addInputListener(object : InputListener {
             override fun onMapTap(map: Map, point: Point) {
                 handleMapTap(point)
@@ -88,6 +104,7 @@ class MapFragment : Fragment() {
             showSelectedMarker()
         }
     }
+
     private fun handleMapTap(point: Point) {
         selectedPoint = point
         showSelectedMarker()
@@ -99,9 +116,15 @@ class MapFragment : Fragment() {
     private fun showSelectedMarker() {
         selectedPoint?.let { point ->
             mapView.map.mapObjects.clear()
-            val marker = mapView.map.mapObjects.addPlacemark(point)
-            marker.setIcon(ContextCompat.getDrawable(requireContext(), R.drawable.ic_location_marker)!!)
-            marker.opacity = 0.9f
+            placemark = mapView.map.mapObjects.addPlacemark(point)
+            placemark?.setIcon(
+                ContextCompat.getDrawable(requireContext(), R.drawable.ic_location_marker)!!
+            )
+            placemark?.opacity = 0.9f
+
+            placemark?.addTapListener(MapObjectTapListener { mapObject, point ->
+                true // обработано
+            })
         }
     }
 
@@ -134,11 +157,10 @@ class MapFragment : Fragment() {
     private fun confirmLocationSelection() {
         selectedPoint?.let { point ->
             val result = Bundle().apply {
-                putDouble("latitude", point.latitude)
-                putDouble("longitude", point.longitude)
+                putDouble(LATITUDE_KEY, point.latitude)
+                putDouble(LONGITUDE_KEY, point.longitude)
             }
-
-            parentFragmentManager.setFragmentResult("location_selection", result)
+            parentFragmentManager.setFragmentResult(LOCATION_SELECTION_KEY, result)
             findNavController().navigateUp()
         } ?: run {
             Snackbar.make(binding.root, "Сначала выберите локацию на карте", Snackbar.LENGTH_SHORT).show()
@@ -147,7 +169,6 @@ class MapFragment : Fragment() {
 
     private fun moveToCurrentLocation() {
         if (hasLocationPermission()) {
-
             val moscowPoint = Point(MOSCOW_LATITUDE, MOSCOW_LONGITUDE)
             mapView.map.move(
                 CameraPosition(moscowPoint, DEFAULT_ZOOM, 0.0f, 0.0f),
@@ -218,18 +239,5 @@ class MapFragment : Fragment() {
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
-    }
-
-    companion object {
-        const val TAG = "MapFragment"
-
-        fun newInstance(latitude: Double? = null, longitude: Double? = null): MapFragment {
-            return MapFragment().apply {
-                arguments = Bundle().apply {
-                    latitude?.let { putDouble("latitude", it) }
-                    longitude?.let { putDouble("longitude", it) }
-                }
-            }
-        }
     }
 }

@@ -10,7 +10,8 @@ import com.bumptech.glide.Glide
 import ru.netology.nework.databinding.ItemParticipantBinding
 import ru.netology.nework.data.User
 
-class ParticipantAdapter : ListAdapter<User, ParticipantAdapter.ViewHolder>(DiffCallback) {
+class ParticipantAdapter :
+    ListAdapter<ru.netology.nework.data.User, ParticipantAdapter.ViewHolder>(DiffCallback) {
 
     var onUserClicked: ((Long) -> Unit)? = null
     var onSelectionChanged: ((Int) -> Unit)? = null
@@ -18,7 +19,8 @@ class ParticipantAdapter : ListAdapter<User, ParticipantAdapter.ViewHolder>(Diff
     private val selectedUserIds = mutableSetOf<Long>()
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
-        val binding = ItemParticipantBinding.inflate(LayoutInflater.from(parent.context), parent, false)
+        val binding =
+            ItemParticipantBinding.inflate(LayoutInflater.from(parent.context), parent, false)
         return ViewHolder(binding)
     }
 
@@ -29,13 +31,13 @@ class ParticipantAdapter : ListAdapter<User, ParticipantAdapter.ViewHolder>(Diff
     inner class ViewHolder(private val binding: ItemParticipantBinding) :
         RecyclerView.ViewHolder(binding.root) {
 
-        fun bind(user: User) {
+        fun bind(user: ru.netology.nework.data.User) {
             binding.apply {
                 userNameTextView.text = user.name
                 userLoginTextView.text = "@${user.login}"
 
                 user.avatar?.let { avatarUrl ->
-                    Glide.with(avatarImageView)
+                    com.bumptech.glide.Glide.with(avatarImageView)
                         .load(avatarUrl)
                         .placeholder(ru.netology.nework.R.drawable.ic_account_circle)
                         .circleCrop()
@@ -47,7 +49,7 @@ class ParticipantAdapter : ListAdapter<User, ParticipantAdapter.ViewHolder>(Diff
                 if (showCheckbox) {
                     checkbox.visibility = View.VISIBLE
                     checkbox.isChecked = selectedUserIds.contains(user.id)
-
+                    checkbox.setOnCheckedChangeListener(null)
                     checkbox.setOnCheckedChangeListener { _, isChecked ->
                         if (isChecked) {
                             selectedUserIds.add(user.id)
@@ -100,12 +102,12 @@ class ParticipantAdapter : ListAdapter<User, ParticipantAdapter.ViewHolder>(Diff
     }
 
     companion object {
-        private val DiffCallback = object : DiffUtil.ItemCallback<User>() {
-            override fun areItemsTheSame(oldItem: User, newItem: User): Boolean {
+        private val DiffCallback = object : DiffUtil.ItemCallback<ru.netology.nework.data.User>() {
+            override fun areItemsTheSame(oldItem: ru.netology.nework.data.User, newItem: ru.netology.nework.data.User): Boolean {
                 return oldItem.id == newItem.id
             }
 
-            override fun areContentsTheSame(oldItem: User, newItem: User): Boolean {
+            override fun areContentsTheSame(oldItem: ru.netology.nework.data.User, newItem: ru.netology.nework.data.User): Boolean {
                 return oldItem == newItem
             }
         }

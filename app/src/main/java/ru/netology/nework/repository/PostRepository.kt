@@ -14,4 +14,5 @@ interface PostRepository {
     suspend fun getById(id: Long): Post?
     suspend fun getUserWall(userId: Long): List<Post>
     suspend fun getMyWall(): List<Post>
+    suspend fun uploadMedia(uri: Uri, type: Post.AttachmentType): String
 }

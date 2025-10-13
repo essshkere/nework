@@ -87,23 +87,6 @@ class CreateEventFragment : Fragment(), MenuProvider {
         return binding.root
     }
 
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
-
-        requireActivity().addMenuProvider(this, viewLifecycleOwner)
-
-        setupTextWatchers()
-        setupClickListeners()
-        setupEventType()
-        observeEventCreation()
-        setupAttachmentRemoval()
-
-        val calendar = Calendar.getInstance()
-        calendar.add(Calendar.MINUTE, 30)
-        eventDateTime = calendar.time
-        updateSelectedDateTimeText()
-    }
-
     override fun onCreateMenu(menu: Menu, menuInflater: MenuInflater) {
         menuInflater.inflate(R.menu.menu_create_event, menu)
     }
@@ -184,7 +167,6 @@ class CreateEventFragment : Fragment(), MenuProvider {
     private fun observeEventCreation() {
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                // Можно добавить наблюдение за состоянием создания события
             }
         }
     }
@@ -331,57 +313,6 @@ class CreateEventFragment : Fragment(), MenuProvider {
         datePicker.show()
     }
 
-    private fun openSpeakersPicker() {
-        val dialog = SelectUsersDialog.newInstance(
-            initiallySelectedUserIds = speakerIds.toSet(),
-            multiSelect = true
-        )
-
-        dialog.onUsersSelected = { selectedUsers ->
-            handleSpeakersSelection(selectedUsers)
-        }
-
-        dialog.show(parentFragmentManager, SelectUsersDialog.TAG)
-    }
-
-    private fun handleSpeakersSelection(selectedUsers: List<User>) {
-        speakerIds = selectedUsers.map { it.id }
-        updateSelectedSpeakersText(selectedUsers)
-    }
-
-    private fun updateSelectedSpeakersText(selectedUsers: List<User>) {
-        if (selectedUsers.isNotEmpty()) {
-            binding.selectedSpeakersText.visibility = View.VISIBLE
-
-            val speakersText = when (selectedUsers.size) {
-                1 -> "🎤 Спикер: ${selectedUsers.first().name}"
-                2, 3, 4 -> "🎤 Спикеры: ${selectedUsers.joinToString { it.name }}"
-                else -> "🎤 Спикеров: ${selectedUsers.size}"
-            }
-
-            binding.selectedSpeakersText.text = speakersText
-
-            binding.selectedSpeakersText.setOnClickListener {
-                showSelectedSpeakersPreview(selectedUsers)
-            }
-        } else {
-            binding.selectedSpeakersText.visibility = View.GONE
-        }
-    }
-
-    private fun showSelectedSpeakersPreview(selectedUsers: List<User>) {
-        val speakerNames = selectedUsers.joinToString("\n") { "• ${it.name} (@${it.login})" }
-
-        androidx.appcompat.app.AlertDialog.Builder(requireContext())
-            .setTitle("Спикеры события")
-            .setMessage(speakerNames)
-            .setPositiveButton("Изменить") { _, _ ->
-                openSpeakersPicker()
-            }
-            .setNegativeButton("ОК", null)
-            .show()
-    }
-
     private fun updateSelectedDateTimeText() {
         eventDateTime?.let { dateTime ->
             binding.selectedDateTimeText.visibility = View.VISIBLE
@@ -417,6 +348,82 @@ class CreateEventFragment : Fragment(), MenuProvider {
         }
     }
 
+    private val locationSelectionListener = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == android.app.Activity.RESULT_OK) {
+            val data = result.data
+            data?.extras?.let { bundle ->
+                handleLocationSelection(bundle)
+            }
+        }
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        requireActivity().addMenuProvider(this, viewLifecycleOwner)
+        setupTextWatchers()
+        setupClickListeners()
+        setupEventType()
+        observeEventCreation()
+        setupAttachmentRemoval()
+        setupMapResultListener()
+    }
+
+    private fun openSpeakersPicker() {
+        val dialog = SelectUsersDialog.newInstance(
+            initiallySelectedUserIds = speakerIds.toSet(),
+            multiSelect = true
+        )
+
+        dialog.onUsersSelected = { selectedUsers ->
+            handleSpeakersSelection(selectedUsers)
+        }
+
+        dialog.show(parentFragmentManager, SelectUsersDialog.TAG)
+    }
+
+    private fun handleSpeakersSelection(selectedUsers: List<ru.netology.nework.data.User>) {
+        speakerIds = selectedUsers.map { it.id }
+        updateSelectedSpeakersText(selectedUsers)
+
+        // Логирование для отладки
+        println("Выбрано спикеров: ${selectedUsers.size}, IDs: $speakerIds")
+    }
+
+    private fun updateSelectedSpeakersText(selectedUsers: List<ru.netology.nework.data.User>) {
+        if (selectedUsers.isNotEmpty()) {
+            binding.selectedSpeakersText.visibility = View.VISIBLE
+
+            val speakersText = when (selectedUsers.size) {
+                1 -> "🎤 Спикер: ${selectedUsers.first().name}"
+                2, 3, 4 -> "🎤 Спикеры: ${selectedUsers.joinToString { it.name }}"
+                else -> "🎤 Спикеров: ${selectedUsers.size}"
+            }
+
+            binding.selectedSpeakersText.text = speakersText
+
+            binding.selectedSpeakersText.setOnClickListener {
+                showSelectedSpeakersPreview(selectedUsers)
+            }
+        } else {
+            binding.selectedSpeakersText.visibility = View.GONE
+        }
+    }
+
+    private fun showSelectedSpeakersPreview(selectedUsers: List<ru.netology.nework.data.User>) {
+        val speakerNames = selectedUsers.joinToString("\n") { "• ${it.name} (@${it.login})" }
+
+        androidx.appcompat.app.AlertDialog.Builder(requireContext())
+            .setTitle("Спикеры события")
+            .setMessage(speakerNames)
+            .setPositiveButton("Изменить") { _, _ ->
+                openSpeakersPicker()
+            }
+            .setNegativeButton("ОК", null)
+            .show()
+    }
+
     private fun createEvent() {
         val content = binding.contentEditText.text.toString().trim()
 
@@ -424,48 +431,68 @@ class CreateEventFragment : Fragment(), MenuProvider {
             return
         }
 
-        val currentDate = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX", Locale.getDefault())
-            .format(Date())
+        showLoading(true)
 
-        val eventDateTimeFormatted = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX", Locale.getDefault())
-            .format(eventDateTime!!)
+        viewLifecycleOwner.lifecycleScope.launch {
+            try {
+                val uploadedAttachment = attachmentUri?.let { uri ->
+                    try {
+                        val mediaType = when (attachmentType) {
+                            Event.AttachmentType.IMAGE -> Event.AttachmentType.IMAGE
+                            Event.AttachmentType.VIDEO -> Event.AttachmentType.VIDEO
+                            Event.AttachmentType.AUDIO -> Event.AttachmentType.AUDIO
+                            null -> Event.AttachmentType.IMAGE
+                        }
+                        eventsViewModel.uploadMedia(uri, mediaType)
+                    } catch (e: Exception) {
+                        showError("Ошибка загрузки медиа: ${e.message}")
+                        null
+                    }
+                }
 
-        val event = Event(
-            id = 0,
-            authorId = 0,
-            author = "",
-            content = content,
-            datetime = eventDateTimeFormatted,
-            published = currentDate,
-            coords = coordinates,
-            type = eventType,
-            speakerIds = speakerIds,
-            attachment = attachmentUri?.let { uri ->
-                Event.Attachment(
-                    url = uri.toString(),
-                    type = attachmentType ?: Event.AttachmentType.IMAGE
+                val currentDate = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX", Locale.getDefault())
+                    .format(Date())
+
+                val eventDateTimeFormatted = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX", Locale.getDefault())
+                    .format(eventDateTime!!)
+
+                val event = Event(
+                    id = 0,
+                    authorId = 0,
+                    author = "",
+                    content = content,
+                    datetime = eventDateTimeFormatted,
+                    published = currentDate,
+                    coords = coordinates,
+                    type = eventType,
+                    speakerIds = speakerIds,
+                    attachment = uploadedAttachment
                 )
+
+                eventsViewModel.save(event)
+                Snackbar.make(binding.root, "Событие создано", Snackbar.LENGTH_SHORT).show()
+                findNavController().navigateUp()
+            } catch (e: Exception) {
+                showLoading(false)
+                showError(e.message ?: "Неизвестная ошибка при создании события")
             }
-        )
-
-        eventsViewModel.save(event)
-
-        Snackbar.make(binding.root, "Событие создано", Snackbar.LENGTH_SHORT).show()
-        findNavController().navigateUp()
+        }
     }
 
-    private val locationPickerLauncher = registerForActivityResult(
-        ActivityResultContracts.StartActivityForResult()
-    ) { result ->
-        if (result.resultCode == android.app.Activity.RESULT_OK) {
-            val bundle = result.data?.extras
-            bundle?.let { handleLocationSelection(it) }
+    private fun setupMapResultListener() {
+        parentFragmentManager.setFragmentResultListener(
+            MapFragment.LOCATION_SELECTION_KEY,
+            viewLifecycleOwner
+        ) { requestKey, bundle ->
+            if (requestKey == MapFragment.LOCATION_SELECTION_KEY) {
+                handleLocationSelection(bundle)
+            }
         }
     }
 
     private fun handleLocationSelection(bundle: Bundle) {
-        val latitude = bundle.getDouble("latitude")
-        val longitude = bundle.getDouble("longitude")
+        val latitude = bundle.getDouble(MapFragment.LATITUDE_KEY)
+        val longitude = bundle.getDouble(MapFragment.LONGITUDE_KEY)
 
         coordinates = Event.Coordinates(latitude, longitude)
         updateSelectedLocationText()
@@ -479,6 +506,24 @@ class CreateEventFragment : Fragment(), MenuProvider {
         } ?: MapFragment.newInstance()
 
         currentCoords.show(parentFragmentManager, MapFragment.TAG)
+    }
+
+    private suspend fun EventsViewModel.uploadMedia(uri: Uri, type: Event.AttachmentType): Event.Attachment? {
+        return try {
+            val mediaUrl = eventRepository.uploadMedia(uri, type)
+            Event.Attachment(mediaUrl, type)
+        } catch (e: Exception) {
+            null
+        }
+    }
+
+    private val locationPickerLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == android.app.Activity.RESULT_OK) {
+            val bundle = result.data?.extras
+            bundle?.let { handleLocationSelection(it) }
+        }
     }
 
     private fun updateSelectedLocationText() {

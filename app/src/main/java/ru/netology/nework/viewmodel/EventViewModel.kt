@@ -22,9 +22,18 @@ class EventsViewModel @Inject constructor(
 
     private val _eventsState = MutableStateFlow<EventsState>(EventsState.Idle)
     val eventsState: StateFlow<EventsState> = _eventsState.asStateFlow()
-
     private val _uiState = MutableStateFlow<EventsUiState>(EventsUiState())
     val uiState: StateFlow<EventsUiState> = _uiState.asStateFlow()
+
+    suspend fun uploadMedia(uri: Uri, type: Event.AttachmentType): String {
+        return withContext(Dispatchers.IO) {
+            try {
+                repository.uploadMedia(uri, type)
+            } catch (e: Exception) {
+                throw Exception("Ошибка загрузки медиа: ${e.message}")
+            }
+        }
+    }
 
     fun likeById(id: Long) = viewModelScope.launch {
         _uiState.value = _uiState.value.copy(

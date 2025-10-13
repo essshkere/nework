@@ -5,8 +5,7 @@ import android.app.Dialog
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
-import android.widget.CheckBox
-import android.widget.SearchView
+import android.widget.Button
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
@@ -17,7 +16,6 @@ import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import ru.netology.nework.adapter.ParticipantAdapter
 import ru.netology.nework.databinding.DialogSelectUsersBinding
-import ru.netology.nework.data.User
 import ru.netology.nework.viewmodel.UsersViewModel
 import javax.inject.Inject
 
@@ -30,17 +28,35 @@ class SelectUsersDialog : DialogFragment() {
     lateinit var participantAdapter: ParticipantAdapter
     private var initiallySelectedUserIds: Set<Long> = emptySet()
     private var multiSelect: Boolean = true
-    var onUsersSelected: ((List<User>) -> Unit)? = null
+    var onUsersSelected: ((List<ru.netology.nework.data.User>) -> Unit)? = null
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
         _binding = DialogSelectUsersBinding.inflate(LayoutInflater.from(requireContext()))
 
-        return AlertDialog.Builder(requireContext())
+        val dialog = AlertDialog.Builder(requireContext())
             .setView(binding.root)
             .setTitle(getDialogTitle())
             .setNegativeButton("Отмена") { dialog, _ -> dialog.dismiss() }
-            .setPositiveButton(getConfirmButtonText()) { _, _ -> confirmSelection() }
+            .setPositiveButton(getConfirmButtonText()) { _, _ ->
+            }
             .create()
+
+        dialog.setOnShowListener {
+            val positiveButton = dialog.getButton(AlertDialog.BUTTON_POSITIVE)
+            val negativeButton = dialog.getButton(AlertDialog.BUTTON_NEGATIVE)
+
+            positiveButton.setOnClickListener {
+                confirmSelection()
+            }
+
+            negativeButton.setOnClickListener {
+                dismiss()
+            }
+
+            updateConfirmButtonState(positiveButton)
+        }
+
+        return dialog
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -62,7 +78,6 @@ class SelectUsersDialog : DialogFragment() {
         participantAdapter.setInitiallySelectedUsers(initiallySelectedUserIds)
         participantAdapter.onUserClicked = { userId ->
             if (!multiSelect) {
-
                 val selectedUser = participantAdapter.currentList.find { it.id == userId }
                 selectedUser?.let { user ->
                     onUsersSelected?.invoke(listOf(user))
@@ -77,7 +92,7 @@ class SelectUsersDialog : DialogFragment() {
     }
 
     private fun setupSearch() {
-        binding.searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
+        binding.searchView.setOnQueryTextListener(object : android.widget.SearchView.OnQueryTextListener {
             override fun onQueryTextSubmit(query: String?): Boolean {
                 return false
             }
@@ -122,7 +137,6 @@ class SelectUsersDialog : DialogFragment() {
         val selectedUsers = if (multiSelect) {
             participantAdapter.getSelectedUsers()
         } else {
-            // В одиночном режиме берем первого выбранного
             val selectedIds = participantAdapter.getSelectedUserIds()
             if (selectedIds.isNotEmpty()) {
                 listOf(participantAdapter.currentList.find { it.id == selectedIds.first() }!!)
@@ -131,7 +145,12 @@ class SelectUsersDialog : DialogFragment() {
             }
         }
 
-        onUsersSelected?.invoke(selectedUsers)
+        if (selectedUsers.isNotEmpty() || multiSelect) {
+            onUsersSelected?.invoke(selectedUsers)
+            dismiss()
+        } else {
+            android.widget.Toast.makeText(requireContext(), "Выберите пользователя", android.widget.Toast.LENGTH_SHORT).show()
+        }
     }
 
     private fun updateSelectionInfo() {
@@ -149,14 +168,14 @@ class SelectUsersDialog : DialogFragment() {
         }
     }
 
-    private fun updateConfirmButtonState() {
+    private fun updateConfirmButtonState(button: Button? = null) {
         val selectedCount = participantAdapter.getSelectedUserIds().size
-        val dialog = dialog as? AlertDialog
+        val confirmButton = button ?: (dialog as? AlertDialog)?.getButton(AlertDialog.BUTTON_POSITIVE)
 
-        if (multiSelect) {
-            dialog?.getButton(AlertDialog.BUTTON_POSITIVE)?.isEnabled = true
+        confirmButton?.isEnabled = if (multiSelect) {
+            true
         } else {
-            dialog?.getButton(AlertDialog.BUTTON_POSITIVE)?.isEnabled = selectedCount > 0
+            selectedCount > 0
         }
     }
 

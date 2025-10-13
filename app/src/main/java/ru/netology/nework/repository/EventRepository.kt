@@ -14,4 +14,5 @@ interface EventRepository {
     suspend fun participate(id: Long)
     suspend fun unparticipate(id: Long)
     suspend fun getById(id: Long): Event?
+    suspend fun uploadMedia(uri: Uri, type: Event.AttachmentType): String
 }

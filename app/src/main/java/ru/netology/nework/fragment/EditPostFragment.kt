@@ -4,8 +4,6 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.provider.MediaStore
-import android.text.Editable
-import android.text.TextWatcher
 import android.view.LayoutInflater
 import android.view.Menu
 import android.view.MenuInflater
@@ -20,44 +18,37 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
+import androidx.navigation.fragment.navArgs
 import com.bumptech.glide.Glide
 import com.google.android.material.snackbar.Snackbar
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import ru.netology.nework.R
-import ru.netology.nework.databinding.FragmentCreatePostBinding
 import ru.netology.nework.data.Post
-import ru.netology.nework.data.User
+import ru.netology.nework.databinding.FragmentCreatePostBinding
 import ru.netology.nework.viewmodel.PostsViewModel
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
 @AndroidEntryPoint
-class CreatePostFragment : Fragment(), MenuProvider {
+class EditPostFragment : Fragment(), MenuProvider {
     private var _binding: FragmentCreatePostBinding? = null
     private val binding get() = _binding!!
     private val postsViewModel: PostsViewModel by viewModels()
-    private var attachmentUri: Uri? = null
-    private var attachmentType: Post.AttachmentType? = null
-    private var coordinates: Post.Coordinates? = null
-    private var mentionedUserIds: List<Long> = emptyList()
+    private val args: EditPostFragmentArgs by navArgs()
 
-    private val usersPickerLauncher = registerForActivityResult(
-        ActivityResultContracts.StartActivityForResult()
-    ) { result ->
-        if (result.resultCode == android.app.Activity.RESULT_OK) {
-            val users = result.data?.getParcelableArrayListExtra<User>("selectedUsers")
-            users?.let { handleUsersSelection(it) }
-        }
-    }
+    private var attachmentUri: Uri? = null
+    private var attachmentType: ru.netology.nework.data.Post.AttachmentType? = null
+    private var coordinates: ru.netology.nework.data.Post.Coordinates? = null
+    private var mentionedUserIds: List<Long> = emptyList()
 
     private val pickImageLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
     ) { result ->
         if (result.resultCode == android.app.Activity.RESULT_OK) {
             result.data?.data?.let { uri ->
-                handleMediaSelection(uri, Post.AttachmentType.IMAGE)
+                handleMediaSelection(uri, ru.netology.nework.data.Post.AttachmentType.IMAGE)
             }
         }
     }
@@ -67,7 +58,7 @@ class CreatePostFragment : Fragment(), MenuProvider {
     ) { result ->
         if (result.resultCode == android.app.Activity.RESULT_OK) {
             result.data?.data?.let { uri ->
-                handleMediaSelection(uri, Post.AttachmentType.VIDEO)
+                handleMediaSelection(uri, ru.netology.nework.data.Post.AttachmentType.VIDEO)
             }
         }
     }
@@ -77,7 +68,7 @@ class CreatePostFragment : Fragment(), MenuProvider {
     ) { result ->
         if (result.resultCode == android.app.Activity.RESULT_OK) {
             result.data?.data?.let { uri ->
-                handleMediaSelection(uri, Post.AttachmentType.AUDIO)
+                handleMediaSelection(uri, ru.netology.nework.data.Post.AttachmentType.AUDIO)
             }
         }
     }
@@ -93,22 +84,60 @@ class CreatePostFragment : Fragment(), MenuProvider {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
         requireActivity().addMenuProvider(this, viewLifecycleOwner)
-        setupTextWatchers()
+        loadPostData()
         setupClickListeners()
-        observePostCreation()
-        setupAttachmentRemoval()
         setupMapResultListener()
     }
 
+    private fun loadPostData() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                val post = postsViewModel.getPostById(args.postId)
+                post?.let {
+                    bindPostData(it)
+                } ?: run {
+                    Snackbar.make(binding.root, "Пост не найден", Snackbar.LENGTH_SHORT).show()
+                    findNavController().navigateUp()
+                }
+            }
+        }
+    }
+
+    private fun bindPostData(post: ru.netology.nework.data.Post) {
+        binding.contentEditText.setText(post.content)
+        coordinates = post.coords
+        mentionedUserIds = post.mentionIds
+
+        updateSelectedLocationText()
+
+
+        post.attachment?.let { attachment ->
+            when (attachment.type) {
+                ru.netology.nework.data.Post.AttachmentType.IMAGE -> {
+                    showImageAttachmentPreview(Uri.parse(attachment.url))
+                }
+
+                ru.netology.nework.data.Post.AttachmentType.VIDEO -> {
+                    showVideoAttachmentPreview(Uri.parse(attachment.url))
+                }
+
+                ru.netology.nework.data.Post.AttachmentType.AUDIO -> {
+                    showAudioAttachmentPreview()
+                }
+            }
+        }
+    }
+
     override fun onCreateMenu(menu: Menu, menuInflater: MenuInflater) {
-        menuInflater.inflate(R.menu.menu_create_post, menu)
+        menuInflater.inflate(R.menu.menu_edit_post, menu)
     }
 
     override fun onMenuItemSelected(menuItem: MenuItem): Boolean {
         return when (menuItem.itemId) {
             R.id.action_save -> {
-                createPost()
+                updatePost()
                 true
             }
 
@@ -116,88 +145,7 @@ class CreatePostFragment : Fragment(), MenuProvider {
         }
     }
 
-    private fun setupMapResultListener() {
-        parentFragmentManager.setFragmentResultListener(
-            MapFragment.LOCATION_SELECTION_KEY,
-            viewLifecycleOwner
-        ) { requestKey, bundle ->
-            if (requestKey == MapFragment.LOCATION_SELECTION_KEY) {
-                handleLocationSelection(bundle)
-            }
-        }
-    }
-
-    private fun handleLocationSelection(bundle: Bundle) {
-        val latitude = bundle.getDouble(MapFragment.LATITUDE_KEY)
-        val longitude = bundle.getDouble(MapFragment.LONGITUDE_KEY)
-
-        coordinates = Post.Coordinates(latitude, longitude)
-        updateSelectedLocationText()
-
-        Snackbar.make(binding.root, "Локация выбрана", Snackbar.LENGTH_SHORT).show()
-    }
-
-    private fun openLocationPicker() {
-        val currentCoords = coordinates?.let {
-            MapFragment.newInstance(it.lat, it.long)
-        } ?: MapFragment.newInstance()
-
-        currentCoords.show(parentFragmentManager, MapFragment.TAG)
-    }
-
-    private fun openUsersPicker() {
-        val dialog = SelectUsersDialog.newInstance(
-            initiallySelectedUserIds = mentionedUserIds,
-            multiSelect = true
-        )
-
-        dialog.onUsersSelected = { selectedUsers ->
-            handleUsersSelection(selectedUsers)
-        }
-
-        dialog.show(parentFragmentManager, SelectUsersDialog.TAG)
-    }
-
-    private fun handleUsersSelection(selectedUsers: List<ru.netology.nework.data.User>) {
-        mentionedUserIds = selectedUsers.map { it.id }
-        updateMentionedUsersText(selectedUsers)
-        println("Выбрано пользователей: ${selectedUsers.size}, IDs: $mentionedUserIds")
-    }
-
-    private fun updateMentionedUsersText(selectedUsers: List<ru.netology.nework.data.User>) {
-        if (selectedUsers.isNotEmpty()) {
-            binding.mentionedUsersText.visibility = View.VISIBLE
-
-            val usersText = when (selectedUsers.size) {
-                1 -> "👥 Упомянут: ${selectedUsers.first().name}"
-                2, 3, 4 -> "👥 Упомянуты: ${selectedUsers.joinToString { it.name }}"
-                else -> "👥 Упомянуто пользователей: ${selectedUsers.size}"
-            }
-
-            binding.mentionedUsersText.text = usersText
-
-            binding.mentionedUsersText.setOnClickListener {
-                showSelectedUsersPreview(selectedUsers)
-            }
-        } else {
-            binding.mentionedUsersText.visibility = View.GONE
-        }
-    }
-
-    private fun showSelectedUsersPreview(selectedUsers: List<ru.netology.nework.data.User>) {
-        val userNames = selectedUsers.joinToString("\n") { "• ${it.name} (@${it.login})" }
-
-        androidx.appcompat.app.AlertDialog.Builder(requireContext())
-            .setTitle("Упомянутые пользователи")
-            .setMessage(userNames)
-            .setPositiveButton("Изменить") { _, _ ->
-                openUsersPicker()
-            }
-            .setNegativeButton("ОК", null)
-            .show()
-    }
-
-    private fun createPost() {
+    private fun updatePost() {
         val content = binding.contentEditText.text.toString().trim()
 
         if (!validateContent(content)) {
@@ -211,12 +159,8 @@ class CreatePostFragment : Fragment(), MenuProvider {
             try {
                 val uploadedAttachment = attachmentUri?.let { uri ->
                     try {
-                        val mediaType = when (attachmentType) {
-                            Post.AttachmentType.IMAGE -> Post.AttachmentType.IMAGE
-                            Post.AttachmentType.VIDEO -> Post.AttachmentType.VIDEO
-                            Post.AttachmentType.AUDIO -> Post.AttachmentType.AUDIO
-                            null -> Post.AttachmentType.IMAGE
-                        }
+                        val mediaType =
+                            attachmentType ?: ru.netology.nework.data.Post.AttachmentType.IMAGE
                         postsViewModel.uploadMedia(uri, mediaType)
                     } catch (e: Exception) {
                         showError("Ошибка загрузки медиа: ${e.message}")
@@ -228,8 +172,8 @@ class CreatePostFragment : Fragment(), MenuProvider {
                     SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX", Locale.getDefault())
                         .format(Date())
 
-                val post = Post(
-                    id = 0,
+                val post = ru.netology.nework.data.Post(
+                    id = args.postId,
                     authorId = 0,
                     author = "",
                     content = content,
@@ -240,23 +184,13 @@ class CreatePostFragment : Fragment(), MenuProvider {
                 )
 
                 postsViewModel.save(post)
-                Snackbar.make(binding.root, "Пост успешно создан", Snackbar.LENGTH_SHORT).show()
+                Snackbar.make(binding.root, "Пост обновлен", Snackbar.LENGTH_SHORT).show()
                 findNavController().navigateUp()
             } catch (e: Exception) {
                 showLoading(false)
-                showError(e.message ?: "Неизвестная ошибка при создании поста")
+                showError(e.message ?: "Неизвестная ошибка при обновлении поста")
             }
         }
-    }
-
-    private fun setupTextWatchers() {
-        binding.contentEditText.addTextChangedListener(object : TextWatcher {
-            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
-            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
-            override fun afterTextChanged(s: Editable?) {
-                validateContent(s.toString())
-            }
-        })
     }
 
     private fun setupClickListeners() {
@@ -285,20 +219,16 @@ class CreatePostFragment : Fragment(), MenuProvider {
         }
     }
 
-    private fun setupAttachmentRemoval() {
-        binding.attachmentPreview.setOnClickListener {
-            showAttachmentOptions()
-        }
-    }
-
-    private fun observePostCreation() {
-        viewLifecycleOwner.lifecycleScope.launch {
-            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-
+    private fun setupMapResultListener() {
+        parentFragmentManager.setFragmentResultListener(
+            MapFragment.LOCATION_SELECTION_KEY,
+            viewLifecycleOwner
+        ) { requestKey, bundle ->
+            if (requestKey == MapFragment.LOCATION_SELECTION_KEY) {
+                handleLocationSelection(bundle)
             }
         }
     }
-
 
     private fun handleMediaSelection(uri: Uri, type: Post.AttachmentType) {
         attachmentUri = uri
@@ -433,29 +363,6 @@ class CreatePostFragment : Fragment(), MenuProvider {
         }
     }
 
-    private suspend fun PostsViewModel.uploadMedia(
-        uri: Uri,
-        type: Post.AttachmentType
-    ): Post.Attachment? {
-        return try {
-            val mediaUrl = postsRepository.uploadMedia(uri, type)
-            Post.Attachment(mediaUrl, type)
-        } catch (e: Exception) {
-            null
-        }
-    }
-
-    private val locationSelectionListener = registerForActivityResult(
-        ActivityResultContracts.StartActivityForResult()
-    ) { result ->
-        if (result.resultCode == android.app.Activity.RESULT_OK) {
-            val data = result.data
-            data?.extras?.let { bundle ->
-                handleLocationSelection(bundle)
-            }
-        }
-    }
-
     private fun showLoading(isLoading: Boolean) {
         binding.progressBar.visibility = if (isLoading) View.VISIBLE else View.GONE
         binding.contentEditText.isEnabled = !isLoading
@@ -479,18 +386,22 @@ class CreatePostFragment : Fragment(), MenuProvider {
         Snackbar.make(binding.root, errorMessage, Snackbar.LENGTH_LONG).show()
     }
 
-    override fun onDestroyView() {
-        super.onDestroyView()
-        _binding = null
+    private fun handleLocationSelection(bundle: Bundle) {
+        val latitude = bundle.getDouble(MapFragment.LATITUDE_KEY)
+        val longitude = bundle.getDouble(MapFragment.LONGITUDE_KEY)
+
+        coordinates = Post.Coordinates(latitude, longitude)
+        updateSelectedLocationText()
+
+        Snackbar.make(binding.root, "Локация выбрана", Snackbar.LENGTH_SHORT).show()
     }
 
-    private val locationPickerLauncher = registerForActivityResult(
-        ActivityResultContracts.StartActivityForResult()
-    ) { result ->
-        if (result.resultCode == android.app.Activity.RESULT_OK) {
-            val bundle = result.data?.extras
-            bundle?.let { handleLocationSelection(it) }
-        }
+    private fun openLocationPicker() {
+        val currentCoords = coordinates?.let {
+            MapFragment.newInstance(it.lat, it.long)
+        } ?: MapFragment.newInstance()
+
+        currentCoords.show(parentFragmentManager, MapFragment.TAG)
     }
 
     private fun updateSelectedLocationText() {
@@ -529,5 +440,62 @@ class CreatePostFragment : Fragment(), MenuProvider {
         coordinates = null
         updateSelectedLocationText()
         Snackbar.make(binding.root, "Локация удалена", Snackbar.LENGTH_SHORT).show()
+    }
+
+    private fun openUsersPicker() {
+        val dialog = SelectUsersDialog.newInstance(
+            initiallySelectedUserIds = mentionedUserIds,
+            multiSelect = true
+        )
+
+        dialog.onUsersSelected = { selectedUsers ->
+            handleUsersSelection(selectedUsers)
+        }
+
+        dialog.show(parentFragmentManager, SelectUsersDialog.TAG)
+    }
+
+    private fun handleUsersSelection(selectedUsers: List<ru.netology.nework.data.User>) {
+        mentionedUserIds = selectedUsers.map { it.id }
+        updateMentionedUsersText(selectedUsers)
+        println("Выбрано пользователей: ${selectedUsers.size}, IDs: $mentionedUserIds")
+    }
+
+    private fun updateMentionedUsersText(selectedUsers: List<ru.netology.nework.data.User>) {
+        if (selectedUsers.isNotEmpty()) {
+            binding.mentionedUsersText.visibility = View.VISIBLE
+
+            val usersText = when (selectedUsers.size) {
+                1 -> "👥 Упомянут: ${selectedUsers.first().name}"
+                2, 3, 4 -> "👥 Упомянуты: ${selectedUsers.joinToString { it.name }}"
+                else -> "👥 Упомянуто пользователей: ${selectedUsers.size}"
+            }
+
+            binding.mentionedUsersText.text = usersText
+
+            binding.mentionedUsersText.setOnClickListener {
+                showSelectedUsersPreview(selectedUsers)
+            }
+        } else {
+            binding.mentionedUsersText.visibility = View.GONE
+        }
+    }
+
+    private fun showSelectedUsersPreview(selectedUsers: List<ru.netology.nework.data.User>) {
+        val userNames = selectedUsers.joinToString("\n") { "• ${it.name} (@${it.login})" }
+
+        androidx.appcompat.app.AlertDialog.Builder(requireContext())
+            .setTitle("Упомянутые пользователи")
+            .setMessage(userNames)
+            .setPositiveButton("Изменить") { _, _ ->
+                openUsersPicker()
+            }
+            .setNegativeButton("ОК", null)
+            .show()
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
     }
 }

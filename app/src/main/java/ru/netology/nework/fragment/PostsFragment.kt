@@ -59,10 +59,7 @@ class PostsFragment : Fragment() {
         }
 
         postAdapter.onPostClicked = { postId ->
-            val bundle = Bundle().apply {
-                putLong("postId", postId)
-            }
-            findNavController().navigate(R.id.postDetailsFragment, bundle)
+            navigateToPostDetails(postId)
         }
 
         postAdapter.onLikeClicked = { postId ->
@@ -70,17 +67,79 @@ class PostsFragment : Fragment() {
         }
 
         postAdapter.onMentionClicked = { userId ->
-            val bundle = Bundle().apply {
-                putLong("userId", userId)
-            }
-            findNavController().navigate(R.id.userProfileFragment, bundle)
+            navigateToUserProfile(userId)
         }
+
+        postAdapter.onAuthorClicked = { authorId ->
+            navigateToUserProfile(authorId)
+        }
+
+        postAdapter.onMenuClicked = { post ->
+            showPostMenuOptions(post)
+        }
+
         postAdapter.addLoadStateListener { loadState ->
             val isEmpty = postAdapter.itemCount == 0 &&
                     loadState.source.refresh is androidx.paging.LoadState.NotLoading
             binding.emptyStateLayout.isVisible = isEmpty && !postsViewModel.uiState.value.isLoading
             binding.postsRecyclerView.isVisible = !isEmpty
         }
+    }
+
+    private fun showPostMenuOptions(post: ru.netology.nework.data.Post) {
+        val isOwnPost = authViewModel.getUserId() == post.authorId
+
+        val options = mutableListOf<String>()
+
+        if (isOwnPost) {
+            options.add("Редактировать")
+            options.add("Удалить")
+        } else {
+            options.add("Пожаловаться")
+        }
+
+        androidx.appcompat.app.AlertDialog.Builder(requireContext())
+            .setTitle("Опции поста")
+            .setItems(options.toTypedArray()) { _, which ->
+                when (options[which]) {
+                    "Редактировать" -> navigateToEditPost(post.id)
+                    "Удалить" -> confirmDeletePost(post)
+                    "Пожаловаться" -> showReportPostDialog(post)
+                }
+            }
+            .setNegativeButton("Отмена", null)
+            .show()
+    }
+
+    private fun confirmDeletePost(post: ru.netology.nework.data.Post) {
+        androidx.appcompat.app.AlertDialog.Builder(requireContext())
+            .setTitle("Удаление поста")
+            .setMessage("Вы уверены, что хотите удалить этот пост? Это действие нельзя отменить.")
+            .setPositiveButton("Удалить") { _, _ ->
+                postsViewModel.removeById(post.id)
+            }
+            .setNegativeButton("Отмена", null)
+            .show()
+    }
+
+    private fun showReportPostDialog(post: ru.netology.nework.data.Post) {
+        val reportOptions = arrayOf("Спам", "Оскорбительный контент", "Нежелательный контент", "Другое")
+
+        androidx.appcompat.app.AlertDialog.Builder(requireContext())
+            .setTitle("Пожаловаться на пост")
+            .setItems(reportOptions) { _, which ->
+                Snackbar.make(binding.root, "Жалоба отправлена: ${reportOptions[which]}", Snackbar.LENGTH_SHORT).show()
+            }
+            .setNegativeButton("Отмена", null)
+            .show()
+    }
+
+    private fun navigateToEditPost(postId: Long) {
+        val bundle = Bundle().apply {
+            putLong("postId", postId)
+        }
+         findNavController().navigate(R.id.editPostFragment, bundle)
+        Snackbar.make(binding.root, "Редактирование поста будет реализовано в следующем обновлении", Snackbar.LENGTH_SHORT).show()
     }
 
     private fun setupSwipeRefresh() {

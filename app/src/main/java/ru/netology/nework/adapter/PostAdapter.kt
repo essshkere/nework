@@ -18,6 +18,7 @@ class PostAdapter : ListAdapter<Post, PostAdapter.ViewHolder>(DiffCallback) {
     var onLikeClicked: ((Long) -> Unit)? = null
     var onMentionClicked: ((Long) -> Unit)? = null
     var onAuthorClicked: ((Long) -> Unit)? = null
+    var onMenuClicked: ((Post) -> Unit)? = null
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         val binding = ItemPostBinding.inflate(LayoutInflater.from(parent.context), parent, false)
@@ -115,7 +116,10 @@ class PostAdapter : ListAdapter<Post, PostAdapter.ViewHolder>(DiffCallback) {
                     onAuthorClicked?.invoke(post.authorId)
                 }
 
-                menuButton.visibility = android.view.View.GONE
+                menuButton.visibility = android.view.View.VISIBLE
+                menuButton.setOnClickListener {
+                    onMenuClicked?.invoke(post)
+                }
             }
         }
 

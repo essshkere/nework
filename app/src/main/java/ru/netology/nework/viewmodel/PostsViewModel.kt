@@ -21,9 +21,18 @@ class PostsViewModel @Inject constructor(
     val data: Flow<PagingData<Post>> = repository.getPagingData().cachedIn(viewModelScope)
     private val _postsState = MutableStateFlow<PostsState>(PostsState.Idle)
     val postsState: StateFlow<PostsState> = _postsState.asStateFlow()
-
     private val _uiState = MutableStateFlow<PostsUiState>(PostsUiState())
     val uiState: StateFlow<PostsUiState> = _uiState.asStateFlow()
+
+    suspend fun uploadMedia(uri: Uri, type: Post.AttachmentType): String {
+        return withContext(Dispatchers.IO) {
+            try {
+                repository.uploadMedia(uri, type)
+            } catch (e: Exception) {
+                throw Exception("Ошибка загрузки медиа: ${e.message}")
+            }
+        }
+    }
 
     fun likeById(id: Long) = viewModelScope.launch {
         _uiState.value = _uiState.value.copy(

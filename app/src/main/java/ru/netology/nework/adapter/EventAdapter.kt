@@ -20,6 +20,7 @@ class EventAdapter : ListAdapter<Event, EventAdapter.ViewHolder>(DiffCallback) {
     var onSpeakerClicked: ((Long) -> Unit)? = null
     var onAuthorClicked: ((Long) -> Unit)? = null
     var onParticipantClicked: ((Long) -> Unit)? = null
+    var onMenuClicked: ((Event) -> Unit)? = null
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         val binding = ItemEventBinding.inflate(LayoutInflater.from(parent.context), parent, false)
@@ -108,8 +109,10 @@ class EventAdapter : ListAdapter<Event, EventAdapter.ViewHolder>(DiffCallback) {
                 )
 
                 setupClickListeners(event)
-
-                menuButton.visibility = android.view.View.GONE
+                menuButton.visibility = android.view.View.VISIBLE
+                menuButton.setOnClickListener {
+                    onMenuClicked?.invoke(event)
+                }
             }
         }
 

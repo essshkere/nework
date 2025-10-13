@@ -77,12 +77,77 @@ class EventsFragment : Fragment() {
         eventAdapter.onAuthorClicked = { authorId ->
             navigateToUserProfile(authorId)
         }
+
+        eventAdapter.onMenuClicked = { event ->
+            showEventMenuOptions(event)
+        }
+
         eventAdapter.addLoadStateListener { loadState ->
             val isEmpty = eventAdapter.itemCount == 0 &&
                     loadState.source.refresh is androidx.paging.LoadState.NotLoading
             binding.emptyStateLayout.isVisible = isEmpty && !eventsViewModel.uiState.value.isLoading
             binding.eventsRecyclerView.isVisible = !isEmpty
         }
+    }
+
+    private fun showEventMenuOptions(event: ru.netology.nework.data.Event) {
+        val isOwnEvent = authViewModel.getUserId() == event.authorId
+
+        val options = mutableListOf<String>()
+
+        if (isOwnEvent) {
+            options.add("Редактировать")
+            options.add("Удалить")
+        } else {
+            options.add("Пожаловаться")
+            if (event.participatedByMe) {
+                options.add("Отказаться от участия")
+            }
+        }
+
+        androidx.appcompat.app.AlertDialog.Builder(requireContext())
+            .setTitle("Опции события")
+            .setItems(options.toTypedArray()) { _, which ->
+                when (options[which]) {
+                    "Редактировать" -> navigateToEditEvent(event.id)
+                    "Удалить" -> confirmDeleteEvent(event)
+                    "Пожаловаться" -> showReportEventDialog(event)
+                    "Отказаться от участия" -> eventsViewModel.unparticipate(event.id)
+                }
+            }
+            .setNegativeButton("Отмена", null)
+            .show()
+    }
+
+    private fun confirmDeleteEvent(event: ru.netology.nework.data.Event) {
+        androidx.appcompat.app.AlertDialog.Builder(requireContext())
+            .setTitle("Удаление события")
+            .setMessage("Вы уверены, что хотите удалить это событие? Это действие нельзя отменить.")
+            .setPositiveButton("Удалить") { _, _ ->
+                eventsViewModel.removeById(event.id)
+            }
+            .setNegativeButton("Отмена", null)
+            .show()
+    }
+
+    private fun showReportEventDialog(event: ru.netology.nework.data.Event) {
+        val reportOptions = arrayOf("Спам", "Несоответствующее содержание", "Неправильная дата/время", "Другое")
+
+        androidx.appcompat.app.AlertDialog.Builder(requireContext())
+            .setTitle("Пожаловаться на событие")
+            .setItems(reportOptions) { _, which ->
+                Snackbar.make(binding.root, "Жалоба отправлена: ${reportOptions[which]}", Snackbar.LENGTH_SHORT).show()
+            }
+            .setNegativeButton("Отмена", null)
+            .show()
+    }
+
+    private fun navigateToEditEvent(eventId: Long) {
+        val bundle = Bundle().apply {
+            putLong("eventId", eventId)
+        }
+         findNavController().navigate(R.id.editEventFragment, bundle)
+        Snackbar.make(binding.root, "Редактирование события будет реализовано в следующем обновлении", Snackbar.LENGTH_SHORT).show()
     }
 
     private fun setupSwipeRefresh() {
@@ -96,7 +161,6 @@ class EventsFragment : Fragment() {
             refreshData()
         }
 
-        // Показываем прогресс при первом запуске
         binding.swipeRefreshLayout.isRefreshing = true
     }
 

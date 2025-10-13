@@ -179,6 +179,45 @@ class EventRepositoryImpl @Inject constructor(
             }
         }
     }
+
+    override suspend fun uploadMedia(uri: Uri, type: Event.AttachmentType): String {
+        return withContext(Dispatchers.IO) {
+            try {
+                val file = createTempFileFromUri(uri)
+                if (file.length() > 15 * 1024 * 1024) {
+                    throw Exception("Размер файла превышает 15 МБ")
+                }
+
+                val mimeType = when (type) {
+                    Event.AttachmentType.IMAGE -> "image/*"
+                    Event.AttachmentType.VIDEO -> "video/*"
+                    Event.AttachmentType.AUDIO -> "audio/*"
+                }
+
+                val requestFile = file.asRequestBody(mimeType.toMediaTypeOrNull())
+                val filePart = MultipartBody.Part.createFormData("file", file.name, requestFile)
+
+                val response = mediaApi.uploadMedia(filePart)
+                if (!response.isSuccessful) {
+                    throw when (response.code()) {
+                        403 -> Exception("Нужно авторизоваться для загрузки медиа")
+                        415 -> Exception("Неподдерживаемый формат файла")
+                        else -> Exception("Ошибка загрузки медиа: ${response.code()}")
+                    }
+                }
+
+                val mediaDto = response.body() ?: throw Exception("Пустой ответ при загрузке медиа")
+                file.delete()
+                return@withContext mediaDto.url
+            } catch (e: Exception) {
+                throw when {
+                    e.message?.contains("network", ignoreCase = true) == true ->
+                        Exception("Ошибка сети при загрузке медиа")
+                    else -> Exception("Ошибка загрузки файла: ${e.message}")
+                }
+            }
+        }
+    }
     private suspend fun uploadMediaFile(
         fileUri: Uri,
         attachmentType: Event.AttachmentType
