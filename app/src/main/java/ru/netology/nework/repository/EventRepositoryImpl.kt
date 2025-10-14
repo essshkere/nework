@@ -1,22 +1,14 @@
 package ru.netology.nework.repository
 
+import android.net.Uri
 import androidx.paging.ExperimentalPagingApi
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.PagingData
 import androidx.paging.map
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
-import ru.netology.nework.api.EventApi
-import ru.netology.nework.dao.EventDao
-import ru.netology.nework.data.Event
-import ru.netology.nework.mapper.toDto
-import ru.netology.nework.mapper.toEntity
-import ru.netology.nework.mapper.toModel
-import javax.inject.Inject
-import javax.inject.Singleton
-import android.net.Uri
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
@@ -25,8 +17,13 @@ import ru.netology.nework.api.EventApi
 import ru.netology.nework.api.MediaApi
 import ru.netology.nework.dao.EventDao
 import ru.netology.nework.data.Event
+import ru.netology.nework.dto.AttachmentDto
+import ru.netology.nework.dto.AttachmentTypeDto
+import ru.netology.nework.dto.CoordinatesDto
 import ru.netology.nework.dto.EventDto
+import ru.netology.nework.dto.UserPreviewDto
 import ru.netology.nework.mapper.toEntity
+import ru.netology.nework.mapper.toModel
 import java.io.File
 import java.io.FileOutputStream
 import javax.inject.Inject
@@ -40,8 +37,17 @@ class EventRepositoryImpl @Inject constructor(
     private val mediaApi: MediaApi
 ) : EventRepository {
 
-    override fun getPagingData() = eventDao.pagingSource()
-        .map { it.toModel() }
+    override fun getPagingData(): Flow<PagingData<Event>> {
+        return Pager(
+            config = PagingConfig(
+                pageSize = 20,
+                enablePlaceholders = false
+            ),
+            pagingSourceFactory = { eventDao.pagingSource() }
+        ).flow.map { pagingData ->
+            pagingData.map { it.toModel() }
+        }
+    }
 
     override suspend fun getAll() {
         try {
@@ -107,47 +113,6 @@ class EventRepositoryImpl @Inject constructor(
         }
     }
 
-    private fun createEventDto(event: Event, uploadedAttachment: Event.Attachment?): EventDto {
-        return EventDto(
-            id = event.id,
-            authorId = event.authorId,
-            author = event.author,
-            authorAvatar = event.authorAvatar,
-            authorJob = event.authorJob,
-            content = event.content,
-            datetime = event.datetime,
-            published = event.published,
-            coords = event.coords?.let { coords ->
-                ru.netology.nework.dto.CoordinatesDto(
-                    lat = coords.lat.toString(),
-                    long = coords.long.toString()
-                )
-            },
-            type = when (event.type) {
-                Event.EventType.ONLINE -> ru.netology.nework.dto.EventTypeDto.ONLINE
-                Event.EventType.OFFLINE -> ru.netology.nework.dto.EventTypeDto.OFFLINE
-            },
-            likeOwnerIds = event.likeOwnerIds,
-            likedByMe = event.likedByMe,
-            speakerIds = event.speakerIds,
-            participantsIds = event.participantsIds,
-            participatedByMe = event.participatedByMe,
-            attachment = uploadedAttachment?.let { attachment ->
-                ru.netology.nework.dto.AttachmentDto(
-                    url = attachment.url,
-                    type = when (attachment.type) {
-                        Event.AttachmentType.IMAGE -> ru.netology.nework.dto.AttachmentTypeDto.IMAGE
-                        Event.AttachmentType.VIDEO -> ru.netology.nework.dto.AttachmentTypeDto.VIDEO
-                        Event.AttachmentType.AUDIO -> ru.netology.nework.dto.AttachmentTypeDto.AUDIO
-                    }
-                )
-            },
-            link = event.link,
-            users = emptyMap() // Сервер сам заполнит это поле
-        )
-    }
-
-
     override suspend fun save(event: Event) {
         try {
             val uploadedAttachment = event.attachment?.let { attachment ->
@@ -157,6 +122,7 @@ class EventRepositoryImpl @Inject constructor(
                     attachment
                 }
             }
+
             val eventDto = createEventDto(event, uploadedAttachment)
             val response = eventApi.save(eventDto)
             if (!response.isSuccessful) {
@@ -178,95 +144,6 @@ class EventRepositoryImpl @Inject constructor(
                 else -> Exception("Ошибка сохранения события: ${e.message}")
             }
         }
-    }
-
-    override suspend fun uploadMedia(uri: Uri, type: Event.AttachmentType): String {
-        return withContext(Dispatchers.IO) {
-            try {
-                val file = createTempFileFromUri(uri)
-                if (file.length() > 15 * 1024 * 1024) {
-                    throw Exception("Размер файла превышает 15 МБ")
-                }
-
-                val mimeType = when (type) {
-                    Event.AttachmentType.IMAGE -> "image/*"
-                    Event.AttachmentType.VIDEO -> "video/*"
-                    Event.AttachmentType.AUDIO -> "audio/*"
-                }
-
-                val requestFile = file.asRequestBody(mimeType.toMediaTypeOrNull())
-                val filePart = MultipartBody.Part.createFormData("file", file.name, requestFile)
-
-                val response = mediaApi.uploadMedia(filePart)
-                if (!response.isSuccessful) {
-                    throw when (response.code()) {
-                        403 -> Exception("Нужно авторизоваться для загрузки медиа")
-                        415 -> Exception("Неподдерживаемый формат файла")
-                        else -> Exception("Ошибка загрузки медиа: ${response.code()}")
-                    }
-                }
-
-                val mediaDto = response.body() ?: throw Exception("Пустой ответ при загрузке медиа")
-                file.delete()
-                return@withContext mediaDto.url
-            } catch (e: Exception) {
-                throw when {
-                    e.message?.contains("network", ignoreCase = true) == true ->
-                        Exception("Ошибка сети при загрузке медиа")
-                    else -> Exception("Ошибка загрузки файла: ${e.message}")
-                }
-            }
-        }
-    }
-    private suspend fun uploadMediaFile(
-        fileUri: Uri,
-        attachmentType: Event.AttachmentType
-    ): Event.Attachment = withContext(Dispatchers.IO) {
-        try {
-            val file = createTempFileFromUri(fileUri)
-            if (file.length() > 15 * 1024 * 1024) {
-                throw Exception("Размер файла превышает 15 МБ")
-            }
-
-            val mimeType = when (attachmentType) {
-                Event.AttachmentType.IMAGE -> "image/*"
-                Event.AttachmentType.VIDEO -> "video/*"
-                Event.AttachmentType.AUDIO -> "audio/*"
-            }
-            val requestFile = file.asRequestBody(mimeType.toMediaTypeOrNull())
-            val filePart = MultipartBody.Part.createFormData("file", file.name, requestFile)
-            val response = mediaApi.uploadMedia(filePart)
-            if (!response.isSuccessful) {
-                throw when (response.code()) {
-                    403 -> Exception("Нужно авторизоваться для загрузки медиа")
-                    415 -> Exception("Неподдерживаемый формат файла")
-                    else -> Exception("Ошибка загрузки медиа: ${response.code()}")
-                }
-            }
-            val mediaDto = response.body() ?: throw Exception("Пустой ответ при загрузке медиа")
-            file.delete()
-            return@withContext Event.Attachment(mediaDto.url, attachmentType)
-        } catch (e: Exception) {
-            throw when {
-                e.message?.contains("network", ignoreCase = true) == true ->
-                    Exception("Ошибка сети при загрузке медиа")
-                else -> Exception("Ошибка загрузки файла: ${e.message}")
-            }
-        }
-    }
-
-    private fun createTempFileFromUri(uri: Uri): File {
-        val context = ru.netology.nework.App.applicationContext()
-        val file = File.createTempFile("media_upload", ".tmp", context.cacheDir)
-        file.deleteOnExit()
-
-        context.contentResolver.openInputStream(uri)?.use { inputStream ->
-            FileOutputStream(file).use { outputStream ->
-                inputStream.copyTo(outputStream)
-            }
-        } ?: throw Exception("Не удалось открыть файл")
-
-        return file
     }
 
     override suspend fun participate(id: Long) {
@@ -327,5 +204,143 @@ class EventRepositoryImpl @Inject constructor(
         } catch (e: Exception) {
             null
         }
+    }
+
+    override suspend fun uploadMedia(uri: Uri, type: Event.AttachmentType): String {
+        return withContext(Dispatchers.IO) {
+            try {
+                val file = createTempFileFromUri(uri)
+                if (file.length() > 15 * 1024 * 1024) {
+                    throw Exception("Размер файла превышает 15 МБ")
+                }
+
+                val mimeType = when (type) {
+                    Event.AttachmentType.IMAGE -> "image/*"
+                    Event.AttachmentType.VIDEO -> "video/*"
+                    Event.AttachmentType.AUDIO -> "audio/*"
+                }
+
+                val requestFile = file.asRequestBody(mimeType.toMediaTypeOrNull())
+                val filePart = MultipartBody.Part.createFormData("file", file.name, requestFile)
+
+                val response = mediaApi.uploadMedia(filePart)
+                if (!response.isSuccessful) {
+                    throw when (response.code()) {
+                        403 -> Exception("Нужно авторизоваться для загрузки медиа")
+                        415 -> Exception("Неподдерживаемый формат файла")
+                        else -> Exception("Ошибка загрузки медиа: ${response.code()}")
+                    }
+                }
+
+                val mediaDto = response.body() ?: throw Exception("Пустой ответ при загрузке медиа")
+                file.delete()
+                return@withContext mediaDto.url
+            } catch (e: Exception) {
+                throw when {
+                    e.message?.contains("network", ignoreCase = true) == true ->
+                        Exception("Ошибка сети при загрузке медиа")
+                    else -> Exception("Ошибка загрузки файла: ${e.message}")
+                }
+            }
+        }
+    }
+
+    private suspend fun uploadMediaFile(
+        fileUri: Uri,
+        attachmentType: Event.AttachmentType
+    ): Event.Attachment = withContext(Dispatchers.IO) {
+        try {
+            val file = createTempFileFromUri(fileUri)
+            if (file.length() > 15 * 1024 * 1024) {
+                throw Exception("Размер файла превышает 15 МБ")
+            }
+
+            val mimeType = when (attachmentType) {
+                Event.AttachmentType.IMAGE -> "image/*"
+                Event.AttachmentType.VIDEO -> "video/*"
+                Event.AttachmentType.AUDIO -> "audio/*"
+            }
+
+            val requestFile = file.asRequestBody(mimeType.toMediaTypeOrNull())
+            val filePart = MultipartBody.Part.createFormData("file", file.name, requestFile)
+
+            val response = mediaApi.uploadMedia(filePart)
+            if (!response.isSuccessful) {
+                throw when (response.code()) {
+                    403 -> Exception("Нужно авторизоваться для загрузки медиа")
+                    415 -> Exception("Неподдерживаемый формат файла")
+                    else -> Exception("Ошибка загрузки медиа: ${response.code()}")
+                }
+            }
+
+            val mediaDto = response.body() ?: throw Exception("Пустой ответ при загрузке медиа")
+            file.delete()
+            return@withContext Event.Attachment(mediaDto.url, attachmentType)
+        } catch (e: Exception) {
+            throw when {
+                e.message?.contains("network", ignoreCase = true) == true ->
+                    Exception("Ошибка сети при загрузке медиа")
+                else -> Exception("Ошибка загрузки файла: ${e.message}")
+            }
+        }
+    }
+
+    private fun createTempFileFromUri(uri: Uri): File {
+        val context = ru.netology.nework.App.applicationContext()
+        val file = File.createTempFile("media_upload", ".tmp", context.cacheDir)
+        file.deleteOnExit()
+
+        context.contentResolver.openInputStream(uri)?.use { inputStream ->
+            FileOutputStream(file).use { outputStream ->
+                inputStream.copyTo(outputStream)
+            }
+        } ?: throw Exception("Не удалось открыть файл")
+
+        return file
+    }
+
+    private fun createEventDto(event: Event, uploadedAttachment: Event.Attachment?): EventDto {
+        return EventDto(
+            id = event.id,
+            authorId = event.authorId,
+            author = event.author,
+            authorAvatar = event.authorAvatar,
+            authorJob = event.authorJob,
+            content = event.content,
+            datetime = event.datetime,
+            published = event.published,
+            coords = event.coords?.let { coords ->
+                CoordinatesDto(
+                    lat = coords.lat.toString(),
+                    long = coords.long.toString()
+                )
+            },
+            type = when (event.type) {
+                Event.EventType.ONLINE -> ru.netology.nework.dto.EventTypeDto.ONLINE
+                Event.EventType.OFFLINE -> ru.netology.nework.dto.EventTypeDto.OFFLINE
+            },
+            likeOwnerIds = event.likeOwnerIds,
+            likedByMe = event.likedByMe,
+            speakerIds = event.speakerIds,
+            participantsIds = event.participantsIds,
+            participatedByMe = event.participatedByMe,
+            attachment = uploadedAttachment?.let { attachment ->
+                AttachmentDto(
+                    url = attachment.url,
+                    type = when (attachment.type) {
+                        Event.AttachmentType.IMAGE -> AttachmentTypeDto.IMAGE
+                        Event.AttachmentType.VIDEO -> AttachmentTypeDto.VIDEO
+                        Event.AttachmentType.AUDIO -> AttachmentTypeDto.AUDIO
+                    }
+                )
+            },
+            link = event.link,
+            users = event.users.mapValues { (_, userPreview) ->
+                UserPreviewDto(
+                    name = userPreview.name,
+                    avatar = userPreview.avatar
+                )
+            }
+        )
     }
 }

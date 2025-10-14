@@ -1,5 +1,6 @@
 package ru.netology.nework.repository
 
+import android.net.Uri
 import androidx.paging.ExperimentalPagingApi
 import androidx.paging.map
 import kotlinx.coroutines.Dispatchers
@@ -13,6 +14,11 @@ import ru.netology.nework.api.PostApi
 import ru.netology.nework.api.UserApi
 import ru.netology.nework.dao.PostDao
 import ru.netology.nework.data.Post
+import ru.netology.nework.dto.AttachmentDto
+import ru.netology.nework.dto.AttachmentTypeDto
+import ru.netology.nework.dto.CoordinatesDto
+import ru.netology.nework.dto.PostDto
+import ru.netology.nework.dto.UserPreviewDto
 import ru.netology.nework.mapper.toEntity
 import ru.netology.nework.mapper.toModel
 import java.io.File
@@ -103,7 +109,7 @@ class PostRepositoryImpl @Inject constructor(
         try {
             val uploadedAttachment = post.attachment?.let { attachment ->
                 if (attachment.url.startsWith("content://") || attachment.url.startsWith("file://")) {
-                    uploadMediaFile(android.net.Uri.parse(attachment.url), attachment.type)
+                    uploadMediaFile(Uri.parse(attachment.url), attachment.type)
                 } else {
                     attachment
                 }
@@ -220,7 +226,7 @@ class PostRepositoryImpl @Inject constructor(
     }
 
     private suspend fun uploadMediaFile(
-        fileUri: android.net.Uri,
+        fileUri: Uri,
         attachmentType: Post.AttachmentType
     ): Post.Attachment = withContext(Dispatchers.IO) {
         try {
@@ -259,7 +265,7 @@ class PostRepositoryImpl @Inject constructor(
         }
     }
 
-    private fun createTempFileFromUri(uri: android.net.Uri): File {
+    private fun createTempFileFromUri(uri: Uri): File {
         val context = ru.netology.nework.App.applicationContext()
         val file = File.createTempFile("media_upload", ".tmp", context.cacheDir)
         file.deleteOnExit()
@@ -273,8 +279,8 @@ class PostRepositoryImpl @Inject constructor(
         return file
     }
 
-    private fun createPostDto(post: Post, uploadedAttachment: Post.Attachment?): ru.netology.nework.dto.PostDto {
-        return ru.netology.nework.dto.PostDto(
+    private fun createPostDto(post: Post, uploadedAttachment: Post.Attachment?): PostDto {
+        return PostDto(
             id = post.id,
             authorId = post.authorId,
             author = post.author,
@@ -283,7 +289,7 @@ class PostRepositoryImpl @Inject constructor(
             content = post.content,
             published = post.published,
             coords = post.coords?.let { coords ->
-                ru.netology.nework.dto.CoordinatesDto(
+                CoordinatesDto(
                     lat = coords.lat.toString(),
                     long = coords.long.toString()
                 )
@@ -294,21 +300,64 @@ class PostRepositoryImpl @Inject constructor(
             likeOwnerIds = post.likeOwnerIds,
             likedByMe = post.likedByMe,
             attachment = uploadedAttachment?.let { attachment ->
-                ru.netology.nework.dto.AttachmentDto(
+                AttachmentDto(
                     url = attachment.url,
                     type = when (attachment.type) {
-                        Post.AttachmentType.IMAGE -> ru.netology.nework.dto.AttachmentTypeDto.IMAGE
-                        Post.AttachmentType.VIDEO -> ru.netology.nework.dto.AttachmentTypeDto.VIDEO
-                        Post.AttachmentType.AUDIO -> ru.netology.nework.dto.AttachmentTypeDto.AUDIO
+                        Post.AttachmentType.IMAGE -> AttachmentTypeDto.IMAGE
+                        Post.AttachmentType.VIDEO -> AttachmentTypeDto.VIDEO
+                        Post.AttachmentType.AUDIO -> AttachmentTypeDto.AUDIO
                     }
                 )
             },
             users = post.users.mapValues { (_, userPreview) ->
-                ru.netology.nework.dto.UserPreviewDto(
+                UserPreviewDto(
                     name = userPreview.name,
                     avatar = userPreview.avatar
                 )
             }
         )
+    }
+
+    // Методы для работы с комментариями
+    override suspend fun getComments(postId: Long): List<ru.netology.nework.data.Comment> {
+        return try {
+            val response = postApi.getComments(postId)
+            if (response.isSuccessful) {
+                response.body()?.map { it.toModel() } ?: emptyList()
+            } else {
+                emptyList()
+            }
+        } catch (e: Exception) {
+            emptyList()
+        }
+    }
+
+    override suspend fun saveComment(comment: ru.netology.nework.data.Comment): ru.netology.nework.data.Comment {
+        val response = postApi.saveComment(comment.postId, comment.toDto())
+        if (!response.isSuccessful) {
+            throw Exception("Ошибка сохранения комментария: ${response.code()}")
+        }
+        return response.body()!!.toModel()
+    }
+
+    override suspend fun likeComment(postId: Long, commentId: Long) {
+        val response = postApi.likeComment(postId, commentId)
+        if (!response.isSuccessful) {
+            throw Exception("Ошибка лайка комментария: ${response.code()}")
+        }
+    }
+
+    override suspend fun dislikeComment(postId: Long, commentId: Long) {
+        val response = postApi.dislikeComment(postId, commentId)
+        if (!response.isSuccessful) {
+            throw Exception("Ошибка дизлайка комментария: ${response.code()}")
+        }
+    }
+
+    override suspend fun removeComment(postId: Long, commentId: Long) {
+        val response = postApi.removeComment(postId, commentId)
+        if (!response.isSuccessful) {
+            throw Exception("Ошибка удаления комментария: ${response.code()}")
+        }
     }
 }

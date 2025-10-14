@@ -1,8 +1,8 @@
 package ru.netology.nework.api
 
+import retrofit2.Response
 import retrofit2.http.*
 import ru.netology.nework.dto.EventDto
-import retrofit2.Response
 
 interface EventApi {
     @GET("api/events")
@@ -34,6 +34,7 @@ interface EventApi {
 
     @GET("api/events/{id}/newer")
     suspend fun getNewer(@Path("id") id: Long): Response<List<EventDto>>
+
     @GET("api/events/{id}/before")
     suspend fun getBefore(
         @Path("id") id: Long,

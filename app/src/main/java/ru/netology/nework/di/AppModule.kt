@@ -112,4 +112,35 @@ object AppModule {
     @Provides
     @Singleton
     fun provideJobRepository(jobApi: JobApi): JobRepository = JobRepositoryImpl(jobApi)
+
+    @Provides
+    @Singleton
+    fun provideAuthInterceptor(authRepository: AuthRepository): Interceptor {
+        return Interceptor { chain ->
+            val originalRequest = chain.request()
+            val requestBuilder = originalRequest.newBuilder()
+                .addHeader("Api-Key", "c1378193-bc0e-42c8-a502-b8d66d189617")
+
+            authRepository.getToken()?.let { token ->
+                requestBuilder.addHeader("Authorization", "Bearer $token")
+            }
+
+            val request = requestBuilder.build()
+            chain.proceed(request)
+        }
+    }
+
+    @Provides
+    @Singleton
+    fun provideOkHttpClient(authInterceptor: Interceptor): OkHttpClient {
+        val loggingInterceptor = HttpLoggingInterceptor().apply {
+            level = HttpLoggingInterceptor.Level.BODY
+        }
+
+        return OkHttpClient.Builder()
+            .addInterceptor(authInterceptor)
+            .addInterceptor(loggingInterceptor)
+            .build()
+    }
+
 }

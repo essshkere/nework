@@ -1,8 +1,6 @@
 package ru.netology.nework.repository
 
-import ru.netology.nework.dto.LoginRequestDto
 import ru.netology.nework.dto.LoginResponseDto
-import ru.netology.nework.dto.RegisterRequestDto
 
 interface AuthRepository {
     suspend fun signIn(login: String, password: String): LoginResponseDto

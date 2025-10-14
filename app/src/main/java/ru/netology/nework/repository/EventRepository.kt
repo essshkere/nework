@@ -3,6 +3,7 @@ package ru.netology.nework.repository
 import androidx.paging.PagingData
 import kotlinx.coroutines.flow.Flow
 import ru.netology.nework.data.Event
+import java.net.URI
 
 interface EventRepository {
     fun getPagingData(): Flow<PagingData<Event>>
@@ -14,5 +15,5 @@ interface EventRepository {
     suspend fun participate(id: Long)
     suspend fun unparticipate(id: Long)
     suspend fun getById(id: Long): Event?
-    suspend fun uploadMedia(uri: Uri, type: Event.AttachmentType): String
+    suspend fun uploadMedia(uri: URI, type: Event.AttachmentType): String
 }

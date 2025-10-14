@@ -31,7 +31,7 @@ class AuthRepositoryImpl @Inject constructor(
     private companion object {
         const val KEY_TOKEN = "token"
         const val KEY_USER_ID = "user_id"
-        const val MAX_AVATAR_SIZE = 2048
+        const val MAX_AVATAR_SIZE = 5 * 1024 * 1024
     }
 
     override suspend fun signIn(login: String, password: String): LoginResponseDto {
@@ -83,6 +83,8 @@ class AuthRepositoryImpl @Inject constructor(
                 throw when {
                     e.message?.contains("Unable to resolve host") == true ->
                         Exception("Ошибка сети. Проверьте подключение к интернету")
+                    e.message?.contains("Размер файла") == true ->
+                        Exception("Размер файла превышает 5 МБ")
                     else -> e
                 }
             }
@@ -93,9 +95,8 @@ class AuthRepositoryImpl @Inject constructor(
         return try {
             val inputStream: InputStream? = context.contentResolver.openInputStream(avatarUri)
             val file = createTempFileFromUri(avatarUri, inputStream)
-
-
-            if (file.length() > 5 * 1024 * 1024) { // 5MB limit
+            if (file.length() > MAX_AVATAR_SIZE) {
+                file.delete()
                 throw Exception("Размер файла превышает 5 МБ")
             }
 
@@ -114,7 +115,7 @@ class AuthRepositoryImpl @Inject constructor(
             FileOutputStream(file).use { output ->
                 input.copyTo(output)
             }
-        }
+        } ?: throw Exception("Не удалось открыть файл")
 
         return file
     }
@@ -139,6 +140,7 @@ class AuthRepositoryImpl @Inject constructor(
     override fun saveUserId(userId: Long) {
         prefs.edit().putLong(KEY_USER_ID, userId).apply()
     }
+
     override fun clearToken() {
         prefs.edit().remove(KEY_TOKEN).apply()
     }
