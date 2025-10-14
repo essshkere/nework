@@ -28,20 +28,15 @@ import javax.inject.Inject
 
 @AndroidEntryPoint
 class EventDetailsFragment : Fragment() {
-
     private var _binding: FragmentEventDetailsBinding? = null
     private val binding get() = _binding!!
-
     private val eventsViewModel: EventsViewModel by viewModels()
     private val usersViewModel: UsersViewModel by viewModels()
     private val authViewModel: AuthViewModel by viewModels()
-
     @Inject
     lateinit var speakersAdapter: ParticipantAdapter
-
     @Inject
     lateinit var participantsAdapter: ParticipantAdapter
-
     private var eventId: Long = 0
 
     override fun onCreateView(
@@ -207,7 +202,47 @@ class EventDetailsFragment : Fragment() {
                 usersViewModel.getUserById(userId)
             }
             speakersAdapter.submitList(speakers)
-            binding.speakersCardView.visibility = if (speakers.isNotEmpty()) View.VISIBLE else View.GONE
+            binding.speakersCardView.visibility = if (speakerIds.isNotEmpty()) View.VISIBLE else View.GONE
+            if (speakerIds.isNotEmpty()) {
+                binding.speakersTitle.text = when (speakerIds.size) {
+                    1 -> "Спикер (1)"
+                    in 2..4 -> "Спикеры (${speakerIds.size})"
+                    else -> "Спикеры (${speakerIds.size})"
+                }
+                if (speakers.size < speakerIds.size) {
+                    binding.speakersTitle.text = "${binding.speakersTitle.text} • загружено ${speakers.size}"
+                }
+            }
+        }
+    }
+
+    private fun showAllSpeakersDialog() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            val event = eventsViewModel.getById(eventId)
+            val speakerIds = event?.speakerIds ?: emptyList()
+            if (speakerIds.isEmpty()) return@launch
+
+            val speakers = speakerIds.mapNotNull { userId ->
+                usersViewModel.getUserById(userId)
+            }
+
+            val speakerNames = speakers.joinToString("\n") { "• ${it.name} (@${it.login})" }
+
+            androidx.appcompat.app.AlertDialog.Builder(requireContext())
+                .setTitle("Спикеры события")
+                .setMessage(if (speakerNames.isNotEmpty()) speakerNames else "Загрузка спикеров...")
+                .setPositiveButton("OK", null)
+                .show()
+        }
+    }
+
+    private fun setupSpeakersClickListeners() {
+        binding.speakersCardView.setOnClickListener {
+            showAllSpeakersDialog()
+        }
+
+        speakersAdapter.onUserClicked = { userId ->
+            navigateToUserProfile(userId)
         }
     }
 

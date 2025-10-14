@@ -36,7 +36,6 @@ object AppModule {
             val originalRequest = chain.request()
             val requestBuilder = originalRequest.newBuilder()
                 .addHeader("Api-Key", "c1378193-bc0e-42c8-a502-b8d66d189617")
-
             authRepository.getToken()?.let { token ->
                 requestBuilder.addHeader("Authorization", "Bearer $token")
             }
@@ -44,26 +43,6 @@ object AppModule {
             val request = requestBuilder.build()
             chain.proceed(request)
         }
-
-        val tokenRefreshInterceptor = Interceptor { chain ->
-            val request = chain.request()
-            val response = chain.proceed(request)
-
-            if (response.code == 403) {
-                response.close()
-                runBlocking {
-                    authRepository.logout()
-                }
-                val newRequest = request.newBuilder()
-                    .removeHeader("Authorization")
-                    .build()
-
-                return@Interceptor chain.proceed(newRequest)
-            }
-
-            response
-        }
-
         return OkHttpClient.Builder()
             .addInterceptor(authInterceptor)
             .addInterceptor(tokenRefreshInterceptor)

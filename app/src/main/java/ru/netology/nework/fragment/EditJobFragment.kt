@@ -227,7 +227,6 @@ class EditJobFragment : Fragment(), MenuProvider {
         if (!validateForm()) {
             return
         }
-
         val companyName = binding.companyNameEditText.text.toString().trim()
         val position = binding.positionEditText.text.toString().trim()
         val link = binding.linkEditText.text.toString().trim().takeIf { it.isNotBlank() }
@@ -238,7 +237,6 @@ class EditJobFragment : Fragment(), MenuProvider {
         } else {
             null
         }
-
         val updatedJob = currentJob?.copy(
             name = companyName,
             position = position,

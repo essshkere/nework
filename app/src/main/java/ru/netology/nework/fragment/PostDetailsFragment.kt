@@ -175,12 +175,15 @@ class PostDetailsFragment : Fragment() {
                 usersViewModel.getUserById(userId)
             }
             participantAdapter.submitList(mentionedUsers)
-            binding.mentionedUsersCardView.visibility = if (mentionedUsers.isNotEmpty()) View.VISIBLE else View.GONE
-
-            if (mentionedUsers.isNotEmpty()) {
-                binding.mentionedUsersTitle.text = when (mentionedUsers.size) {
+            binding.mentionedUsersCardView.visibility = if (mentionIds.isNotEmpty()) View.VISIBLE else View.GONE
+            if (mentionIds.isNotEmpty()) {
+                binding.mentionedUsersTitle.text = when (mentionIds.size) {
                     1 -> "Упомянут 1 пользователь"
-                    else -> "Упомянуто ${mentionedUsers.size} пользователей"
+                    in 2..4 -> "Упомянуто ${mentionIds.size} пользователя"
+                    else -> "Упомянуто ${mentionIds.size} пользователей"
+                }
+                if (mentionedUsers.size < mentionIds.size) {
+                    binding.mentionedUsersTitle.text = "${binding.mentionedUsersTitle.text} (загружено ${mentionedUsers.size})"
                 }
             }
         }
@@ -207,6 +210,33 @@ class PostDetailsFragment : Fragment() {
             outputFormat.format(date!!)
         } catch (e: Exception) {
             dateString
+        }
+    }
+
+    private fun setupMentionedUsersClickListeners() {
+        participantAdapter.onUserClicked = { userId ->
+            navigateToUserProfile(userId)
+        }
+        binding.mentionedUsersCardView.setOnClickListener {
+            showAllMentionedUsersDialog()
+        }
+    }
+    private fun showAllMentionedUsersDialog() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            val mentionIds = postsViewModel.getPostById(postId)?.mentionIds ?: emptyList()
+            if (mentionIds.isEmpty()) return@launch
+
+            val mentionedUsers = mentionIds.mapNotNull { userId ->
+                usersViewModel.getUserById(userId)
+            }
+
+            val userNames = mentionedUsers.joinToString("\n") { "• ${it.name} (@${it.login})" }
+
+            androidx.appcompat.app.AlertDialog.Builder(requireContext())
+                .setTitle("Упомянутые пользователи")
+                .setMessage(if (userNames.isNotEmpty()) userNames else "Загрузка...")
+                .setPositiveButton("OK", null)
+                .show()
         }
     }
 

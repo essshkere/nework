@@ -1,7 +1,13 @@
 package ru.netology.nework.adapter
 
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
+import android.content.Intent
 import android.view.LayoutInflater
+import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
@@ -80,15 +86,19 @@ class PostAdapter : ListAdapter<Post, PostAdapter.ViewHolder>(DiffCallback) {
 
                 val mentionIds = post.mentionIds
                 if (mentionIds.isNotEmpty()) {
-                    mentionedUsersTextView.visibility = android.view.View.VISIBLE
-                    val mentionedUsersText = if (mentionIds.size == 1) {
-                        "Упомянут 1 пользователь"
-                    } else {
-                        "Упомянуто ${mentionIds.size} пользователей"
+                    mentionedUsersTextView.visibility = View.VISIBLE
+                    val mentionedUsersText = when (mentionIds.size) {
+                        1 -> "Упомянут 1 пользователь"
+                        in 2..4 -> "Упомянуто ${mentionIds.size} пользователя"
+                        else -> "Упомянуто ${mentionIds.size} пользователей"
                     }
                     mentionedUsersTextView.text = mentionedUsersText
+
+                    mentionedUsersTextView.setOnClickListener {
+                        showMentionedUsersPreview(post.mentionIds)
+                    }
                 } else {
-                    mentionedUsersTextView.visibility = android.view.View.GONE
+                    mentionedUsersTextView.visibility = View.GONE
                 }
 
                 val likeIcon = if (post.likedByMe) {
@@ -125,7 +135,8 @@ class PostAdapter : ListAdapter<Post, PostAdapter.ViewHolder>(DiffCallback) {
 
         private fun formatDate(dateString: String): String {
             return try {
-                val inputFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX", Locale.getDefault())
+                val inputFormat =
+                    SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX", Locale.getDefault())
                 val outputFormat = SimpleDateFormat("dd.MM.yyyy HH:mm", Locale.getDefault())
                 val date = inputFormat.parse(dateString) ?: Date()
                 outputFormat.format(date)
@@ -133,6 +144,79 @@ class PostAdapter : ListAdapter<Post, PostAdapter.ViewHolder>(DiffCallback) {
                 dateString
             }
         }
+
+        private fun showMentionedUsersPreview(mentionIds: List<Long>) {
+            val context = binding.root.context
+            androidx.appcompat.app.AlertDialog.Builder(context)
+                .setTitle("Упомянутые пользователи")
+                .setMessage("Упомянуто пользователей: ${mentionIds.size}\nID: ${mentionIds.joinToString()}")
+                .setPositiveButton("Подробнее") { dialog, _ ->
+                    onMentionClicked?.invoke(mentionIds.firstOrNull() ?: 0)
+                    dialog.dismiss()
+                }
+                .setNegativeButton("OK", null)
+                .show()
+        }
+
+
+        private fun showPostMenuOptions(post: Post) {
+            val isOwnPost = authViewModel.getUserId() == post.authorId
+
+            val options = mutableListOf<String>()
+
+            if (isOwnPost) {
+                options.add("Редактировать")
+                options.add("Удалить")
+            } else {
+                options.add("Пожаловаться")
+            }
+
+            options.add("Поделиться")
+            options.add("Скопировать ссылку")
+
+            androidx.appcompat.app.AlertDialog.Builder(binding.root.context)
+                .setTitle("Опции поста")
+                .setItems(options.toTypedArray()) { _, which ->
+                    when (options[which]) {
+                        "Редактировать" -> navigateToEditPost(post.id)
+                        "Удалить" -> confirmDeletePost(post)
+                        "Пожаловаться" -> showReportPostDialog(post)
+                        "Поделиться" -> sharePost(post)
+                        "Скопировать ссылку" -> copyPostLink(post)
+                    }
+                }
+                .setNegativeButton("Отмена", null)
+                .show()
+        }
+
+        private fun navigateToEditPost(postId: Long) {
+
+            onEditPostClicked?.invoke(postId)
+        }
+
+        private fun sharePost(post: Post) {
+            val shareIntent = Intent().apply {
+                action = Intent.ACTION_SEND
+                putExtra(Intent.EXTRA_TEXT, "Посмотрите этот пост: ${post.content.take(100)}...")
+                type = "text/plain"
+            }
+            binding.root.context.startActivity(
+                Intent.createChooser(
+                    shareIntent,
+                    "Поделиться постом"
+                )
+            )
+        }
+
+        private fun copyPostLink(post: Post) {
+            val clipboard =
+                binding.root.context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+            val clip = ClipData.newPlainText("post_link", "https://nework/post/${post.id}")
+            clipboard.setPrimaryClip(clip)
+            Toast.makeText(binding.root.context, "Ссылка скопирована", Toast.LENGTH_SHORT).show()
+        }
+
+        var onEditPostClicked: ((Long) -> Unit)? = null
     }
 
     companion object {

@@ -66,34 +66,41 @@ fun PostEntity.toModel(): Post = Post(
     }
 )
 
-fun Post.toDto(): PostDto = PostDto(
-    id = id,
-    authorId = authorId,
-    author = author,
-    authorAvatar = authorAvatar,
-    authorJob = authorJob,
-    content = content,
-    published = published,
-    coords = coords?.let { CoordinatesDto(it.lat.toString(), it.long.toString()) },
-    link = link,
-    mentionIds = mentionIds,
-    mentionedMe = false,
-    likeOwnerIds = likeOwnerIds,
-    likedByMe = likedByMe,
-    attachment = attachment?.let {
-        AttachmentDto(
-            it.url,
-            when (it.type) {
-                Post.AttachmentType.IMAGE -> AttachmentTypeDto.IMAGE
-                Post.AttachmentType.VIDEO -> AttachmentTypeDto.VIDEO
-                Post.AttachmentType.AUDIO -> AttachmentTypeDto.AUDIO
-            }
-        )
-    },
-    users = users.mapValues { (_, userPreview) ->
-        ru.netology.nework.dto.UserPreviewDto(
-            name = userPreview.name,
-            avatar = userPreview.avatar
-        )
-    }
-)
+fun Post.toDto(): PostDto {
+    return PostDto(
+        id = id,
+        authorId = authorId,
+        author = author,
+        authorAvatar = authorAvatar,
+        authorJob = authorJob,
+        content = content,
+        published = published,
+        coords = coords?.let {
+            CoordinatesDto(
+                lat = it.lat,
+                long = it.long
+            )
+        },
+        link = link,
+        mentionIds = mentionIds,
+        mentionedMe = mentionedMe,
+        likeOwnerIds = likeOwnerIds,
+        likedByMe = likedByMe,
+        attachment = attachment?.let {
+            AttachmentDto(
+                it.url,
+                when (it.type) {
+                    Post.AttachmentType.IMAGE -> AttachmentTypeDto.IMAGE
+                    Post.AttachmentType.VIDEO -> AttachmentTypeDto.VIDEO
+                    Post.AttachmentType.AUDIO -> AttachmentTypeDto.AUDIO
+                }
+            )
+        },
+        users = users.mapValues { (_, userPreview) ->
+            UserPreviewDto(
+                name = userPreview.name,
+                avatar = userPreview.avatar
+            )
+        }
+    )
+}

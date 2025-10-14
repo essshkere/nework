@@ -20,12 +20,14 @@ fun UserEntity.toModel(): User = User(
     avatar = avatar
 )
 
-fun User.toDto(): UserDto = UserDto(
-    id = id,
-    login = login,
-    name = name,
-    avatar = avatar
-)
+fun User.toDto(): UserDto {
+    return UserDto(
+        id = id,
+        login = login,
+        name = name,
+        avatar = avatar
+    )
+}
 
 fun JobDto.toModel(): Job = Job(
     id = id,
@@ -35,11 +37,23 @@ fun JobDto.toModel(): Job = Job(
     finish = finish,
     link = link
 )
-fun Job.toDto(): JobDto = JobDto(
-    id = id,
-    name = name,
-    position = position,
-    start = start,
-    finish = finish,
-    link = link
-)
+fun Job.toDto(): JobDto {
+    val dateRegex = Regex("\\d{4}-\\d{2}-\\d{2}")
+    if (!dateRegex.matches(start)) {
+        throw IllegalArgumentException("Invalid start date format in Job: $start. Expected: yyyy-MM-dd")
+    }
+    finish?.let {
+        if (!dateRegex.matches(it)) {
+            throw IllegalArgumentException("Invalid finish date format in Job: $it. Expected: yyyy-MM-dd")
+        }
+    }
+
+    return JobDto(
+        id = id,
+        name = name,
+        position = position,
+        start = start,
+        finish = finish,
+        link = link
+    )
+}

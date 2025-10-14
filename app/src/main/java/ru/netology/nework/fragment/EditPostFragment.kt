@@ -91,45 +91,6 @@ class EditPostFragment : Fragment(), MenuProvider {
         setupMapResultListener()
     }
 
-    private fun loadPostData() {
-        viewLifecycleOwner.lifecycleScope.launch {
-            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                val post = postsViewModel.getPostById(args.postId)
-                post?.let {
-                    bindPostData(it)
-                } ?: run {
-                    Snackbar.make(binding.root, "Пост не найден", Snackbar.LENGTH_SHORT).show()
-                    findNavController().navigateUp()
-                }
-            }
-        }
-    }
-
-    private fun bindPostData(post: ru.netology.nework.data.Post) {
-        binding.contentEditText.setText(post.content)
-        coordinates = post.coords
-        mentionedUserIds = post.mentionIds
-
-        updateSelectedLocationText()
-
-
-        post.attachment?.let { attachment ->
-            when (attachment.type) {
-                ru.netology.nework.data.Post.AttachmentType.IMAGE -> {
-                    showImageAttachmentPreview(Uri.parse(attachment.url))
-                }
-
-                ru.netology.nework.data.Post.AttachmentType.VIDEO -> {
-                    showVideoAttachmentPreview(Uri.parse(attachment.url))
-                }
-
-                ru.netology.nework.data.Post.AttachmentType.AUDIO -> {
-                    showAudioAttachmentPreview()
-                }
-            }
-        }
-    }
-
     override fun onCreateMenu(menu: Menu, menuInflater: MenuInflater) {
         menuInflater.inflate(R.menu.menu_edit_post, menu)
     }
@@ -157,10 +118,15 @@ class EditPostFragment : Fragment(), MenuProvider {
 
         viewLifecycleOwner.lifecycleScope.launch {
             try {
+                val existingPost = postsViewModel.getPostById(args.postId)
+                if (existingPost == null) {
+                    showError("Пост не найден")
+                    return@launch
+                }
+
                 val uploadedAttachment = attachmentUri?.let { uri ->
                     try {
-                        val mediaType =
-                            attachmentType ?: ru.netology.nework.data.Post.AttachmentType.IMAGE
+                        val mediaType = attachmentType ?: Post.AttachmentType.IMAGE
                         postsViewModel.uploadMedia(uri, mediaType)
                     } catch (e: Exception) {
                         showError("Ошибка загрузки медиа: ${e.message}")
@@ -168,22 +134,14 @@ class EditPostFragment : Fragment(), MenuProvider {
                     }
                 }
 
-                val currentDate =
-                    SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX", Locale.getDefault())
-                        .format(Date())
-
-                val post = ru.netology.nework.data.Post(
-                    id = args.postId,
-                    authorId = 0,
-                    author = "",
+                val updatedPost = existingPost.copy(
                     content = content,
-                    published = currentDate,
                     coords = coordinates,
                     mentionIds = mentionedUserIds,
-                    attachment = uploadedAttachment
+                    attachment = uploadedAttachment ?: existingPost.attachment
                 )
 
-                postsViewModel.save(post)
+                postsViewModel.save(updatedPost)
                 Snackbar.make(binding.root, "Пост обновлен", Snackbar.LENGTH_SHORT).show()
                 findNavController().navigateUp()
             } catch (e: Exception) {
@@ -218,7 +176,46 @@ class EditPostFragment : Fragment(), MenuProvider {
             removeAttachment()
         }
     }
-
+    private fun loadPostData() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                val post = postsViewModel.getPostById(args.postId)
+                post?.let {
+                    bindPostData(it)
+                } ?: run {
+                    Snackbar.make(binding.root, "Пост не найден", Snackbar.LENGTH_SHORT).show()
+                    findNavController().navigateUp()
+                }
+            }
+        }
+    }
+    private fun bindPostData(post: Post) {
+        binding.contentEditText.setText(post.content)
+        coordinates = post.coords
+        mentionedUserIds = post.mentionIds
+        updateSelectedLocationText()
+        updateMentionedUsersText()
+        post.attachment?.let { attachment ->
+            when (attachment.type) {
+                Post.AttachmentType.IMAGE -> {
+                    binding.attachmentPreview.visibility = View.VISIBLE
+                    Glide.with(this)
+                        .load(attachment.url)
+                        .centerCrop()
+                        .into(binding.attachmentPreview)
+                }
+                Post.AttachmentType.VIDEO -> {
+                    binding.attachmentPreview.visibility = View.VISIBLE
+                    binding.attachmentPreview.setImageResource(R.drawable.ic_video)
+                }
+                Post.AttachmentType.AUDIO -> {
+                    binding.attachmentPreview.visibility = View.VISIBLE
+                    binding.attachmentPreview.setImageResource(R.drawable.ic_audio)
+                }
+            }
+            binding.removeAttachmentButton.visibility = View.VISIBLE
+        }
+    }
     private fun setupMapResultListener() {
         parentFragmentManager.setFragmentResultListener(
             MapFragment.LOCATION_SELECTION_KEY,

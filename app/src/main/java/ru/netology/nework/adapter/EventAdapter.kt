@@ -1,13 +1,15 @@
 package ru.netology.nework.adapter
 
+import android.content.Intent
 import android.view.LayoutInflater
 import android.view.ViewGroup
+import android.widget.Toast
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
-import ru.netology.nework.databinding.ItemEventBinding
 import ru.netology.nework.data.Event
+import ru.netology.nework.databinding.ItemEventBinding
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -112,6 +114,76 @@ class EventAdapter : ListAdapter<Event, EventAdapter.ViewHolder>(DiffCallback) {
                 menuButton.visibility = android.view.View.VISIBLE
                 menuButton.setOnClickListener {
                     onMenuClicked?.invoke(event)
+                }
+                private fun showEventMenuOptions(event: Event) {
+                    val isOwnEvent = authViewModel.getUserId() == event.authorId
+
+                    val options = mutableListOf<String>()
+
+                    if (isOwnEvent) {
+                        options.add("Редактировать")
+                        options.add("Удалить")
+                        options.add("Управление участниками")
+                    } else {
+                        options.add("Пожаловаться")
+                        if (event.participatedByMe) {
+                            options.add("Отказаться от участия")
+                        } else {
+                            options.add("Участвовать")
+                        }
+                    }
+
+                    options.add("Поделиться")
+                    options.add("Добавить в календарь")
+
+                    androidx.appcompat.app.AlertDialog.Builder(binding.root.context)
+                        .setTitle("Опции события")
+                        .setItems(options.toTypedArray()) { _, which ->
+                            when (options[which]) {
+                                "Редактировать" -> navigateToEditEvent(event.id)
+                                "Удалить" -> confirmDeleteEvent(event)
+                                "Управление участниками" -> manageEventParticipants(event)
+                                "Пожаловаться" -> showReportEventDialog(event)
+                                "Отказаться от участия" -> eventsViewModel.unparticipate(event.id)
+                                "Участвовать" -> eventsViewModel.participate(event.id)
+                                "Поделиться" -> shareEvent(event)
+                                "Добавить в календарь" -> addToCalendar(event)
+                            }
+                        }
+                        .setNegativeButton("Отмена", null)
+                        .show()
+
+                    private fun navigateToEditEvent(eventId: Long) {
+                        onEditEventClicked?.invoke(eventId)
+                    }
+
+                    private fun manageEventParticipants(event: Event) {
+                        androidx.appcompat.app.AlertDialog.Builder(binding.root.context)
+                            .setTitle("Участники события")
+                            .setMessage("Участников: ${event.participantsIds.size}\nСпикеров: ${event.speakerIds.size}")
+                            .setPositiveButton("Подробнее") { dialog, _ ->
+                                onEventClicked?.invoke(event.id)
+                                dialog.dismiss()
+                            }
+                            .setNegativeButton("OK", null)
+                            .show()
+                    }
+
+                    private fun shareEvent(event: Event) {
+                        val shareIntent = Intent().apply {
+                            action = Intent.ACTION_SEND
+                            putExtra(Intent.EXTRA_TEXT, "Присоединяйтесь к событию: ${event.content.take(100)}...")
+                            type = "text/plain"
+                        }
+                        binding.root.context.startActivity(Intent.createChooser(shareIntent, "Поделиться событием"))
+                    }
+
+                    private fun addToCalendar(event: Event) {
+                        Toast.makeText(binding.root.context, "Функция добавления в календарь в разработке", Toast.LENGTH_SHORT).show()
+                    }
+
+                    var onEditEventClicked: ((Long) -> Unit)? = null
+
                 }
             }
         }

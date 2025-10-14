@@ -8,6 +8,7 @@ import ru.netology.nework.dto.AttachmentTypeDto
 import ru.netology.nework.dto.CoordinatesDto
 import ru.netology.nework.dto.EventDto
 import ru.netology.nework.dto.EventTypeDto
+import ru.netology.nework.dto.UserPreviewDto
 
 private val gson = Gson()
 
@@ -72,30 +73,47 @@ fun EventEntity.toModel(): Event = Event(
     }
 )
 
-fun Event.toDto(): EventDto = EventDto(
-    id = id,
-    authorId = authorId,
-    author = author,
-    authorAvatar = authorAvatar,
-    authorJob = authorJob,
-    content = content,
-    datetime = datetime,
-    published = published,
-    coords = coords?.let { CoordinatesDto(it.lat.toString(), it.long.toString()) },
-    type = EventTypeDto.valueOf(type.name),
-    likeOwnerIds = likeOwnerIds,
-    likedByMe = likedByMe,
-    speakerIds = speakerIds,
-    participantsIds = participantsIds,
-    participatedByMe = participatedByMe,
-    attachment = attachment?.let {
-        AttachmentDto(it.url, AttachmentTypeDto.valueOf(it.type.name))
-    },
-    link = link,
-    users = users.mapValues { (_, userPreview) ->
-        ru.netology.nework.dto.UserPreviewDto(
-            name = userPreview.name,
-            avatar = userPreview.avatar
-        )
-    }
-)
+fun Event.toDto(): EventDto {
+    return EventDto(
+        id = id,
+        authorId = authorId,
+        author = author,
+        authorAvatar = authorAvatar,
+        authorJob = authorJob,
+        content = content,
+        datetime = datetime,
+        published = published,
+        coords = coords?.let {
+            CoordinatesDto(
+                lat = it.lat,
+                long = it.long
+            )
+        },
+        type = when (type) {
+            Event.EventType.ONLINE -> EventTypeDto.ONLINE
+            Event.EventType.OFFLINE -> EventTypeDto.OFFLINE
+        },
+        likeOwnerIds = likeOwnerIds,
+        likedByMe = likedByMe,
+        speakerIds = speakerIds,
+        participantsIds = participantsIds,
+        participatedByMe = participatedByMe,
+        attachment = attachment?.let {
+            AttachmentDto(
+                it.url,
+                when (it.type) {
+                    Event.AttachmentType.IMAGE -> AttachmentTypeDto.IMAGE
+                    Event.AttachmentType.VIDEO -> AttachmentTypeDto.VIDEO
+                    Event.AttachmentType.AUDIO -> AttachmentTypeDto.AUDIO
+                }
+            )
+        },
+        link = link,
+        users = users.mapValues { (_, userPreview) ->
+            UserPreviewDto(
+                name = userPreview.name,
+                avatar = userPreview.avatar
+            )
+        }
+    )
+}

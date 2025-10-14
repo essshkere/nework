@@ -370,8 +370,6 @@ class CreateJobFragment : Fragment(), MenuProvider {
         val companyName = binding.companyNameEditText.text.toString().trim()
         val position = binding.positionEditText.text.toString().trim()
         val link = binding.linkEditText.text.toString().trim().takeIf { it.isNotBlank() }
-
-        // Форматируем даты для сервера
         val startDateFormatted = serverDateFormat.format(startDate!!)
         val finishDateFormatted = if (!binding.currentJobCheckbox.isChecked) {
             serverDateFormat.format(finishDate!!)

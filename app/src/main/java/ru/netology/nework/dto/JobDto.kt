@@ -7,6 +7,6 @@ data class JobDto(
     @SerializedName("name") val name: String,
     @SerializedName("position") val position: String,
     @SerializedName("start") val start: String,
-    @SerializedName("finish") val finish: String? = null,
-    @SerializedName("link") val link: String? = null
+    @SerializedName("finish") val finish: String?,
+    @SerializedName("link") val link: String?
 )
