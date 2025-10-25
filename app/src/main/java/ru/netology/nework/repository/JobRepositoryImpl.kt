@@ -164,7 +164,7 @@ class JobRepositoryImpl @Inject constructor(
         return urlRegex.matches(url)
     }
 
-    fun formatDateForDisplay(dateString: String): String {
+    override fun formatDateForDisplay(dateString: String): String {
         return try {
             val date = dateFormat.parse(dateString)
             displayDateFormat.format(date)
@@ -173,7 +173,7 @@ class JobRepositoryImpl @Inject constructor(
         }
     }
 
-    fun parseDateFromDisplay(displayDate: String): String {
+    override fun parseDateFromDisplay(displayDate: String): String {
         return try {
             val date = displayDateFormat.parse(displayDate)
             dateFormat.format(date)
@@ -182,11 +182,11 @@ class JobRepositoryImpl @Inject constructor(
         }
     }
 
-    fun getCurrentDate(): String {
+    override fun getCurrentDate(): String {
         return dateFormat.format(Date())
     }
 
-    fun isCurrentJob(job: Job): Boolean {
+    override fun isCurrentJob(job: Job): Boolean {
         return job.finish == null
     }
 }

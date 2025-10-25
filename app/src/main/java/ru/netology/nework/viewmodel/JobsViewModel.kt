@@ -74,7 +74,7 @@ class JobsViewModel @Inject constructor(
                     isLoading = false,
                     currentOperation = null
                 )
-                loadJobs() // Reload jobs after save
+                loadJobs()
             } catch (e: Exception) {
                 val errorMessage = when {
                     e.message?.contains("403") == true -> "Необходимо авторизоваться для сохранения работы"
@@ -108,7 +108,7 @@ class JobsViewModel @Inject constructor(
                     isLoading = false,
                     currentOperation = null
                 )
-                loadJobs() // Reload jobs after delete
+                loadJobs()
             } catch (e: Exception) {
                 val errorMessage = when {
                     e.message?.contains("403") == true -> "Необходимо авторизоваться для удаления работы"

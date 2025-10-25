@@ -1,7 +1,9 @@
 package ru.netology.nework.api
 
 import retrofit2.Response
+import retrofit2.http.DELETE
 import retrofit2.http.GET
+import retrofit2.http.POST
 import retrofit2.http.Path
 import ru.netology.nework.dto.JobDto
 import ru.netology.nework.dto.PostDto
@@ -21,4 +23,20 @@ interface UserApi {
     suspend fun getWall(@Path("authorId") authorId: Long): Response<List<PostDto>>
     @GET("api/my/wall")
     suspend fun getMyWall(): Response<List<PostDto>>
+
+    @GET("api/{authorId}/wall")
+    suspend fun getUserWall(@Path("authorId") authorId: Long): Response<List<PostDto>>
+
+    @POST("api/{authorId}/wall/{id}/likes")
+    suspend fun likeUserWallPost(
+        @Path("authorId") authorId: Long,
+        @Path("id") postId: Long
+    ): Response<PostDto>
+
+    @DELETE("api/{authorId}/wall/{id}/likes")
+    suspend fun dislikeUserWallPost(
+        @Path("authorId") authorId: Long,
+        @Path("id") postId: Long
+    ): Response<PostDto>
+
 }
