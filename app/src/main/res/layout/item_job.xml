@@ -18,6 +18,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:textStyle="bold"
+            android:textColor="@android:color/black"
             android:textSize="16sp" />
 
         <TextView
@@ -25,22 +26,36 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:textColor="@android:color/darker_gray"
-            android:layout_marginTop="4dp" />
+            android:layout_marginTop="4dp"
+            android:textSize="14sp" />
 
         <TextView
             android:id="@+id/durationTextView"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:textSize="12sp"
-            android:layout_marginTop="4dp" />
+            android:textColor="@android:color/black"
+            android:layout_marginTop="6dp" />
+
+        <TextView
+            android:id="@+id/currentJobIndicator"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:text="Текущая работа"
+            android:textColor="@color/design_default_color_primary"
+            android:textStyle="bold"
+            android:visibility="gone" />
 
         <TextView
             android:id="@+id/linkTextView"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:textColor="@color/design_default_color_primary"
+            android:autoLink="web"
+            android:layout_marginTop="6dp"
             android:visibility="gone"
-            android:layout_marginTop="4dp" />
+            android:textSize="13sp" />
 
     </LinearLayout>
 

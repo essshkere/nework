@@ -12,3 +12,8 @@ enum class AttachmentTypeDto {
     @SerializedName("VIDEO") VIDEO,
     @SerializedName("AUDIO") AUDIO
 }
+
+data class MediaDto(
+    @SerializedName("url")
+    val url: String
+)

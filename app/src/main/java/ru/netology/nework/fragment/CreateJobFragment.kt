@@ -140,26 +140,25 @@ class CreateJobFragment : Fragment(), MenuProvider {
 
     private fun observeJobCreation() {
         viewLifecycleOwner.lifecycleScope.launch {
-            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                jobsViewModel.state.observe(viewLifecycleOwner) { state ->
-                    when (state) {
-                        JobsViewModel.JobsState.Loading -> {
-                            showLoading(true)
-                        }
-                        JobsViewModel.JobsState.Success -> {
-                            showLoading(false)
-                            Snackbar.make(binding.root, "Работа успешно добавлена", Snackbar.LENGTH_SHORT).show()
-                            findNavController().navigateUp()
-                        }
-                        is JobsViewModel.JobsState.Error -> {
-                            showLoading(false)
-                            showError(state.message)
-                        }
+            jobsViewModel.state.collect { state ->
+                when (state) {
+                    JobsViewModel.JobsState.Loading -> showLoading(true)
+                    JobsViewModel.JobsState.Success -> {
+                        showLoading(false)
+                        Snackbar.make(binding.root, "Работа успешно добавлена", Snackbar.LENGTH_SHORT).show()
+                        findNavController().navigateUp()
+                    }
+                    is JobsViewModel.JobsState.Error -> {
+                        showLoading(false)
+                        showError(state.message)
+                    }
+                    JobsViewModel.JobsState.Idle -> {
                     }
                 }
             }
         }
     }
+
 
     private fun showStartDatePicker() {
         val currentDate = startDate ?: Date()

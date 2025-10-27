@@ -211,13 +211,10 @@ class CreatePostFragment : Fragment(), MenuProvider {
             try {
                 val uploadedAttachment = attachmentUri?.let { uri ->
                     try {
-                        val mediaType = when (attachmentType) {
-                            Post.AttachmentType.IMAGE -> Post.AttachmentType.IMAGE
-                            Post.AttachmentType.VIDEO -> Post.AttachmentType.VIDEO
-                            Post.AttachmentType.AUDIO -> Post.AttachmentType.AUDIO
-                            null -> Post.AttachmentType.IMAGE
+                        val mediaType = attachmentType ?: Post.AttachmentType.IMAGE
+                        postsViewModel.uploadMedia(uri, mediaType)?.let { url ->
+                            Post.Attachment(url, mediaType)
                         }
-                        postsViewModel.uploadMedia(uri, mediaType)
                     } catch (e: Exception) {
                         showError("Ошибка загрузки медиа: ${e.message}")
                         null
@@ -433,13 +430,9 @@ class CreatePostFragment : Fragment(), MenuProvider {
         }
     }
 
-    private suspend fun PostsViewModel.uploadMedia(
-        uri: Uri,
-        type: Post.AttachmentType
-    ): Post.Attachment? {
+    private suspend fun PostsViewModel.uploadMedia(uri: Uri, type: Post.AttachmentType): String? {
         return try {
-            val mediaUrl = postsRepository.uploadMedia(uri, type)
-            Post.Attachment(mediaUrl, type)
+            repository.uploadMedia(uri, type)
         } catch (e: Exception) {
             null
         }

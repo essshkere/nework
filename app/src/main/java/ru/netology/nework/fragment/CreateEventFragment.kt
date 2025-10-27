@@ -18,9 +18,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.view.MenuProvider
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
-import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
-import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import com.bumptech.glide.Glide
 import com.google.android.material.snackbar.Snackbar
@@ -28,7 +26,6 @@ import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import ru.netology.nework.R
 import ru.netology.nework.data.Event
-import ru.netology.nework.data.User
 import ru.netology.nework.databinding.FragmentCreateEventBinding
 import ru.netology.nework.viewmodel.EventsViewModel
 import java.text.SimpleDateFormat
@@ -79,12 +76,19 @@ class CreateEventFragment : Fragment(), MenuProvider {
     }
 
     override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?
+        inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
     ): View {
         _binding = FragmentCreateEventBinding.inflate(inflater, container, false)
         return binding.root
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        requireActivity().addMenuProvider(this, viewLifecycleOwner)
+        setupTextWatchers()
+        setupClickListeners()
+        setupEventType()
+        setupAttachmentRemoval()
     }
 
     override fun onCreateMenu(menu: Menu, menuInflater: MenuInflater) {
@@ -112,33 +116,11 @@ class CreateEventFragment : Fragment(), MenuProvider {
     }
 
     private fun setupClickListeners() {
-        binding.selectDateTimeButton.setOnClickListener {
-            showDateTimePicker()
-        }
-
-        binding.selectLocationButton.setOnClickListener {
-            openLocationPicker()
-        }
-
-        binding.selectSpeakersButton.setOnClickListener {
-            openSpeakersPicker()
-        }
-
-        binding.attachImageButton.setOnClickListener {
-            pickImageFromGallery()
-        }
-
-        binding.attachVideoButton.setOnClickListener {
-            pickVideoFromGallery()
-        }
-
-        binding.attachAudioButton.setOnClickListener {
-            pickAudioFromStorage()
-        }
-
-        binding.removeAttachmentButton.setOnClickListener {
-            removeAttachment()
-        }
+        binding.selectDateTimeButton.setOnClickListener { showDateTimePicker() }
+        binding.attachImageButton.setOnClickListener { pickImageFromGallery() }
+        binding.attachVideoButton.setOnClickListener { pickVideoFromGallery() }
+        binding.attachAudioButton.setOnClickListener { pickAudioFromStorage() }
+        binding.removeAttachmentButton.setOnClickListener { removeAttachment() }
     }
 
     private fun setupEventType() {
@@ -159,38 +141,24 @@ class CreateEventFragment : Fragment(), MenuProvider {
     }
 
     private fun setupAttachmentRemoval() {
-        binding.attachmentPreview.setOnClickListener {
-            showAttachmentOptions()
-        }
-    }
-
-    private fun observeEventCreation() {
-        viewLifecycleOwner.lifecycleScope.launch {
-            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-            }
-        }
+        binding.attachmentPreview.setOnClickListener { showAttachmentOptions() }
     }
 
     private fun handleMediaSelection(uri: Uri, type: Event.AttachmentType) {
         attachmentUri = uri
         attachmentType = type
-
         when (type) {
             Event.AttachmentType.IMAGE -> showImageAttachmentPreview(uri)
             Event.AttachmentType.VIDEO -> showVideoAttachmentPreview(uri)
             Event.AttachmentType.AUDIO -> showAudioAttachmentPreview()
         }
-
         binding.removeAttachmentButton.visibility = View.VISIBLE
     }
 
     private fun showImageAttachmentPreview(uri: Uri) {
         binding.attachmentPreview.visibility = View.VISIBLE
         binding.attachmentTypeIndicator.visibility = View.GONE
-
-        Glide.with(this)
-            .load(uri)
-            .centerCrop()
+        Glide.with(this).load(uri).centerCrop()
             .placeholder(R.drawable.ic_image)
             .into(binding.attachmentPreview)
     }
@@ -199,10 +167,7 @@ class CreateEventFragment : Fragment(), MenuProvider {
         binding.attachmentPreview.visibility = View.VISIBLE
         binding.attachmentTypeIndicator.visibility = View.VISIBLE
         binding.attachmentTypeIndicator.setImageResource(R.drawable.ic_video)
-
-        Glide.with(this)
-            .load(uri)
-            .centerCrop()
+        Glide.with(this).load(uri).centerCrop()
             .placeholder(R.drawable.ic_video)
             .into(binding.attachmentPreview)
     }
@@ -252,10 +217,8 @@ class CreateEventFragment : Fragment(), MenuProvider {
                 }
                 null -> return
             }
-
-            try {
-                startActivity(intent)
-            } catch (e: Exception) {
+            try { startActivity(intent) }
+            catch (e: Exception) {
                 Snackbar.make(binding.root, "Не найдено приложение для просмотра", Snackbar.LENGTH_SHORT).show()
             }
         }
@@ -286,7 +249,6 @@ class CreateEventFragment : Fragment(), MenuProvider {
     private fun showDateTimePicker() {
         val calendar = Calendar.getInstance()
         val currentDate = eventDateTime ?: calendar.time
-
         val datePicker = DatePickerDialog(
             requireContext(),
             { _, year, month, day ->
@@ -300,8 +262,7 @@ class CreateEventFragment : Fragment(), MenuProvider {
                         updateSelectedDateTimeText()
                     },
                     calendar.get(Calendar.HOUR_OF_DAY),
-                    calendar.get(Calendar.MINUTE),
-                    true
+                    calendar.get(Calendar.MINUTE), true
                 )
                 timePicker.show()
             },
@@ -335,7 +296,6 @@ class CreateEventFragment : Fragment(), MenuProvider {
             true
         }
     }
-
     private fun validateDateTime(): Boolean {
         return if (eventDateTime == null) {
             Snackbar.make(binding.root, "Выберите дату и время события", Snackbar.LENGTH_SHORT).show()
@@ -348,102 +308,18 @@ class CreateEventFragment : Fragment(), MenuProvider {
         }
     }
 
-    private val locationSelectionListener = registerForActivityResult(
-        ActivityResultContracts.StartActivityForResult()
-    ) { result ->
-        if (result.resultCode == android.app.Activity.RESULT_OK) {
-            val data = result.data
-            data?.extras?.let { bundle ->
-                handleLocationSelection(bundle)
-            }
-        }
-    }
-
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
-        requireActivity().addMenuProvider(this, viewLifecycleOwner)
-        setupTextWatchers()
-        setupClickListeners()
-        setupEventType()
-        observeEventCreation()
-        setupAttachmentRemoval()
-        setupMapResultListener()
-    }
-
-    private fun openSpeakersPicker() {
-        val dialog = SelectUsersDialog.newInstance(
-            initiallySelectedUserIds = speakerIds.toSet(),
-            multiSelect = true
-        )
-
-        dialog.onUsersSelected = { selectedUsers ->
-            handleSpeakersSelection(selectedUsers)
-        }
-
-        dialog.show(parentFragmentManager, SelectUsersDialog.TAG)
-    }
-
-    private fun handleSpeakersSelection(selectedUsers: List<ru.netology.nework.data.User>) {
-        speakerIds = selectedUsers.map { it.id }
-        updateSelectedSpeakersText(selectedUsers)
-
-        // Логирование для отладки
-        println("Выбрано спикеров: ${selectedUsers.size}, IDs: $speakerIds")
-    }
-
-    private fun updateSelectedSpeakersText(selectedUsers: List<ru.netology.nework.data.User>) {
-        if (selectedUsers.isNotEmpty()) {
-            binding.selectedSpeakersText.visibility = View.VISIBLE
-
-            val speakersText = when (selectedUsers.size) {
-                1 -> "🎤 Спикер: ${selectedUsers.first().name}"
-                2, 3, 4 -> "🎤 Спикеры: ${selectedUsers.joinToString { it.name }}"
-                else -> "🎤 Спикеров: ${selectedUsers.size}"
-            }
-
-            binding.selectedSpeakersText.text = speakersText
-
-            binding.selectedSpeakersText.setOnClickListener {
-                showSelectedSpeakersPreview(selectedUsers)
-            }
-        } else {
-            binding.selectedSpeakersText.visibility = View.GONE
-        }
-    }
-
-    private fun showSelectedSpeakersPreview(selectedUsers: List<ru.netology.nework.data.User>) {
-        val speakerNames = selectedUsers.joinToString("\n") { "• ${it.name} (@${it.login})" }
-
-        androidx.appcompat.app.AlertDialog.Builder(requireContext())
-            .setTitle("Спикеры события")
-            .setMessage(speakerNames)
-            .setPositiveButton("Изменить") { _, _ ->
-                openSpeakersPicker()
-            }
-            .setNegativeButton("ОК", null)
-            .show()
-    }
-
     private fun createEvent() {
         val content = binding.contentEditText.text.toString().trim()
-
-        if (!validateContent(content) || !validateDateTime()) {
-            return
-        }
-
+        if (!validateContent(content) || !validateDateTime()) return
         showLoading(true)
-
         viewLifecycleOwner.lifecycleScope.launch {
             try {
                 val uploadedAttachment = attachmentUri?.let { uri ->
                     try {
-                        val mediaType = when (attachmentType) {
-                            Event.AttachmentType.IMAGE -> Event.AttachmentType.IMAGE
-                            Event.AttachmentType.VIDEO -> Event.AttachmentType.VIDEO
-                            Event.AttachmentType.AUDIO -> Event.AttachmentType.AUDIO
-                            null -> Event.AttachmentType.IMAGE
+                        val mediaType = attachmentType ?: Event.AttachmentType.IMAGE
+                        eventsViewModel.uploadMedia(uri, mediaType)?.let { url ->
+                            Event.Attachment(url, mediaType)
                         }
-                        eventsViewModel.uploadMedia(uri, mediaType)
                     } catch (e: Exception) {
                         showError("Ошибка загрузки медиа: ${e.message}")
                         null
@@ -452,7 +328,6 @@ class CreateEventFragment : Fragment(), MenuProvider {
 
                 val currentDate = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX", Locale.getDefault())
                     .format(Date())
-
                 val eventDateTimeFormatted = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX", Locale.getDefault())
                     .format(eventDateTime!!)
 
@@ -479,84 +354,22 @@ class CreateEventFragment : Fragment(), MenuProvider {
         }
     }
 
-    private fun setupMapResultListener() {
-        parentFragmentManager.setFragmentResultListener(
-            MapFragment.LOCATION_SELECTION_KEY,
-            viewLifecycleOwner
-        ) { requestKey, bundle ->
-            if (requestKey == MapFragment.LOCATION_SELECTION_KEY) {
-                handleLocationSelection(bundle)
-            }
+
+    private fun showLoading(show: Boolean) {
+        binding.apply {
+            contentEditText.isEnabled = !show
+            selectDateTimeButton.isEnabled = !show
+            selectLocationButton.isEnabled = !show
+            selectSpeakersButton.isEnabled = !show
+            attachImageButton.isEnabled = !show
+            attachVideoButton.isEnabled = !show
+            attachAudioButton.isEnabled = !show
+            removeAttachmentButton.isEnabled = !show
         }
     }
 
-    private fun handleLocationSelection(bundle: Bundle) {
-        val latitude = bundle.getDouble(MapFragment.LATITUDE_KEY)
-        val longitude = bundle.getDouble(MapFragment.LONGITUDE_KEY)
-
-        coordinates = Event.Coordinates(latitude, longitude)
-        updateSelectedLocationText()
-
-        Snackbar.make(binding.root, "Локация выбрана", Snackbar.LENGTH_SHORT).show()
-    }
-
-    private fun openLocationPicker() {
-        val currentCoords = coordinates?.let {
-            MapFragment.newInstance(it.lat, it.long)
-        } ?: MapFragment.newInstance()
-
-        currentCoords.show(parentFragmentManager, MapFragment.TAG)
-    }
-
-    private suspend fun EventsViewModel.uploadMedia(uri: Uri, type: Event.AttachmentType): Event.Attachment? {
-        return try {
-            val mediaUrl = eventRepository.uploadMedia(uri, type)
-            Event.Attachment(mediaUrl, type)
-        } catch (e: Exception) {
-            null
-        }
-    }
-
-    private val locationPickerLauncher = registerForActivityResult(
-        ActivityResultContracts.StartActivityForResult()
-    ) { result ->
-        if (result.resultCode == android.app.Activity.RESULT_OK) {
-            val bundle = result.data?.extras
-            bundle?.let { handleLocationSelection(it) }
-        }
-    }
-
-    private fun updateSelectedLocationText() {
-        coordinates?.let { coords ->
-            binding.selectedLocationText.visibility = View.VISIBLE
-            binding.selectedLocationText.text =
-                "📍 Координаты: ${String.format("%.6f", coords.lat)}, ${String.format("%.6f", coords.long)}"
-
-            binding.selectedLocationText.setOnClickListener {
-                showLocationOptions()
-            }
-        } ?: run {
-            binding.selectedLocationText.visibility = View.GONE
-        }
-    }
-
-    private fun showLocationOptions() {
-        androidx.appcompat.app.AlertDialog.Builder(requireContext())
-            .setTitle("Локация")
-            .setItems(arrayOf("Изменить", "Удалить")) { _, which ->
-                when (which) {
-                    0 -> openLocationPicker()
-                    1 -> removeLocation()
-                }
-            }
-            .setNegativeButton("Отмена", null)
-            .show()
-    }
-
-    private fun removeLocation() {
-        coordinates = null
-        updateSelectedLocationText()
-        Snackbar.make(binding.root, "Локация удалена", Snackbar.LENGTH_SHORT).show()
+    private fun showError(message: String) {
+        Snackbar.make(binding.root, message, Snackbar.LENGTH_LONG).show()
     }
 
     override fun onDestroyView() {

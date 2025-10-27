@@ -18,63 +18,83 @@
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/contentEditText"
                 android:layout_width="match_parent"
-                android:layout_height="120dp"
+                android:layout_height="150dp"
                 android:gravity="top"
                 android:hint="Описание события"
                 android:inputType="textMultiLine" />
 
         </com.google.android.material.textfield.TextInputLayout>
 
-        <LinearLayout
+        <RadioGroup
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:gravity="center_vertical"
-            android:layout_marginBottom="12dp">
+            android:layout_marginBottom="16dp">
 
-            <com.google.android.material.radiobutton.MaterialRadioButton
+            <RadioButton
                 android:id="@+id/onlineRadioButton"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:text="Онлайн" />
 
-            <com.google.android.material.radiobutton.MaterialRadioButton
+            <RadioButton
                 android:id="@+id/offlineRadioButton"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="Офлайн" />
-
-        </LinearLayout>
+                android:text="Оффлайн" />
+        </RadioGroup>
 
         <Button
             android:id="@+id/selectDateTimeButton"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Выбрать дату и время"
-            android:layout_marginBottom="8dp" />
+            android:layout_marginBottom="8dp"
+            />
+
+        <TextView
+            android:id="@+id/selectedDateTimeText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:visibility="gone"
+            android:layout_marginBottom="16dp"/>
 
         <Button
             android:id="@+id/selectLocationButton"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Выбрать местоположение"
-            android:layout_marginBottom="8dp"
+            android:text="Местоположение"
+            android:layout_marginBottom="8dp"/>
+
+        <TextView
+            android:id="@+id/selectedLocationText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
             android:visibility="gone" />
 
         <Button
             android:id="@+id/selectSpeakersButton"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Выбрать спикеров"
-            android:layout_marginBottom="8dp" />
+            android:text="Спикеры"
+            android:layout_marginBottom="8dp"/>
+
+        <TextView
+            android:id="@+id/selectedSpeakersText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:visibility="gone"
+            android:layout_marginBottom="16dp"/>
+
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:layout_marginBottom="8dp">
+            android:layout_marginBottom="16dp">
 
             <Button
                 android:id="@+id/attachImageButton"
@@ -103,57 +123,35 @@
 
         </LinearLayout>
 
-        <TextView
-            android:id="@+id/selectedDateTimeText"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="8dp"
-            android:visibility="gone" />
-
-        <TextView
-            android:id="@+id/selectedLocationText"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="8dp"
-            android:visibility="gone" />
-
-        <TextView
-            android:id="@+id/selectedSpeakersText"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="8dp"
-            android:visibility="gone" />
-
         <FrameLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="8dp">
+            android:layout_marginBottom="16dp">
 
             <ImageView
                 android:id="@+id/attachmentPreview"
                 android:layout_width="match_parent"
-                android:layout_height="180dp"
+                android:layout_height="200dp"
                 android:scaleType="centerCrop"
                 android:visibility="gone" />
 
-            <ImageView
-                android:id="@+id/attachmentTypeIndicator"
+            <ImageButton
+                android:id="@+id/removeAttachmentButton"
                 android:layout_width="34dp"
                 android:layout_height="34dp"
-                android:layout_gravity="end|bottom"
-                android:layout_margin="6dp"
+                android:layout_gravity="top|end"
+                android:src="@drawable/ic_close"
+                android:background="@android:color/transparent"
                 android:visibility="gone"
-                android:src="@drawable/ic_video" />
+                android:contentDescription="Удалить вложение"/>
         </FrameLayout>
 
-        <Button
-            android:id="@+id/removeAttachmentButton"
+        <ProgressBar
+            android:id="@+id/progressBar"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_gravity="end"
-            android:text="Удалить вложение"
-            android:visibility="gone"
-            android:layout_marginBottom="14dp"/>
+            android:layout_gravity="center"
+            android:visibility="gone" />
 
     </LinearLayout>
 </ScrollView>

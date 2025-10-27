@@ -16,6 +16,9 @@ import dagger.hilt.android.AndroidEntryPoint
 import ru.netology.nework.databinding.ActivityMainBinding
 import ru.netology.nework.fragment.ConfirmLogoutDialog
 import ru.netology.nework.viewmodel.AuthViewModel
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
@@ -72,9 +75,11 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun observeAuthState() {
-        authViewModel.uiState.observe(this) { uiState ->
-            invalidateOptionsMenu()
-            updateUi(uiState)
+        lifecycleScope.launch {
+            authViewModel.uiState.collectLatest { uiState ->
+                invalidateOptionsMenu()
+                updateUi(uiState)
+            }
         }
     }
 

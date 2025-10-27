@@ -17,22 +17,8 @@ data class Post(
     val mentionedMe: Boolean = false,
     val users: Map<Long, UserPreview> = emptyMap()
 ) {
-    data class Coordinates(
-        val lat: Double,
-        val long: Double
-    )
-
-    data class Attachment(
-        val url: String,
-        val type: AttachmentType
-    )
-
-    data class UserPreview(
-        val name: String,
-        val avatar: String?
-    )
-
-    enum class AttachmentType {
-        IMAGE, VIDEO, AUDIO
-    }
+    data class Coordinates(val lat: Double, val long: Double)
+    data class Attachment(val url: String, val type: AttachmentType)
+    data class UserPreview(val name: String, val avatar: String?)
+    enum class AttachmentType { IMAGE, VIDEO, AUDIO }
 }

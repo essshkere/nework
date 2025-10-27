@@ -11,4 +11,6 @@
     <color name="current_job_text">#2E7D32</color>
     <color name="past_job_background">#F5F5F5</color>
     <color name="past_job_text">#757575</color>
+    <color name="participation_active">#4CAF50</color>
+    <color name="participation_inactive">#9E9E9E</color>
 </resources>

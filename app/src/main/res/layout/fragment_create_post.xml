@@ -82,19 +82,43 @@
 
         </LinearLayout>
 
-        <ImageView
-            android:id="@+id/attachmentPreview"
+        <FrameLayout
             android:layout_width="match_parent"
-            android:layout_height="200dp"
-            android:scaleType="centerCrop"
-            android:visibility="gone"
-            android:layout_marginBottom="16dp" />
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp">
+
+            <ImageView
+                android:id="@+id/attachmentPreview"
+                android:layout_width="match_parent"
+                android:layout_height="200dp"
+                android:scaleType="centerCrop"
+                android:visibility="gone" />
+
+            <ImageView
+                android:id="@+id/attachmentTypeIndicator"
+                android:layout_width="34dp"
+                android:layout_height="34dp"
+                android:layout_gravity="end|bottom"
+                android:layout_margin="6dp"
+                android:visibility="gone"
+                android:src="@drawable/ic_video" />
+
+            <ImageButton
+                android:id="@+id/removeAttachmentButton"
+                android:layout_width="34dp"
+                android:layout_height="34dp"
+                android:layout_gravity="start|top"
+                android:src="@drawable/ic_close"
+                android:background="@android:color/transparent"
+                android:visibility="gone"
+                android:contentDescription="Удалить вложение"/>
+        </FrameLayout>
 
         <TextView
             android:id="@+id/selectedLocationText"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
+            android:layout_marginBottom="8dp"
             android:visibility="gone" />
 
         <TextView
@@ -104,6 +128,12 @@
             android:layout_marginBottom="16dp"
             android:visibility="gone" />
 
-    </LinearLayout>
+        <ProgressBar
+            android:id="@+id/progressBar"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:visibility="gone" />
 
+    </LinearLayout>
 </ScrollView>
