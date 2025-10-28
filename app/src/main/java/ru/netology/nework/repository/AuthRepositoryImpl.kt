@@ -9,7 +9,6 @@ import kotlinx.coroutines.withContext
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.asRequestBody
-import okhttp3.RequestBody.Companion.toRequestBody
 import ru.netology.nework.api.AuthApi
 import ru.netology.nework.dto.LoginResponseDto
 import java.io.File
@@ -57,15 +56,11 @@ class AuthRepositoryImpl @Inject constructor(
     ): LoginResponseDto {
         return withContext(Dispatchers.IO) {
             try {
-                val loginPart = login.toRequestBody(MultipartBody.FORM)
-                val passwordPart = password.toRequestBody(MultipartBody.FORM)
-                val namePart = name.toRequestBody(MultipartBody.FORM)
-
                 val filePart = avatarUri?.let { uriString ->
                     createAvatarPart(Uri.parse(uriString))
                 }
 
-                val response = authApi.signUp(loginPart, passwordPart, namePart, filePart)
+                val response = authApi.signUp(login, password, name, filePart)
 
                 if (!response.isSuccessful) {
                     throw when (response.code()) {

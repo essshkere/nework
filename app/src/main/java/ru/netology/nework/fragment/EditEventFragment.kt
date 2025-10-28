@@ -2,6 +2,7 @@ package ru.netology.nework.fragment
 
 import android.app.DatePickerDialog
 import android.app.TimePickerDialog
+import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.text.Editable
@@ -19,7 +20,6 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
-import androidx.navigation.fragment.navArgs
 import com.bumptech.glide.Glide
 import com.google.android.material.snackbar.Snackbar
 import dagger.hilt.android.AndroidEntryPoint
@@ -38,8 +38,6 @@ class EditEventFragment : Fragment(), MenuProvider {
     private var _binding: FragmentEditEventBinding? = null
     private val binding get() = _binding!!
     private val eventsViewModel: EventsViewModel by viewModels()
-    private val args: EditEventFragmentArgs by navArgs()
-
     private var attachmentUri: Uri? = null
     private var attachmentType: Event.AttachmentType? = null
     private var coordinates: Event.Coordinates? = null
@@ -47,6 +45,9 @@ class EditEventFragment : Fragment(), MenuProvider {
     private var eventDateTime: Date? = null
     private var eventType: Event.EventType = Event.EventType.ONLINE
     private var currentEvent: Event? = null
+    private val eventId: Long by lazy {
+        arguments?.getLong("eventId") ?: throw IllegalArgumentException("eventId is required")
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -81,12 +82,33 @@ class EditEventFragment : Fragment(), MenuProvider {
         setupEventType()
         setupAttachmentRemoval()
         observeEventUpdates()
+        setupMapResultListener()
+    }
+
+    private fun setupMapResultListener() {
+        parentFragmentManager.setFragmentResultListener(
+            MapFragment.LOCATION_SELECTION_KEY,
+            viewLifecycleOwner
+        ) { requestKey, bundle ->
+            if (requestKey == MapFragment.LOCATION_SELECTION_KEY) {
+                handleLocationSelection(bundle)
+            }
+        }
+    }
+
+    private fun handleLocationSelection(bundle: Bundle) {
+        val latitude = bundle.getDouble(MapFragment.LATITUDE_KEY)
+        val longitude = bundle.getDouble(MapFragment.LONGITUDE_KEY)
+        coordinates = Event.Coordinates(latitude, longitude)
+        updateSelectedLocationText()
+        Snackbar.make(binding.root, "Локация выбрана", Snackbar.LENGTH_SHORT).show()
     }
 
     private fun loadEventData() {
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                eventsViewModel.getById(args.eventId)?.let { event ->
+
+                eventsViewModel.getById(eventId)?.let { event ->
                     currentEvent = event
                     bindEventData(event)
                 } ?: run {
@@ -120,9 +142,7 @@ class EditEventFragment : Fragment(), MenuProvider {
         speakerIds = event.speakerIds
         updateSelectedSpeakersText(emptyList())
 
-
         event.attachment?.let { attachment ->
-
             binding.attachmentPreview.visibility = View.VISIBLE
             when (attachment.type) {
                 Event.AttachmentType.IMAGE -> {
@@ -271,23 +291,15 @@ class EditEventFragment : Fragment(), MenuProvider {
 
     private fun openLocationPicker() {
         val currentCoords = coordinates?.let {
-            findNavController().navigate(
-                EditEventFragmentDirections.actionEditEventFragmentToMapFragment(
-                    it.lat,
-                    it.long
-                )
-            )
-        } ?: run {
-            findNavController().navigate(
-                EditEventFragmentDirections.actionEditEventFragmentToMapFragment()
-            )
-        }
+            MapFragment.newInstance(it.lat, it.long)
+        } ?: MapFragment.newInstance()
+
+        currentCoords.show(parentFragmentManager, MapFragment.TAG)
     }
 
     private fun openSpeakersPicker() {
-        // Implementation from CreateEventFragment
         val dialog = SelectUsersDialog.newInstance(
-            initiallySelectedUserIds = speakerIds.toSet(),
+            initiallySelectedUserIds = speakerIds,
             multiSelect = true
         )
 
@@ -398,8 +410,9 @@ class EditEventFragment : Fragment(), MenuProvider {
 
         viewLifecycleOwner.lifecycleScope.launch {
             try {
-                val uploadedAttachment = if (attachmentUri != null) {
-                    eventsViewModel.uploadMedia(attachmentUri!!, attachmentType!!)
+                val uploadedAttachment = if (attachmentUri != null && attachmentType != null) {
+                    val url = eventsViewModel.uploadMedia(attachmentUri!!, attachmentType!!)
+                    Event.Attachment(url, attachmentType!!)
                 } else {
                     currentEvent?.attachment
                 }

@@ -7,6 +7,7 @@ import ru.netology.nework.dto.AttachmentDto
 import ru.netology.nework.dto.AttachmentTypeDto
 import ru.netology.nework.dto.CoordinatesDto
 import ru.netology.nework.dto.PostDto
+import ru.netology.nework.dto.UserPreviewDto
 
 private val gson = Gson()
 
@@ -63,6 +64,37 @@ fun PostEntity.toModel(): Post = Post(
         gson.fromJson(users, Map::class.java) as? Map<Long, Post.UserPreview> ?: emptyMap()
     } catch (e: Exception) {
         emptyMap()
+    }
+)
+fun PostDto.toModel(): Post = Post(
+    id = id,
+    authorId = authorId,
+    author = author,
+    authorAvatar = authorAvatar,
+    authorJob = authorJob,
+    content = content,
+    published = published,
+    coords = coords?.let { Post.Coordinates(it.lat, it.long) },
+    link = link,
+    likeOwnerIds = likeOwnerIds,
+    likedByMe = likedByMe,
+    attachment = attachment?.let {
+        Post.Attachment(
+            url = it.url,
+            type = when (it.type) {
+                AttachmentTypeDto.IMAGE -> Post.AttachmentType.IMAGE
+                AttachmentTypeDto.VIDEO -> Post.AttachmentType.VIDEO
+                AttachmentTypeDto.AUDIO -> Post.AttachmentType.AUDIO
+            }
+        )
+    },
+    mentionIds = mentionIds,
+    mentionedMe = mentionedMe,
+    users = users.mapValues { (_, userPreviewDto) ->
+        Post.UserPreview(
+            name = userPreviewDto.name,
+            avatar = userPreviewDto.avatar
+        )
     }
 )
 

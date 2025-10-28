@@ -13,6 +13,9 @@ import kotlinx.coroutines.launch
 import ru.netology.nework.data.Post
 import ru.netology.nework.repository.PostRepository
 import javax.inject.Inject
+import android.net.Uri
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 @HiltViewModel
 class PostsViewModel @Inject constructor(
@@ -231,6 +234,6 @@ class PostsViewModel @Inject constructor(
         val isRefreshing: Boolean = false,
         val error: String? = null,
         val showError: Boolean = false,
-        val currentOperation: String? = null // "like", "dislike", "create", "edit", "delete"
+        val currentOperation: String? = null
     )
 }

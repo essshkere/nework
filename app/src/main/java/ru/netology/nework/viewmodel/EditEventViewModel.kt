@@ -13,7 +13,8 @@ class EditEventViewModel @Inject constructor(
 ) : ViewModel() {
     private val eventId: Long = savedStateHandle.get<Long>("eventId") ?: 0L
 
-    fun getEventById(id: Long) = eventsViewModel.getById(id)
+    suspend fun getEventById(id: Long): Event? = eventsViewModel.getById(id)
     fun save(event: Event) = eventsViewModel.save(event)
-    fun uploadMedia(uri: android.net.Uri, type: Event.AttachmentType) = eventsViewModel.uploadMedia(uri, type)
+    suspend fun uploadMedia(uri: android.net.Uri, type: Event.AttachmentType): String =
+        eventsViewModel.uploadMedia(uri, type)
 }

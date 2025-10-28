@@ -46,8 +46,7 @@ class RegisterFragment : Fragment() {
                     .circleCrop()
                     .placeholder(R.drawable.ic_account_circle)
                     .into(binding.avatarImageView)
-                binding.removeAvatarButton.isVisible = true
-                binding.avatarErrorTextView.isVisible = false
+                showAvatarSelected()
             }
         }
     }
@@ -124,21 +123,12 @@ class RegisterFragment : Fragment() {
             pickImageFromGallery()
         }
 
-        binding.removeAvatarButton.setOnClickListener {
+        binding.avatarImageView.setOnLongClickListener {
             removeAvatar()
+            true
         }
 
         binding.signUpButton.setOnClickListener {
-            if (validateForm()) {
-                val login = binding.loginEditText.text.toString().trim()
-                val password = binding.passwordEditText.text.toString()
-                val name = binding.nameEditText.text.toString().trim()
-                val avatarUriString = avatarUri?.toString()
-                authViewModel.signUp(login, password, name, avatarUriString)
-            }
-        }
-
-        binding.retryButton.setOnClickListener {
             if (validateForm()) {
                 val login = binding.loginEditText.text.toString().trim()
                 val password = binding.passwordEditText.text.toString()
@@ -199,15 +189,12 @@ class RegisterFragment : Fragment() {
     private fun updateUi(uiState: AuthViewModel.AuthUiState) {
         with(binding) {
             progressBar.isVisible = uiState.isLoading
-            loadingOverlay.isVisible = uiState.isLoading
             loginEditText.isEnabled = !uiState.isLoading
             nameEditText.isEnabled = !uiState.isLoading
             passwordEditText.isEnabled = !uiState.isLoading
             passwordConfirmEditText.isEnabled = !uiState.isLoading
             signUpButton.isEnabled = !uiState.isLoading && isFormValid()
             selectAvatarButton.isEnabled = !uiState.isLoading
-            removeAvatarButton.isEnabled = !uiState.isLoading
-
             if (uiState.showError && uiState.error != null) {
                 showError(uiState.error)
                 authViewModel.clearError()
@@ -235,9 +222,13 @@ class RegisterFragment : Fragment() {
         avatarUri = null
         avatarFile = null
         binding.avatarImageView.setImageResource(R.drawable.ic_account_circle)
-        binding.removeAvatarButton.isVisible = false
+        Snackbar.make(binding.root, "Аватар удален", Snackbar.LENGTH_SHORT).show()
         avatarFile?.delete()
         avatarFile = null
+    }
+
+    private fun showAvatarSelected() {
+        Snackbar.make(binding.root, "Аватар выбран. Нажмите и удерживайте для удаления", Snackbar.LENGTH_LONG).show()
     }
 
     private fun createTempFileFromUri(uri: Uri): File {
@@ -353,7 +344,6 @@ class RegisterFragment : Fragment() {
         if (!isValid) {
             showFormError("Заполните все обязательные поля правильно")
         }
-
         return isValid
     }
 
@@ -378,25 +368,22 @@ class RegisterFragment : Fragment() {
         binding.nameEditText.error = null
         binding.passwordEditText.error = null
         binding.passwordConfirmEditText.error = null
-        binding.avatarErrorTextView.isVisible = false
         hideError()
     }
 
     private fun showError(message: String) {
-        with(binding) {
-            errorTextView.text = message
-            errorLayout.isVisible = true
-            retryButton.isVisible = message.contains("сети", ignoreCase = true)
-            if (message.contains("аватар", ignoreCase = true) ||
-                message.contains("изображен", ignoreCase = true)
-            ) {
-                avatarErrorTextView.text = message
-                avatarErrorTextView.isVisible = true
+        Snackbar.make(binding.root, message, Snackbar.LENGTH_LONG)
+            .setAction("Повторить") {
+                if (validateForm()) {
+                    val login = binding.loginEditText.text.toString().trim()
+                    val password = binding.passwordEditText.text.toString()
+                    val name = binding.nameEditText.text.toString().trim()
+                    val avatarUriString = avatarUri?.toString()
+                    authViewModel.signUp(login, password, name, avatarUriString)
+                }
             }
-            errorLayout.postDelayed({
-                hideError()
-            }, 5000)
-        }
+            .show()
+
     }
 
     private fun showFormError(message: String) {
@@ -404,7 +391,7 @@ class RegisterFragment : Fragment() {
     }
 
     private fun hideError() {
-        binding.errorLayout.isVisible = false
+
     }
 
     private fun navigateToPosts() {

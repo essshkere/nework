@@ -58,6 +58,7 @@ class PostDetailsFragment : Fragment() {
         setupRecyclerView()
         observePost()
         setupClickListeners()
+        setupMentionedUsersClickListeners()
     }
 
     private fun setupRecyclerView() {
@@ -67,10 +68,7 @@ class PostDetailsFragment : Fragment() {
         }
 
         participantAdapter.onUserClicked = { userId ->
-            val bundle = Bundle().apply {
-                putLong("userId", userId)
-            }
-            findNavController().navigate(R.id.userProfileFragment, bundle)
+            navigateToUserProfile(userId)
         }
     }
 
@@ -137,7 +135,6 @@ class PostDetailsFragment : Fragment() {
 
             post.coords?.let { coords ->
                 locationCardView.visibility = View.VISIBLE
-                locationTextView.text = "Координаты: ${coords.lat}, ${coords.long}"
             } ?: run {
                 locationCardView.visibility = View.GONE
             }
@@ -177,14 +174,7 @@ class PostDetailsFragment : Fragment() {
             participantAdapter.submitList(mentionedUsers)
             binding.mentionedUsersCardView.visibility = if (mentionIds.isNotEmpty()) View.VISIBLE else View.GONE
             if (mentionIds.isNotEmpty()) {
-                binding.mentionedUsersTitle.text = when (mentionIds.size) {
-                    1 -> "Упомянут 1 пользователь"
-                    in 2..4 -> "Упомянуто ${mentionIds.size} пользователя"
-                    else -> "Упомянуто ${mentionIds.size} пользователей"
-                }
-                if (mentionedUsers.size < mentionIds.size) {
-                    binding.mentionedUsersTitle.text = "${binding.mentionedUsersTitle.text} (загружено ${mentionedUsers.size})"
-                }
+
             }
         }
     }
@@ -193,10 +183,7 @@ class PostDetailsFragment : Fragment() {
         binding.authorAvatarImageView.setOnClickListener {
             viewLifecycleOwner.lifecycleScope.launch {
                 postsViewModel.getPostById(postId)?.authorId?.let { authorId ->
-                    val bundle = Bundle().apply {
-                        putLong("userId", authorId)
-                    }
-                    findNavController().navigate(R.id.userProfileFragment, bundle)
+                    navigateToUserProfile(authorId)
                 }
             }
         }
@@ -221,6 +208,14 @@ class PostDetailsFragment : Fragment() {
             showAllMentionedUsersDialog()
         }
     }
+
+    private fun navigateToUserProfile(userId: Long) {
+        val bundle = Bundle().apply {
+            putLong("userId", userId)
+        }
+        findNavController().navigate(R.id.userProfileFragment, bundle)
+    }
+
     private fun showAllMentionedUsersDialog() {
         viewLifecycleOwner.lifecycleScope.launch {
             val mentionIds = postsViewModel.getPostById(postId)?.mentionIds ?: emptyList()

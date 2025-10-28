@@ -52,6 +52,7 @@ class MyProfileFragment : Fragment() {
         observeJobs()
         observeJobsState()
     }
+
     private fun setupRecyclerView() {
         jobAdapter = JobAdapter()
 
@@ -95,7 +96,7 @@ class MyProfileFragment : Fragment() {
     private fun observeJobs() {
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                jobsViewModel.jobs.observe(viewLifecycleOwner) { jobs ->
+                jobsViewModel.jobs.collect { jobs ->
                     jobAdapter.submitList(jobs)
                     updateJobsEmptyState(jobs)
                     updateCurrentJob(jobs)
@@ -107,7 +108,7 @@ class MyProfileFragment : Fragment() {
     private fun observeJobsState() {
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                jobsViewModel.state.observe(viewLifecycleOwner) { state ->
+                jobsViewModel.state.collect { state ->
                     when (state) {
                         JobsViewModel.JobsState.Loading -> {
                             showLoading(true)
@@ -118,6 +119,9 @@ class MyProfileFragment : Fragment() {
                         is JobsViewModel.JobsState.Error -> {
                             showLoading(false)
                             showError(state.message)
+                        }
+                        JobsViewModel.JobsState.Idle -> {
+                            showLoading(false)
                         }
                     }
                 }
@@ -149,7 +153,7 @@ class MyProfileFragment : Fragment() {
     private fun updateCurrentJob(jobs: List<Job>) {
         val currentJob = jobs.find { it.finish == null }
 
-        binding.currentJobTextView.text = currentJob?.let { job ->
+        binding.currentJobTextView.text = currentJob?.let { job: Job ->
             formatCurrentJobText(job)
         } ?: "В поиске работы"
     }

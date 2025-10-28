@@ -21,8 +21,8 @@ data class PostDto(
 )
 
 data class CoordinatesDto(
-    @SerializedName("lat") val lat: String,
-    @SerializedName("long") val long: String
+    @SerializedName("lat") val lat: Double,
+    @SerializedName("long") val long: Double
 )
 
 data class CommentDto(

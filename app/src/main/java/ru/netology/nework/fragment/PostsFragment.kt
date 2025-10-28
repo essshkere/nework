@@ -12,6 +12,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.google.android.material.snackbar.Snackbar
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
@@ -28,8 +29,7 @@ class PostsFragment : Fragment() {
     private val binding get() = _binding!!
     private val postsViewModel: PostsViewModel by viewModels()
     private val authViewModel: AuthViewModel by viewModels()
-    @Inject
-    lateinit var postAdapter: PostAdapter
+    private lateinit var postAdapter: PostAdapter
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -42,11 +42,16 @@ class PostsFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        postAdapter = PostAdapter(
+            currentUserId = authViewModel.getUserId(),
+            onEditPost = { post -> navigateToEditPost(post.id) },
+            onDeletePost = { post -> confirmDeletePost(post) },
+            onReportPost = { post -> showReportPostDialog(post) }
+        )
 
         setupRecyclerView()
         setupSwipeRefresh()
         setupFab()
-        setupEmptyState()
         observePosts()
         observeUiState()
         observePostsState()
@@ -73,42 +78,20 @@ class PostsFragment : Fragment() {
         postAdapter.onAuthorClicked = { authorId ->
             navigateToUserProfile(authorId)
         }
-
-        postAdapter.onMenuClicked = { post ->
-            showPostMenuOptions(post)
-        }
-
-        postAdapter.addLoadStateListener { loadState ->
-            val isEmpty = postAdapter.itemCount == 0 &&
-                    loadState.source.refresh is androidx.paging.LoadState.NotLoading
-            binding.emptyStateLayout.isVisible = isEmpty && !postsViewModel.uiState.value.isLoading
-            binding.postsRecyclerView.isVisible = !isEmpty
-        }
     }
 
-    private fun showPostMenuOptions(post: ru.netology.nework.data.Post) {
-        val isOwnPost = authViewModel.getUserId() == post.authorId
-
-        val options = mutableListOf<String>()
-
-        if (isOwnPost) {
-            options.add("Редактировать")
-            options.add("Удалить")
-        } else {
-            options.add("Пожаловаться")
+    private fun navigateToPostDetails(postId: Long) {
+        val bundle = Bundle().apply {
+            putLong("postId", postId)
         }
+        findNavController().navigate(R.id.postDetailsFragment, bundle)
+    }
 
-        androidx.appcompat.app.AlertDialog.Builder(requireContext())
-            .setTitle("Опции поста")
-            .setItems(options.toTypedArray()) { _, which ->
-                when (options[which]) {
-                    "Редактировать" -> navigateToEditPost(post.id)
-                    "Удалить" -> confirmDeletePost(post)
-                    "Пожаловаться" -> showReportPostDialog(post)
-                }
-            }
-            .setNegativeButton("Отмена", null)
-            .show()
+    private fun navigateToUserProfile(userId: Long) {
+        val bundle = Bundle().apply {
+            putLong("userId", userId)
+        }
+        findNavController().navigate(R.id.userProfileFragment, bundle)
     }
 
     private fun confirmDeletePost(post: ru.netology.nework.data.Post) {
@@ -123,30 +106,22 @@ class PostsFragment : Fragment() {
     }
 
     private fun showReportPostDialog(post: ru.netology.nework.data.Post) {
-        val reportOptions = arrayOf("Спам", "Оскорбительный контент", "Нежелательный контент", "Другое")
-
-        androidx.appcompat.app.AlertDialog.Builder(requireContext())
-            .setTitle("Пожаловаться на пост")
-            .setItems(reportOptions) { _, which ->
-                Snackbar.make(binding.root, "Жалоба отправлена: ${reportOptions[which]}", Snackbar.LENGTH_SHORT).show()
-            }
-            .setNegativeButton("Отмена", null)
-            .show()
+        Snackbar.make(binding.root, "Жалоба на пост отправлена", Snackbar.LENGTH_SHORT).show()
     }
 
     private fun navigateToEditPost(postId: Long) {
         val bundle = Bundle().apply {
             putLong("postId", postId)
         }
-         findNavController().navigate(R.id.editPostFragment, bundle)
+        findNavController().navigate(R.id.editPostFragment, bundle)
         Snackbar.make(binding.root, "Редактирование поста будет реализовано в следующем обновлении", Snackbar.LENGTH_SHORT).show()
     }
 
     private fun setupSwipeRefresh() {
         binding.swipeRefreshLayout.setColorSchemeResources(
-            R.color.design_default_color_primary,
-            R.color.design_default_color_primary_variant,
-            R.color.design_default_color_secondary
+            R.color.purple_500,
+            R.color.purple_700,
+            R.color.teal_200
         )
 
         binding.swipeRefreshLayout.setOnRefreshListener {
@@ -165,22 +140,11 @@ class PostsFragment : Fragment() {
         }
     }
 
-    private fun setupEmptyState() {
-        binding.emptyStateTextView.text = "Пока нет постов\nБудьте первым, кто поделится новостью!"
-        binding.emptyStateButton.setOnClickListener {
-            if (authViewModel.isAuthenticated()) {
-                findNavController().navigate(R.id.createPostFragment)
-            } else {
-                showAuthenticationRequired()
-            }
-        }
-    }
-
     private fun observePosts() {
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 postsViewModel.data.collect { pagingData ->
-                    postAdapter.submitData(pagingData)
+                    updateEmptyState()
                 }
             }
         }
@@ -218,23 +182,31 @@ class PostsFragment : Fragment() {
 
     private fun updateUi(uiState: PostsViewModel.PostsUiState) {
         with(binding) {
-            progressBar.isVisible = uiState.isLoading && !uiState.isRefreshing
-            swipeRefreshLayout.isRefreshing = uiState.isRefreshing
+            swipeRefreshLayout.isRefreshing = uiState.isLoading || uiState.isRefreshing
             postsRecyclerView.isEnabled = !uiState.isLoading
             fab.isEnabled = !uiState.isLoading
             if (uiState.showError && uiState.error != null) {
                 showError(uiState.error)
                 postsViewModel.clearError()
             }
-            updateEmptyState(uiState)
+            updateEmptyState()
             updateOperationState(uiState.currentOperation)
         }
     }
 
-    private fun updateEmptyState(uiState: PostsViewModel.PostsUiState) {
-        val isEmpty = postAdapter.itemCount == 0 && !uiState.isLoading && !uiState.isRefreshing
-        binding.emptyStateLayout.isVisible = isEmpty
-        binding.postsRecyclerView.isVisible = !isEmpty || uiState.isLoading
+    private fun updateEmptyState() {
+        val isEmpty = postAdapter.itemCount == 0
+        if (isEmpty && !postsViewModel.uiState.value.isLoading) {
+            Snackbar.make(binding.root, "Пока нет постов. Будьте первым!", Snackbar.LENGTH_LONG)
+                .setAction("Создать") {
+                    if (authViewModel.isAuthenticated()) {
+                        findNavController().navigate(R.id.createPostFragment)
+                    } else {
+                        showAuthenticationRequired()
+                    }
+                }
+                .show()
+        }
     }
 
     private fun updateOperationState(operation: String?) {

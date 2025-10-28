@@ -18,7 +18,6 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
-import androidx.navigation.fragment.navArgs
 import com.bumptech.glide.Glide
 import com.google.android.material.snackbar.Snackbar
 import dagger.hilt.android.AndroidEntryPoint
@@ -36,11 +35,13 @@ class EditPostFragment : Fragment(), MenuProvider {
     private var _binding: FragmentCreatePostBinding? = null
     private val binding get() = _binding!!
     private val postsViewModel: PostsViewModel by viewModels()
-    private val args: EditPostFragmentArgs by navArgs()
+    private val postId: Long by lazy {
+        arguments?.getLong("postId") ?: throw IllegalArgumentException("postId is required")
+    }
 
     private var attachmentUri: Uri? = null
-    private var attachmentType: ru.netology.nework.data.Post.AttachmentType? = null
-    private var coordinates: ru.netology.nework.data.Post.Coordinates? = null
+    private var attachmentType: Post.AttachmentType? = null
+    private var coordinates: Post.Coordinates? = null
     private var mentionedUserIds: List<Long> = emptyList()
 
     private val pickImageLauncher = registerForActivityResult(
@@ -48,7 +49,7 @@ class EditPostFragment : Fragment(), MenuProvider {
     ) { result ->
         if (result.resultCode == android.app.Activity.RESULT_OK) {
             result.data?.data?.let { uri ->
-                handleMediaSelection(uri, ru.netology.nework.data.Post.AttachmentType.IMAGE)
+                handleMediaSelection(uri, Post.AttachmentType.IMAGE)
             }
         }
     }
@@ -58,7 +59,7 @@ class EditPostFragment : Fragment(), MenuProvider {
     ) { result ->
         if (result.resultCode == android.app.Activity.RESULT_OK) {
             result.data?.data?.let { uri ->
-                handleMediaSelection(uri, ru.netology.nework.data.Post.AttachmentType.VIDEO)
+                handleMediaSelection(uri, Post.AttachmentType.VIDEO)
             }
         }
     }
@@ -68,7 +69,7 @@ class EditPostFragment : Fragment(), MenuProvider {
     ) { result ->
         if (result.resultCode == android.app.Activity.RESULT_OK) {
             result.data?.data?.let { uri ->
-                handleMediaSelection(uri, ru.netology.nework.data.Post.AttachmentType.AUDIO)
+                handleMediaSelection(uri, Post.AttachmentType.AUDIO)
             }
         }
     }
@@ -84,7 +85,6 @@ class EditPostFragment : Fragment(), MenuProvider {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
         requireActivity().addMenuProvider(this, viewLifecycleOwner)
         loadPostData()
         setupClickListeners()
@@ -101,7 +101,6 @@ class EditPostFragment : Fragment(), MenuProvider {
                 updatePost()
                 true
             }
-
             else -> false
         }
     }
@@ -118,20 +117,22 @@ class EditPostFragment : Fragment(), MenuProvider {
 
         viewLifecycleOwner.lifecycleScope.launch {
             try {
-                val existingPost = postsViewModel.getPostById(args.postId)
+                val existingPost = postsViewModel.getPostById(postId)
                 if (existingPost == null) {
                     showError("Пост не найден")
                     return@launch
                 }
 
-                val uploadedAttachment = attachmentUri?.let { uri ->
+                val uploadedAttachment = if (attachmentUri != null && attachmentType != null) {
                     try {
-                        val mediaType = attachmentType ?: Post.AttachmentType.IMAGE
-                        postsViewModel.uploadMedia(uri, mediaType)
+                        val url = postsViewModel.uploadMedia(attachmentUri!!, attachmentType!!)
+                        Post.Attachment(url, attachmentType!!)
                     } catch (e: Exception) {
                         showError("Ошибка загрузки медиа: ${e.message}")
                         null
                     }
+                } else {
+                    null
                 }
 
                 val updatedPost = existingPost.copy(
@@ -175,11 +176,14 @@ class EditPostFragment : Fragment(), MenuProvider {
         binding.removeAttachmentButton.setOnClickListener {
             removeAttachment()
         }
+        binding.attachmentPreview.setOnClickListener {
+            showAttachmentOptions()
+        }
     }
     private fun loadPostData() {
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                val post = postsViewModel.getPostById(args.postId)
+                val post = postsViewModel.getPostById(postId)
                 post?.let {
                     bindPostData(it)
                 } ?: run {
@@ -216,6 +220,11 @@ class EditPostFragment : Fragment(), MenuProvider {
             binding.removeAttachmentButton.visibility = View.VISIBLE
         }
     }
+
+    private fun updateMentionedUsersText() {
+        binding.mentionedUsersText.visibility = View.GONE
+    }
+
     private fun setupMapResultListener() {
         parentFragmentManager.setFragmentResultListener(
             MapFragment.LOCATION_SELECTION_KEY,
@@ -298,17 +307,14 @@ class EditPostFragment : Fragment(), MenuProvider {
                     setDataAndType(uri, "image/*")
                     addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                 }
-
                 Post.AttachmentType.VIDEO -> Intent(Intent.ACTION_VIEW).apply {
                     setDataAndType(uri, "video/*")
                     addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                 }
-
                 Post.AttachmentType.AUDIO -> Intent(Intent.ACTION_VIEW).apply {
                     setDataAndType(uri, "audio/*")
                     addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                 }
-
                 null -> return
             }
 

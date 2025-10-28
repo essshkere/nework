@@ -150,7 +150,7 @@ class EditJobFragment : Fragment(), MenuProvider {
     private fun observeJob() {
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                jobsViewModel.jobs.observe(viewLifecycleOwner) { jobs ->
+                jobsViewModel.jobs.collect { jobs ->
                     currentJob = jobs.find { it.id == jobId }
                     currentJob?.let { job ->
                         bindJob(job)
@@ -166,12 +166,12 @@ class EditJobFragment : Fragment(), MenuProvider {
     private fun observeJobUpdate() {
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                jobsViewModel.state.observe(viewLifecycleOwner) { state ->
+                jobsViewModel.state.collect { state ->
                     when (state) {
-                        JobsViewModel.JobsState.Loading -> {
+                        is JobsViewModel.JobsState.Loading -> {
                             showLoading(true)
                         }
-                        JobsViewModel.JobsState.Success -> {
+                        is JobsViewModel.JobsState.Success -> {
                             showLoading(false)
                             Snackbar.make(binding.root, "Работа успешно обновлена", Snackbar.LENGTH_SHORT).show()
                             findNavController().navigateUp()
@@ -180,6 +180,7 @@ class EditJobFragment : Fragment(), MenuProvider {
                             showLoading(false)
                             showError(state.message)
                         }
+                        else -> {}
                     }
                 }
             }

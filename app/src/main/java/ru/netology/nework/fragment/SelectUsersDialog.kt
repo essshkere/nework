@@ -13,6 +13,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import ru.netology.nework.adapter.ParticipantAdapter
 import ru.netology.nework.databinding.DialogSelectUsersBinding
@@ -24,8 +25,10 @@ class SelectUsersDialog : DialogFragment() {
     private var _binding: DialogSelectUsersBinding? = null
     private val binding get() = _binding!!
     private val usersViewModel: UsersViewModel by viewModels()
+
     @Inject
     lateinit var participantAdapter: ParticipantAdapter
+
     private var initiallySelectedUserIds: Set<Long> = emptySet()
     private var multiSelect: Boolean = true
     var onUsersSelected: ((List<ru.netology.nework.data.User>) -> Unit)? = null
@@ -37,8 +40,7 @@ class SelectUsersDialog : DialogFragment() {
             .setView(binding.root)
             .setTitle(getDialogTitle())
             .setNegativeButton("Отмена") { dialog, _ -> dialog.dismiss() }
-            .setPositiveButton(getConfirmButtonText()) { _, _ ->
-            }
+            .setPositiveButton(getConfirmButtonText()) { _, _ -> }
             .create()
 
         dialog.setOnShowListener {
@@ -93,19 +95,28 @@ class SelectUsersDialog : DialogFragment() {
 
     private fun setupSearch() {
         binding.searchView.setOnQueryTextListener(object : android.widget.SearchView.OnQueryTextListener {
-            override fun onQueryTextSubmit(query: String?): Boolean {
-                return false
-            }
+            override fun onQueryTextSubmit(query: String?): Boolean = false
 
             override fun onQueryTextChange(newText: String?): Boolean {
                 filterUsers(newText ?: "")
                 return true
             }
         })
+    }
 
-        binding.searchView.setOnCloseListener {
-            filterUsers("")
-            false
+    private fun filterUsers(query: String) {
+        viewLifecycleOwner.lifecycleScope.launch {
+            usersViewModel.usersFlow.collect { users ->
+                val filteredList = if (query.isBlank()) {
+                    users
+                } else {
+                    users.filter { user ->
+                        user.name.contains(query, ignoreCase = true) ||
+                                user.login.contains(query, ignoreCase = true)
+                    }
+                }
+                participantAdapter.submitList(filteredList)
+            }
         }
     }
 
@@ -119,18 +130,6 @@ class SelectUsersDialog : DialogFragment() {
                 }
             }
         }
-    }
-
-    private fun filterUsers(query: String) {
-        val filteredList = if (query.isBlank()) {
-            usersViewModel.usersFlow.value
-        } else {
-            usersViewModel.usersFlow.value.filter { user ->
-                user.name.contains(query, ignoreCase = true) ||
-                        user.login.contains(query, ignoreCase = true)
-            }
-        }
-        participantAdapter.submitList(filteredList)
     }
 
     private fun confirmSelection() {
@@ -157,14 +156,14 @@ class SelectUsersDialog : DialogFragment() {
         val selectedCount = participantAdapter.getSelectedUserIds().size
 
         if (multiSelect) {
-            binding.selectionInfoTextView.visibility = View.VISIBLE
-            binding.selectionInfoTextView.text = when (selectedCount) {
-                0 -> "Пользователи не выбраны"
-                1 -> "Выбран 1 пользователь"
-                else -> "Выбрано пользователей: $selectedCount"
-            }
+             binding.selectionInfoTextView.visibility = View.VISIBLE
+             binding.selectionInfoTextView.text = when (selectedCount) {
+                 0 -> "Пользователи не выбраны"
+                 1 -> "Выбран 1 пользователь"
+                 else -> "Выбрано пользователей: $selectedCount"
+             }
         } else {
-            binding.selectionInfoTextView.visibility = View.GONE
+             binding.selectionInfoTextView.visibility = View.GONE
         }
     }
 
@@ -180,19 +179,11 @@ class SelectUsersDialog : DialogFragment() {
     }
 
     private fun getDialogTitle(): String {
-        return if (multiSelect) {
-            "Выберите пользователей"
-        } else {
-            "Выберите пользователя"
-        }
+        return if (multiSelect) "Выберите пользователей" else "Выберите пользователя"
     }
 
     private fun getConfirmButtonText(): String {
-        return if (multiSelect) {
-            "Выбрать"
-        } else {
-            "Выбрать пользователя"
-        }
+        return if (multiSelect) "Выбрать" else "Выбрать пользователя"
     }
 
     fun setInitiallySelectedUserIds(userIds: List<Long>) {

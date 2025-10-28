@@ -12,6 +12,9 @@ import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
+import ru.netology.nework.adapter.EventAdapter
+import ru.netology.nework.adapter.ParticipantAdapter
+import ru.netology.nework.adapter.UserAdapter
 import ru.netology.nework.api.*
 import ru.netology.nework.data.AppDatabase
 import ru.netology.nework.repository.*
@@ -121,4 +124,16 @@ object AppModule {
     @Provides
     @Singleton
     fun provideJobRepository(jobApi: JobApi): JobRepository = JobRepositoryImpl(jobApi)
+
+    @Provides
+    @Singleton
+    fun provideParticipantAdapter(): ParticipantAdapter = ParticipantAdapter()
+
+    @Provides
+    @Singleton
+    fun provideEventAdapter(): EventAdapter = EventAdapter()
+
+    @Provides
+    @Singleton
+    fun provideUserAdapter(): UserAdapter = UserAdapter()
 }

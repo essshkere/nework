@@ -70,24 +70,19 @@ class EventsFragment : Fragment() {
             handleParticipation(event)
         }
 
-        eventAdapter.onSpeakerClicked = { userId ->
-            navigateToUserProfile(userId)
-        }
-
         eventAdapter.onAuthorClicked = { authorId ->
             navigateToUserProfile(authorId)
         }
 
-        eventAdapter.onMenuClicked = { event ->
-            showEventMenuOptions(event)
+        eventAdapter.onEditClicked = { eventId ->
+            navigateToEditEvent(eventId)
         }
 
-        eventAdapter.addLoadStateListener { loadState ->
-            val isEmpty = eventAdapter.itemCount == 0 &&
-                    loadState.source.refresh is androidx.paging.LoadState.NotLoading
-            binding.emptyStateLayout.isVisible = isEmpty && !eventsViewModel.uiState.value.isLoading
-            binding.eventsRecyclerView.isVisible = !isEmpty
+        eventAdapter.onDeleteClicked = { event ->
+            confirmDeleteEvent(event)
         }
+
+        observeEmptyState()
     }
 
     private fun showEventMenuOptions(event: ru.netology.nework.data.Event) {
@@ -146,15 +141,14 @@ class EventsFragment : Fragment() {
         val bundle = Bundle().apply {
             putLong("eventId", eventId)
         }
-         findNavController().navigate(R.id.editEventFragment, bundle)
-        Snackbar.make(binding.root, "Редактирование события будет реализовано в следующем обновлении", Snackbar.LENGTH_SHORT).show()
+        findNavController().navigate(R.id.editEventFragment, bundle)
     }
 
     private fun setupSwipeRefresh() {
         binding.swipeRefreshLayout.setColorSchemeResources(
-            R.color.design_default_color_primary,
-            R.color.design_default_color_primary_variant,
-            R.color.design_default_color_secondary
+            R.color.purple_500,
+            R.color.purple_700,
+            R.color.teal_200
         )
 
         binding.swipeRefreshLayout.setOnRefreshListener {
@@ -188,9 +182,6 @@ class EventsFragment : Fragment() {
     private fun observeEvents() {
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                eventsViewModel.data.collect { pagingData ->
-                    eventAdapter.submitData(pagingData)
-                }
             }
         }
     }
@@ -225,6 +216,22 @@ class EventsFragment : Fragment() {
         }
     }
 
+    private fun observeEmptyState() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                eventsViewModel.uiState.collect { uiState ->
+                    updateEmptyStateBasedOnAdapter()
+                }
+            }
+        }
+    }
+
+    private fun updateEmptyStateBasedOnAdapter() {
+        val isEmpty = eventAdapter.itemCount == 0
+        binding.emptyStateLayout.isVisible = isEmpty
+        binding.eventsRecyclerView.isVisible = !isEmpty
+    }
+
     private fun updateUi(uiState: EventsViewModel.EventsUiState) {
         with(binding) {
             progressBar.isVisible = uiState.isLoading && !uiState.isRefreshing
@@ -235,15 +242,8 @@ class EventsFragment : Fragment() {
                 showError(uiState.error)
                 eventsViewModel.clearError()
             }
-            updateEmptyState(uiState)
             updateOperationState(uiState.currentOperation)
         }
-    }
-
-    private fun updateEmptyState(uiState: EventsViewModel.EventsUiState) {
-        val isEmpty = eventAdapter.itemCount == 0 && !uiState.isLoading && !uiState.isRefreshing
-        binding.emptyStateLayout.isVisible = isEmpty
-        binding.eventsRecyclerView.isVisible = !isEmpty || uiState.isLoading
     }
 
     private fun updateOperationState(operation: String?) {

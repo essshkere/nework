@@ -36,6 +36,14 @@
                     android:textStyle="bold"
                     android:textSize="16sp" />
 
+                <!-- ДОБАВЛЕНО: TextView для работы автора -->
+                <TextView
+                    android:id="@+id/authorJobTextView"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textSize="14sp"
+                    android:textColor="@android:color/darker_gray" />
+
                 <TextView
                     android:id="@+id/publishedDateTextView"
                     android:layout_width="match_parent"
@@ -122,27 +130,28 @@
         <com.google.android.material.card.MaterialCardView
             android:id="@+id/locationCardView"
             android:layout_width="match_parent"
-            android:layout_height="150dp"
+            android:layout_height="wrap_content"
             android:visibility="gone"
             android:layout_marginBottom="16dp">
 
             <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:orientation="vertical">
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
 
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="Местоположение"
                     android:textStyle="bold"
-                    android:padding="8dp" />
+                    android:layout_marginBottom="8dp" />
 
-                <FrameLayout
+                <TextView
+                    android:id="@+id/locationTextView"
                     android:layout_width="match_parent"
-                    android:layout_height="0dp"
-                    android:layout_weight="1"
-                    android:background="@android:color/darker_gray" />
+                    android:layout_height="wrap_content"
+                    android:textSize="14sp" />
 
             </LinearLayout>
 
@@ -159,9 +168,10 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:padding="8dp">
+                android:padding="16dp">
 
                 <TextView
+                    android:id="@+id/speakersTitle"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="Спикеры"
@@ -188,7 +198,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:padding="8dp">
+                android:padding="16dp">
 
                 <TextView
                     android:layout_width="match_parent"

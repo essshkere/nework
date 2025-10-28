@@ -430,14 +430,6 @@ class CreatePostFragment : Fragment(), MenuProvider {
         }
     }
 
-    private suspend fun PostsViewModel.uploadMedia(uri: Uri, type: Post.AttachmentType): String? {
-        return try {
-            repository.uploadMedia(uri, type)
-        } catch (e: Exception) {
-            null
-        }
-    }
-
     private val locationSelectionListener = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
     ) { result ->

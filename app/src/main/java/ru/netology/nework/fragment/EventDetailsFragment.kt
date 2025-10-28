@@ -56,6 +56,7 @@ class EventDetailsFragment : Fragment() {
         setupRecyclerViews()
         observeEvent()
         setupClickListeners()
+        setupSpeakersClickListeners()
     }
 
     private fun setupRecyclerViews() {
@@ -95,6 +96,13 @@ class EventDetailsFragment : Fragment() {
                 }
             }
         }
+    }
+
+    private fun navigateToUserProfile(userId: Long) {
+        val bundle = Bundle().apply {
+            putLong("userId", userId)
+        }
+        findNavController().navigate(R.id.userProfileFragment, bundle)
     }
 
     private fun bindEvent(event: ru.netology.nework.data.Event) {

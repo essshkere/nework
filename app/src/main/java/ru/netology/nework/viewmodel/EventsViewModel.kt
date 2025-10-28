@@ -13,6 +13,9 @@ import kotlinx.coroutines.launch
 import ru.netology.nework.data.Event
 import ru.netology.nework.repository.EventRepository
 import javax.inject.Inject
+import android.net.Uri
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 @HiltViewModel
 class EventsViewModel @Inject constructor(

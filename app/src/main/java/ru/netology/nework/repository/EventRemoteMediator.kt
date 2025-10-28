@@ -8,7 +8,6 @@ import androidx.room.withTransaction
 import ru.netology.nework.api.EventApi
 import ru.netology.nework.data.AppDatabase
 import ru.netology.nework.data.EventEntity
-import ru.netology.nework.dto.EventDto
 import ru.netology.nework.mapper.toEntity
 
 @OptIn(ExperimentalPagingApi::class)

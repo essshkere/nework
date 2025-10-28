@@ -1,6 +1,7 @@
 package ru.netology.nework.fragment
 
 import android.Manifest
+import android.content.DialogInterface
 import android.content.pm.PackageManager
 import android.graphics.Color
 import android.os.Bundle
@@ -9,7 +10,7 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import androidx.fragment.app.Fragment
+import androidx.fragment.app.DialogFragment
 import androidx.navigation.fragment.findNavController
 import com.google.android.material.snackbar.Snackbar
 import com.yandex.mapkit.Animation
@@ -20,10 +21,11 @@ import com.yandex.mapkit.map.InputListener
 import com.yandex.mapkit.map.Map
 import com.yandex.mapkit.map.PlacemarkMapObject
 import com.yandex.mapkit.mapview.MapView
+import com.yandex.runtime.image.ImageProvider
 import ru.netology.nework.R
 import ru.netology.nework.databinding.FragmentMapBinding
 
-class MapFragment : Fragment() {
+class MapFragment : DialogFragment() {
 
     private var _binding: FragmentMapBinding? = null
     private val binding get() = _binding!!
@@ -59,6 +61,7 @@ class MapFragment : Fragment() {
         savedInstanceState: Bundle?
     ): View {
         _binding = FragmentMapBinding.inflate(inflater, container, false)
+        dialog?.setTitle("Выберите локацию")
         return binding.root
     }
 
@@ -90,11 +93,11 @@ class MapFragment : Fragment() {
         )
 
         mapView.map.addInputListener(object : InputListener {
-            override fun onMapTap(map: Map, point: Point) {
+            override fun onMapTap(map: com.yandex.mapkit.map.Map, point: Point) {
                 handleMapTap(point)
             }
 
-            override fun onMapLongTap(map: Map, point: Point) {
+            override fun onMapLongTap(map: com.yandex.mapkit.map.Map, point: Point) {
                 handleMapTap(point)
             }
         })
@@ -117,14 +120,13 @@ class MapFragment : Fragment() {
         selectedPoint?.let { point ->
             mapView.map.mapObjects.clear()
             placemark = mapView.map.mapObjects.addPlacemark(point)
-            placemark?.setIcon(
-                ContextCompat.getDrawable(requireContext(), R.drawable.ic_location_marker)!!
-            )
-            placemark?.opacity = 0.9f
 
-            placemark?.addTapListener(MapObjectTapListener { mapObject, point ->
-                true // обработано
-            })
+            val imageProvider = ImageProvider.fromResource(requireContext(), R.drawable.ic_location_marker)
+            placemark?.setIcon(imageProvider)
+            placemark?.opacity = 0.9f
+            placemark?.addTapListener { mapObject, point ->
+                true
+            }
         }
     }
 
@@ -236,8 +238,8 @@ class MapFragment : Fragment() {
         super.onStop()
     }
 
-    override fun onDestroyView() {
-        super.onDestroyView()
-        _binding = null
+    override fun onCancel(dialog: DialogInterface) {
+        super.onCancel(dialog)
+        findNavController().navigateUp()
     }
 }

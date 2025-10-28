@@ -311,8 +311,8 @@ class EventRepositoryImpl @Inject constructor(
             published = event.published,
             coords = event.coords?.let { coords ->
                 CoordinatesDto(
-                    lat = coords.lat.toString(),
-                    long = coords.long.toString()
+                    lat = coords.lat,
+                    long = coords.long
                 )
             },
             type = when (event.type) {

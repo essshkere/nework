@@ -30,8 +30,7 @@ fun EventDto.toEntity(): EventEntity = EventEntity(
     participatedByMe = participatedByMe,
     attachmentUrl = attachment?.url,
     attachmentType = attachment?.type?.name,
-    link = link,
-    users = gson.toJson(users)
+    link = link
 )
 
 fun EventEntity.toModel(): Event = Event(
@@ -65,14 +64,46 @@ fun EventEntity.toModel(): Event = Event(
             type = Event.AttachmentType.valueOf(attachmentType ?: "IMAGE")
         )
     },
-    link = link,
-    users = try {
-        gson.fromJson(users, Map::class.java) as? Map<Long, Event.UserPreview> ?: emptyMap()
-    } catch (e: Exception) {
-        emptyMap()
-    }
+    link = link
 )
 
+fun EventDto.toModel(): Event = Event(
+    id = id,
+    authorId = authorId,
+    author = author,
+    authorAvatar = authorAvatar,
+    authorJob = authorJob,
+    content = content,
+    datetime = datetime,
+    published = published,
+    coords = coords?.let { Event.Coordinates(it.lat, it.long) },
+    type = when (type) {
+        EventTypeDto.ONLINE -> Event.EventType.ONLINE
+        EventTypeDto.OFFLINE -> Event.EventType.OFFLINE
+    },
+    likeOwnerIds = likeOwnerIds,
+    likedByMe = likedByMe,
+    speakerIds = speakerIds,
+    participantsIds = participantsIds,
+    participatedByMe = participatedByMe,
+    attachment = attachment?.let {
+        Event.Attachment(
+            url = it.url,
+            type = when (it.type) {
+                AttachmentTypeDto.IMAGE -> Event.AttachmentType.IMAGE
+                AttachmentTypeDto.VIDEO -> Event.AttachmentType.VIDEO
+                AttachmentTypeDto.AUDIO -> Event.AttachmentType.AUDIO
+            }
+        )
+    },
+    link = link,
+    users = users.mapValues { (_, userPreviewDto) ->
+        Event.UserPreview(
+            name = userPreviewDto.name,
+            avatar = userPreviewDto.avatar
+        )
+    }
+)
 fun Event.toDto(): EventDto {
     return EventDto(
         id = id,
@@ -109,11 +140,6 @@ fun Event.toDto(): EventDto {
             )
         },
         link = link,
-        users = users.mapValues { (_, userPreview) ->
-            UserPreviewDto(
-                name = userPreview.name,
-                avatar = userPreview.avatar
-            )
-        }
+        users = emptyMap()
     )
 }

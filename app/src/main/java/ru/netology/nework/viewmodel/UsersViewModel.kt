@@ -1,7 +1,5 @@
 package ru.netology.nework.viewmodel
 
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -18,21 +16,16 @@ class UsersViewModel @Inject constructor(
     private val repository: UserRepository
 ) : ViewModel() {
 
-    private val _users = MutableLiveData<List<User>>()
-    val users: LiveData<List<User>> = _users
+    val usersFlow: Flow<List<User>> = repository.getUsers()
 
     init {
         loadUsers()
     }
 
-    val usersFlow: Flow<List<User>> = repository.getUsers()
-
     private fun loadUsers() {
         viewModelScope.launch {
             try {
-                repository.getUsers().collect { userList ->
-                    _users.value = userList
-                }
+                repository.getUsers().collect {}
             } catch (e: Exception) {
                 e.printStackTrace()
             }

@@ -124,10 +124,10 @@ class JobRepositoryImpl @Inject constructor(
 
     private fun validateJobDates(start: String, finish: String?) {
         try {
-            val startDate = dateFormat.parse(start)
+            val startDate = dateFormat.parse(start) ?: return
 
             finish?.let { finishDateStr ->
-                val finishDate = dateFormat.parse(finishDateStr)
+                val finishDate = dateFormat.parse(finishDateStr) ?: return
 
                 if (startDate.after(finishDate)) {
                     throw IllegalArgumentException("Дата начала не может быть позже даты окончания")

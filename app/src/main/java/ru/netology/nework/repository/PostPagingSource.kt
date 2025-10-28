@@ -1,3 +1,4 @@
+// PostPagingSource.kt
 package ru.netology.nework.repository
 
 import androidx.paging.PagingSource
@@ -12,7 +13,15 @@ class PostPagingSource(
 
     override suspend fun load(params: LoadParams<Long>): LoadResult<Long, Post> {
         return try {
-            val response = postApi.getAll()
+            val pageSize = params.loadSize
+            val key = params.key
+
+            val response = if (key == null) {
+                postApi.getLatest(count = pageSize)
+            } else {
+                postApi.getBefore(id = key, count = pageSize)
+            }
+
             if (!response.isSuccessful) {
                 throw Exception("Failed to load posts: ${response.code()}")
             }
@@ -22,7 +31,7 @@ class PostPagingSource(
             LoadResult.Page(
                 data = posts,
                 prevKey = null,
-                nextKey = if (posts.isNotEmpty()) posts.last().id else null
+                nextKey = posts.lastOrNull()?.id
             )
         } catch (e: Exception) {
             LoadResult.Error(e)
@@ -31,7 +40,8 @@ class PostPagingSource(
 
     override fun getRefreshKey(state: PagingState<Long, Post>): Long? {
         return state.anchorPosition?.let { anchorPosition ->
-            state.closestPageToPosition(anchorPosition)?.prevKey
+            state.closestPageToPosition(anchorPosition)?.prevKey?.plus(1)
+                ?: state.closestPageToPosition(anchorPosition)?.nextKey?.minus(1)
         }
     }
 }

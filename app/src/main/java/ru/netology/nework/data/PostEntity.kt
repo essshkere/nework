@@ -19,5 +19,6 @@ data class PostEntity(
     val likedByMe: Boolean,
     val attachmentUrl: String?,
     val attachmentType: String?,
-    val mentionIds: String
+    val mentionIds: String,
+    val users: String? = null
 )

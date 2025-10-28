@@ -4,7 +4,6 @@ import androidx.paging.PagingSource
 import androidx.paging.PagingState
 import ru.netology.nework.api.EventApi
 import ru.netology.nework.data.Event
-import ru.netology.nework.dto.EventDto
 import ru.netology.nework.mapper.toModel
 
 class EventPagingSource(
@@ -13,7 +12,28 @@ class EventPagingSource(
 
     override suspend fun load(params: LoadParams<Long>): LoadResult<Long, Event> {
         return try {
-            val response = eventApi.getAll()
+            val response = when (params) {
+                is LoadParams.Refresh -> {
+                    eventApi.getLatest(params.loadSize)
+                }
+                is LoadParams.Append -> {
+                    val key = params.key ?: return LoadResult.Page(
+                        data = emptyList(),
+                        prevKey = null,
+                        nextKey = null
+                    )
+                    eventApi.getBefore(key, params.loadSize)
+                }
+                is LoadParams.Prepend -> {
+                    val key = params.key ?: return LoadResult.Page(
+                        data = emptyList(),
+                        prevKey = null,
+                        nextKey = null
+                    )
+                    eventApi.getAfter(key, params.loadSize)
+                }
+            }
+
             if (!response.isSuccessful) {
                 throw Exception("Failed to load events: ${response.code()}")
             }
@@ -22,8 +42,8 @@ class EventPagingSource(
 
             LoadResult.Page(
                 data = events,
-                prevKey = null,
-                nextKey = if (events.isNotEmpty()) events.last().id else null
+                prevKey = events.firstOrNull()?.id,
+                nextKey = events.lastOrNull()?.id
             )
         } catch (e: Exception) {
             LoadResult.Error(e)

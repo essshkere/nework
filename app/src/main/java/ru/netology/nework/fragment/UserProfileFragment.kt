@@ -136,6 +136,7 @@ class UserWallFragment : Fragment() {
 
     private val usersViewModel: UsersViewModel by viewModels()
     private val postsViewModel: PostsViewModel by viewModels()
+    private val authViewModel: AuthViewModel by viewModels()
 
     private lateinit var postAdapter: PostAdapter
 
@@ -177,7 +178,27 @@ class UserWallFragment : Fragment() {
     }
 
     private fun setupRecyclerView() {
-        postAdapter = PostAdapter().apply {
+        val currentUserId = authViewModel.getUserId()
+
+        postAdapter = PostAdapter(
+            currentUserId = currentUserId,
+            onEditPost = { post ->
+                val bundle = Bundle().apply {
+                    putLong("postId", post.id)
+                }
+                findNavController().navigate(R.id.editPostFragment, bundle)
+            },
+            onDeletePost = { post ->
+                postsViewModel.removeById(post.id)
+            },
+            onReportPost = { post ->
+                android.widget.Toast.makeText(
+                    requireContext(),
+                    "Функция жалобы в разработке",
+                    android.widget.Toast.LENGTH_SHORT
+                ).show()
+            }
+        ).apply {
             onPostClicked = { postId ->
                 val bundle = Bundle().apply {
                     putLong("postId", postId)
@@ -190,6 +211,12 @@ class UserWallFragment : Fragment() {
             onAuthorClicked = { authorId ->
                 val bundle = Bundle().apply {
                     putLong("userId", authorId)
+                }
+                findNavController().navigate(R.id.userProfileFragment, bundle)
+            }
+            onMentionClicked = { mentionId ->
+                val bundle = Bundle().apply {
+                    putLong("userId", mentionId)
                 }
                 findNavController().navigate(R.id.userProfileFragment, bundle)
             }
@@ -206,7 +233,13 @@ class UserWallFragment : Fragment() {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 usersViewModel.getUserWall(userId).let { posts ->
                     postAdapter.submitList(posts)
-                    binding.emptyStateLayout.visibility = if (posts.isEmpty()) View.VISIBLE else View.GONE
+                    if (posts.isEmpty()) {
+                        android.widget.Toast.makeText(
+                            requireContext(),
+                            "На стене пока нет постов",
+                            android.widget.Toast.LENGTH_SHORT
+                        ).show()
+                    }
                 }
             }
         }
@@ -277,10 +310,11 @@ class UserJobsFragment : Fragment() {
                 usersViewModel.getJobs(userId).let { jobs ->
                     jobAdapter.submitList(jobs)
                     if (jobs.isEmpty()) {
-                        binding.root.findViewById<android.widget.TextView>(R.id.emptyStateTextView)?.text = "Работы не добавлены"
-                        binding.root.findViewById<android.widget.LinearLayout>(R.id.emptyStateLayout)?.visibility = View.VISIBLE
-                    } else {
-                        binding.root.findViewById<android.widget.LinearLayout>(R.id.emptyStateLayout)?.visibility = View.GONE
+                        android.widget.Toast.makeText(
+                            requireContext(),
+                            "Работы не добавлены",
+                            android.widget.Toast.LENGTH_SHORT
+                        ).show()
                     }
                 }
             }

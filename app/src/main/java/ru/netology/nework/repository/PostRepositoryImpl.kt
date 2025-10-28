@@ -2,8 +2,12 @@ package ru.netology.nework.repository
 
 import android.net.Uri
 import androidx.paging.ExperimentalPagingApi
+import androidx.paging.Pager
+import androidx.paging.PagingConfig
+import androidx.paging.PagingData
 import androidx.paging.map
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
@@ -14,6 +18,7 @@ import ru.netology.nework.api.PostApi
 import ru.netology.nework.api.UserApi
 import ru.netology.nework.dao.PostDao
 import ru.netology.nework.data.Post
+import ru.netology.nework.data.toModel
 import ru.netology.nework.dto.AttachmentDto
 import ru.netology.nework.dto.AttachmentTypeDto
 import ru.netology.nework.dto.CoordinatesDto
@@ -35,8 +40,34 @@ class PostRepositoryImpl @Inject constructor(
     private val mediaApi: MediaApi
 ) : PostRepository {
 
-    override fun getPagingData() = postDao.pagingSource()
-        .map { it.toModel() }
+    override fun getPagingData(): Flow<PagingData<Post>> {
+        return Pager(
+            config = PagingConfig(
+                pageSize = 10,
+                enablePlaceholders = false,
+                initialLoadSize = 20
+            ),
+            pagingSourceFactory = {
+                PostPagingSource(postApi)
+            }
+        ).flow
+    }
+
+    fun getPagingDataFromDb(): Flow<PagingData<Post>> {
+        return Pager(
+            config = PagingConfig(
+                pageSize = 10,
+                enablePlaceholders = false
+            ),
+            pagingSourceFactory = {
+                postDao.pagingSource()
+            }
+        ).flow.map { pagingData ->
+            pagingData.map { postEntity ->
+                postEntity.toModel()
+            }
+        }
+    }
 
     override suspend fun getAll() {
         try {
@@ -148,7 +179,7 @@ class PostRepositoryImpl @Inject constructor(
             val response = postApi.getById(id)
             if (response.isSuccessful) {
                 response.body()?.let { postDto ->
-                    val post = postDto.toEntity().toModel()
+                    val post = postDto.toModel()
                     postDao.insert(postDto.toEntity())
                     post
                 }
@@ -162,9 +193,9 @@ class PostRepositoryImpl @Inject constructor(
 
     override suspend fun getUserWall(userId: Long): List<Post> {
         return try {
-            val response = userApi.getWall(userId)
-            if (response.isSuccessful) {
-                response.body()?.map { it.toEntity().toModel() } ?: emptyList()
+            val allPosts = postApi.getAll()
+            if (allPosts.isSuccessful) {
+                allPosts.body()?.filter { it.authorId == userId }?.map { it.toModel() } ?: emptyList()
             } else {
                 emptyList()
             }
@@ -175,9 +206,9 @@ class PostRepositoryImpl @Inject constructor(
 
     override suspend fun getMyWall(): List<Post> {
         return try {
-            val response = userApi.getMyWall()
+            val response = postApi.getAll()
             if (response.isSuccessful) {
-                response.body()?.map { it.toEntity().toModel() } ?: emptyList()
+                response.body()?.map { it.toModel() } ?: emptyList()
             } else {
                 emptyList()
             }
@@ -290,8 +321,8 @@ class PostRepositoryImpl @Inject constructor(
             published = post.published,
             coords = post.coords?.let { coords ->
                 CoordinatesDto(
-                    lat = coords.lat.toString(),
-                    long = coords.long.toString()
+                    lat = coords.lat,
+                    long = coords.long
                 )
             },
             link = post.link,
@@ -318,7 +349,6 @@ class PostRepositoryImpl @Inject constructor(
         )
     }
 
-    // Методы для работы с комментариями
     override suspend fun getComments(postId: Long): List<ru.netology.nework.data.Comment> {
         return try {
             val response = postApi.getComments(postId)
