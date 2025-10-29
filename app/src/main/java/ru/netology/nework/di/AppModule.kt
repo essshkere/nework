@@ -16,31 +16,28 @@ import ru.netology.nework.adapter.EventAdapter
 import ru.netology.nework.adapter.ParticipantAdapter
 import ru.netology.nework.adapter.UserAdapter
 import ru.netology.nework.api.*
+import ru.netology.nework.auth.AuthInterceptor
+import ru.netology.nework.auth.TokenProvider
+import ru.netology.nework.auth.TokenProviderImpl
 import ru.netology.nework.data.AppDatabase
 import ru.netology.nework.repository.*
 import javax.inject.Singleton
 
+private const val BASE_URL = "http://94.228.125.136:8080/"
+
 @Module
 @InstallIn(SingletonComponent::class)
 object AppModule {
-    private const val BASE_URL = "http://94.228.125.136:8080/"
 
     @Provides
     @Singleton
-    fun provideAuthInterceptor(authRepository: AuthRepository): Interceptor {
-        return Interceptor { chain ->
-            val originalRequest = chain.request()
-            val requestBuilder = originalRequest.newBuilder()
-                .addHeader("Api-Key", "c1378193-bc0e-42c8-a502-b8d66d189617")
+    fun provideTokenProvider(@ApplicationContext context: Context): TokenProvider =
+        TokenProviderImpl(context)
 
-            authRepository.getToken()?.let { token ->
-                requestBuilder.addHeader("Authorization", "Bearer $token")
-            }
-
-            val request = requestBuilder.build()
-            chain.proceed(request)
-        }
-    }
+    @Provides
+    @Singleton
+    fun provideAuthInterceptor(tokenProvider: TokenProvider): Interceptor =
+        AuthInterceptor(tokenProvider)
 
     @Provides
     @Singleton
@@ -48,7 +45,6 @@ object AppModule {
         val loggingInterceptor = HttpLoggingInterceptor().apply {
             level = HttpLoggingInterceptor.Level.BODY
         }
-
         return OkHttpClient.Builder()
             .addInterceptor(authInterceptor)
             .addInterceptor(loggingInterceptor)
@@ -57,11 +53,16 @@ object AppModule {
 
     @Provides
     @Singleton
-    fun provideRetrofit(client: OkHttpClient): Retrofit = Retrofit.Builder()
-        .baseUrl(BASE_URL)
-        .client(client)
-        .addConverterFactory(GsonConverterFactory.create())
-        .build()
+    fun provideRetrofit(client: OkHttpClient): Retrofit =
+        Retrofit.Builder()
+            .baseUrl(BASE_URL)
+            .client(client)
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+
+    @Provides
+    @Singleton
+    fun provideAuthApi(retrofit: Retrofit): AuthApi = retrofit.create(AuthApi::class.java)
 
     @Provides
     @Singleton
@@ -74,10 +75,6 @@ object AppModule {
     @Provides
     @Singleton
     fun provideUserApi(retrofit: Retrofit): UserApi = retrofit.create(UserApi::class.java)
-
-    @Provides
-    @Singleton
-    fun provideAuthApi(retrofit: Retrofit): AuthApi = retrofit.create(AuthApi::class.java)
 
     @Provides
     @Singleton
@@ -118,8 +115,11 @@ object AppModule {
 
     @Provides
     @Singleton
-    fun provideAuthRepository(authApi: AuthApi, @ApplicationContext context: Context): AuthRepository =
-        AuthRepositoryImpl(authApi, context)
+    fun provideAuthRepository(
+        authApi: AuthApi,
+        tokenProvider: TokenProvider,
+        @ApplicationContext context: Context
+    ): AuthRepository = AuthRepositoryImpl(authApi, tokenProvider, context)
 
     @Provides
     @Singleton
