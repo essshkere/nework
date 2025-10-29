@@ -1,28 +1,27 @@
 package ru.netology.nework.viewmodel
 
+import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import ru.netology.nework.data.Event
 import ru.netology.nework.repository.EventRepository
 import javax.inject.Inject
-import android.net.Uri
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 
 @HiltViewModel
 class EventsViewModel @Inject constructor(
     private val repository: EventRepository
 ) : ViewModel() {
     val data: Flow<PagingData<Event>> = repository.getPagingData().cachedIn(viewModelScope)
-
     private val _eventsState = MutableStateFlow<EventsState>(EventsState.Idle)
     val eventsState: StateFlow<EventsState> = _eventsState.asStateFlow()
     private val _uiState = MutableStateFlow<EventsUiState>(EventsUiState())
