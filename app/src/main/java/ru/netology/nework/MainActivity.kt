@@ -47,6 +47,18 @@ class MainActivity : AppCompatActivity() {
         setupNavigation()
         setupToolbar()
         observeAuthState()
+
+        checkAuthorizationOnStart()
+    }
+
+    private fun checkAuthorizationOnStart() {
+        val navHostFragment = supportFragmentManager
+            .findFragmentById(R.id.nav_host_fragment) as NavHostFragment
+        val navController = navHostFragment.navController
+
+        if (!authViewModel.isAuthenticated()) {
+            navController.navigate(R.id.loginFragment)
+        }
     }
 
     private fun setupNavigation() {
