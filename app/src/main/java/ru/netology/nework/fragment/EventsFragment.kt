@@ -25,7 +25,7 @@ import javax.inject.Inject
 @AndroidEntryPoint
 class EventsFragment : Fragment() {
     private var _binding: FragmentEventsBinding? = null
-    private val binding get() = _binding!!
+    private val binding get() = _binding
     private val eventsViewModel: EventsViewModel by viewModels()
     private val authViewModel: AuthViewModel by viewModels()
     @Inject
@@ -37,7 +37,7 @@ class EventsFragment : Fragment() {
         savedInstanceState: Bundle?
     ): View {
         _binding = FragmentEventsBinding.inflate(inflater, container, false)
-        return binding.root
+        return binding!!.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -50,10 +50,11 @@ class EventsFragment : Fragment() {
         observeEvents()
         observeUiState()
         observeEventsState()
+        observeEmptyState()
     }
 
     private fun setupRecyclerView() {
-        binding.eventsRecyclerView.apply {
+        binding?.eventsRecyclerView?.apply {
             layoutManager = LinearLayoutManager(requireContext())
             adapter = eventAdapter
         }
@@ -81,8 +82,6 @@ class EventsFragment : Fragment() {
         eventAdapter.onDeleteClicked = { event ->
             confirmDeleteEvent(event)
         }
-
-        observeEmptyState()
     }
 
     private fun showEventMenuOptions(event: ru.netology.nework.data.Event) {
@@ -131,7 +130,7 @@ class EventsFragment : Fragment() {
         androidx.appcompat.app.AlertDialog.Builder(requireContext())
             .setTitle("Пожаловаться на событие")
             .setItems(reportOptions) { _, which ->
-                Snackbar.make(binding.root, "Жалоба отправлена: ${reportOptions[which]}", Snackbar.LENGTH_SHORT).show()
+                Snackbar.make(binding!!.root, "Жалоба отправлена: ${reportOptions[which]}", Snackbar.LENGTH_SHORT).show()
             }
             .setNegativeButton("Отмена", null)
             .show()
@@ -145,21 +144,21 @@ class EventsFragment : Fragment() {
     }
 
     private fun setupSwipeRefresh() {
-        binding.swipeRefreshLayout.setColorSchemeResources(
+        binding?.swipeRefreshLayout?.setColorSchemeResources(
             R.color.purple_500,
             R.color.purple_700,
             R.color.teal_200
         )
 
-        binding.swipeRefreshLayout.setOnRefreshListener {
+        binding?.swipeRefreshLayout?.setOnRefreshListener {
             refreshData()
         }
 
-        binding.swipeRefreshLayout.isRefreshing = true
+        binding?.swipeRefreshLayout?.isRefreshing = true
     }
 
     private fun setupFab() {
-        binding.fab.setOnClickListener {
+        binding?.fab?.setOnClickListener {
             if (authViewModel.isAuthenticated()) {
                 navigateToCreateEvent()
             } else {
@@ -169,8 +168,8 @@ class EventsFragment : Fragment() {
     }
 
     private fun setupEmptyState() {
-        binding.emptyStateTextView.text = "Пока нет событий\nСоздайте первое мероприятие!"
-        binding.emptyStateButton.setOnClickListener {
+        binding?.emptyStateTextView?.text = "Пока нет событий\nСоздайте первое мероприятие!"
+        binding?.emptyStateButton?.setOnClickListener {
             if (authViewModel.isAuthenticated()) {
                 navigateToCreateEvent()
             } else {
@@ -180,10 +179,6 @@ class EventsFragment : Fragment() {
     }
 
     private fun observeEvents() {
-        viewLifecycleOwner.lifecycleScope.launch {
-            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-            }
-        }
     }
 
     private fun observeUiState() {
@@ -219,7 +214,7 @@ class EventsFragment : Fragment() {
     private fun observeEmptyState() {
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                eventsViewModel.uiState.collect { uiState ->
+                eventsViewModel.uiState.collect { _ ->
                     updateEmptyStateBasedOnAdapter()
                 }
             }
@@ -228,16 +223,16 @@ class EventsFragment : Fragment() {
 
     private fun updateEmptyStateBasedOnAdapter() {
         val isEmpty = eventAdapter.itemCount == 0
-        binding.emptyStateLayout.isVisible = isEmpty
-        binding.eventsRecyclerView.isVisible = !isEmpty
+        binding?.emptyStateLayout?.isVisible = isEmpty
+        binding?.eventsRecyclerView?.isVisible = !isEmpty
     }
 
     private fun updateUi(uiState: EventsViewModel.EventsUiState) {
-        with(binding) {
-            progressBar.isVisible = uiState.isLoading && !uiState.isRefreshing
-            swipeRefreshLayout.isRefreshing = uiState.isRefreshing
-            eventsRecyclerView.isEnabled = !uiState.isLoading
-            fab.isEnabled = !uiState.isLoading
+        binding?.let {
+            it.progressBar.isVisible = uiState.isLoading && !uiState.isRefreshing
+            it.swipeRefreshLayout.isRefreshing = uiState.isRefreshing
+            it.eventsRecyclerView.isEnabled = !uiState.isLoading
+            it.fab.isEnabled = !uiState.isLoading
             if (uiState.showError && uiState.error != null) {
                 showError(uiState.error)
                 eventsViewModel.clearError()
@@ -262,8 +257,8 @@ class EventsFragment : Fragment() {
 
     private fun refreshData() {
         eventsViewModel.refresh()
-        binding.swipeRefreshLayout.postDelayed({
-            binding.swipeRefreshLayout.isRefreshing = false
+        binding?.swipeRefreshLayout?.postDelayed({
+            binding?.swipeRefreshLayout?.isRefreshing = false
         }, 3000)
     }
 
@@ -294,29 +289,36 @@ class EventsFragment : Fragment() {
     }
 
     private fun showAuthenticationRequired() {
-        Snackbar.make(binding.root, "Для этого действия необходимо авторизоваться", Snackbar.LENGTH_LONG)
-            .setAction("Войти") {
-                findNavController().navigate(R.id.loginFragment)
-            }
-            .show()
+        binding?.root?.let {
+            Snackbar.make(it, "Для этого действия необходимо авторизоваться", Snackbar.LENGTH_LONG)
+                .setAction("Войти") {
+                    findNavController().navigate(R.id.loginFragment)
+                }
+                .show()
+        }
     }
 
     private fun showSuccess(message: String) {
-        Snackbar.make(binding.root, message, Snackbar.LENGTH_SHORT).show()
+        binding?.root?.let {
+            Snackbar.make(it, message, Snackbar.LENGTH_SHORT).show()
+        }
     }
 
     private fun showError(message: String) {
-        Snackbar.make(binding.root, message, Snackbar.LENGTH_LONG)
-            .setAction("Повторить") {
-                refreshData()
-            }
-            .show()
-
-        binding.swipeRefreshLayout.isRefreshing = false
+        binding?.root?.let {
+            Snackbar.make(it, message, Snackbar.LENGTH_LONG)
+                .setAction("Повторить") {
+                    refreshData()
+                }
+                .show()
+        }
+        binding?.swipeRefreshLayout?.isRefreshing = false
     }
 
     private fun showShortMessage(message: String) {
-        Snackbar.make(binding.root, message, Snackbar.LENGTH_SHORT).show()
+        binding?.root?.let {
+            Snackbar.make(it, message, Snackbar.LENGTH_SHORT).show()
+        }
     }
 
     override fun onResume() {

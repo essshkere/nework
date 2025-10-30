@@ -12,7 +12,6 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.google.android.material.snackbar.Snackbar
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
@@ -26,7 +25,7 @@ import javax.inject.Inject
 @AndroidEntryPoint
 class PostsFragment : Fragment() {
     private var _binding: FragmentPostsBinding? = null
-    private val binding get() = _binding!!
+    private val binding get() = _binding
     private val postsViewModel: PostsViewModel by viewModels()
     private val authViewModel: AuthViewModel by viewModels()
     private lateinit var postAdapter: PostAdapter
@@ -37,7 +36,7 @@ class PostsFragment : Fragment() {
         savedInstanceState: Bundle?
     ): View {
         _binding = FragmentPostsBinding.inflate(inflater, container, false)
-        return binding.root
+        return binding!!.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -58,7 +57,7 @@ class PostsFragment : Fragment() {
     }
 
     private fun setupRecyclerView() {
-        binding.postsRecyclerView.apply {
+        binding?.postsRecyclerView?.apply {
             layoutManager = LinearLayoutManager(requireContext())
             adapter = postAdapter
         }
@@ -106,7 +105,9 @@ class PostsFragment : Fragment() {
     }
 
     private fun showReportPostDialog(post: ru.netology.nework.data.Post) {
-        Snackbar.make(binding.root, "Жалоба на пост отправлена", Snackbar.LENGTH_SHORT).show()
+        binding?.root?.let {
+            Snackbar.make(it, "Жалоба на пост отправлена", Snackbar.LENGTH_SHORT).show()
+        }
     }
 
     private fun navigateToEditPost(postId: Long) {
@@ -114,24 +115,26 @@ class PostsFragment : Fragment() {
             putLong("postId", postId)
         }
         findNavController().navigate(R.id.editPostFragment, bundle)
-        Snackbar.make(binding.root, "Редактирование поста будет реализовано в следующем обновлении", Snackbar.LENGTH_SHORT).show()
+        binding?.root?.let {
+            Snackbar.make(it, "Редактирование поста будет реализовано в следующем обновлении", Snackbar.LENGTH_SHORT).show()
+        }
     }
 
     private fun setupSwipeRefresh() {
-        binding.swipeRefreshLayout.setColorSchemeResources(
+        binding?.swipeRefreshLayout?.setColorSchemeResources(
             R.color.purple_500,
             R.color.purple_700,
             R.color.teal_200
         )
 
-        binding.swipeRefreshLayout.setOnRefreshListener {
+        binding?.swipeRefreshLayout?.setOnRefreshListener {
             refreshData()
         }
-        binding.swipeRefreshLayout.isRefreshing = true
+        binding?.swipeRefreshLayout?.isRefreshing = true
     }
 
     private fun setupFab() {
-        binding.fab.setOnClickListener {
+        binding?.fab?.setOnClickListener {
             if (authViewModel.isAuthenticated()) {
                 findNavController().navigate(R.id.createPostFragment)
             } else {
@@ -181,10 +184,10 @@ class PostsFragment : Fragment() {
     }
 
     private fun updateUi(uiState: PostsViewModel.PostsUiState) {
-        with(binding) {
-            swipeRefreshLayout.isRefreshing = uiState.isLoading || uiState.isRefreshing
-            postsRecyclerView.isEnabled = !uiState.isLoading
-            fab.isEnabled = !uiState.isLoading
+        binding?.let {
+            it.swipeRefreshLayout.isRefreshing = uiState.isLoading || uiState.isRefreshing
+            it.postsRecyclerView.isEnabled = !uiState.isLoading
+            it.fab.isEnabled = !uiState.isLoading
             if (uiState.showError && uiState.error != null) {
                 showError(uiState.error)
                 postsViewModel.clearError()
@@ -196,16 +199,18 @@ class PostsFragment : Fragment() {
 
     private fun updateEmptyState() {
         val isEmpty = postAdapter.itemCount == 0
-        if (isEmpty && !postsViewModel.uiState.value.isLoading) {
-            Snackbar.make(binding.root, "Пока нет постов. Будьте первым!", Snackbar.LENGTH_LONG)
-                .setAction("Создать") {
-                    if (authViewModel.isAuthenticated()) {
-                        findNavController().navigate(R.id.createPostFragment)
-                    } else {
-                        showAuthenticationRequired()
+        if (isEmpty && postsViewModel.uiState.value.isLoading.not()) {
+            binding?.root?.let {
+                Snackbar.make(it, "Пока нет постов. Будьте первым!", Snackbar.LENGTH_LONG)
+                    .setAction("Создать") {
+                        if (authViewModel.isAuthenticated()) {
+                            findNavController().navigate(R.id.createPostFragment)
+                        } else {
+                            showAuthenticationRequired()
+                        }
                     }
-                }
-                .show()
+                    .show()
+            }
         }
     }
 
@@ -223,35 +228,42 @@ class PostsFragment : Fragment() {
 
     private fun refreshData() {
         postsViewModel.refresh()
-        binding.swipeRefreshLayout.postDelayed({
-            binding.swipeRefreshLayout.isRefreshing = false
+        binding?.swipeRefreshLayout?.postDelayed({
+            binding?.swipeRefreshLayout?.isRefreshing = false
         }, 3000)
     }
 
     private fun showAuthenticationRequired() {
-        Snackbar.make(binding.root, "Для создания поста необходимо авторизоваться", Snackbar.LENGTH_LONG)
-            .setAction("Войти") {
-                findNavController().navigate(R.id.loginFragment)
-            }
-            .show()
+        binding?.root?.let {
+            Snackbar.make(it, "Для создания поста необходимо авторизоваться", Snackbar.LENGTH_LONG)
+                .setAction("Войти") {
+                    findNavController().navigate(R.id.loginFragment)
+                }
+                .show()
+        }
     }
 
     private fun showSuccess(message: String) {
-        Snackbar.make(binding.root, message, Snackbar.LENGTH_SHORT).show()
+        binding?.root?.let {
+            Snackbar.make(it, message, Snackbar.LENGTH_SHORT).show()
+        }
     }
 
     private fun showError(message: String) {
-        Snackbar.make(binding.root, message, Snackbar.LENGTH_LONG)
-            .setAction("Повторить") {
-                refreshData()
-            }
-            .show()
-
-        binding.swipeRefreshLayout.isRefreshing = false
+        binding?.root?.let {
+            Snackbar.make(it, message, Snackbar.LENGTH_LONG)
+                .setAction("Повторить") {
+                    refreshData()
+                }
+                .show()
+        }
+        binding?.swipeRefreshLayout?.isRefreshing = false
     }
 
     private fun showShortMessage(message: String) {
-        Snackbar.make(binding.root, message, Snackbar.LENGTH_SHORT).show()
+        binding?.root?.let {
+            Snackbar.make(it, message, Snackbar.LENGTH_SHORT).show()
+        }
     }
 
     override fun onResume() {
