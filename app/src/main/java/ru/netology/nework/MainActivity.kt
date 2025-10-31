@@ -2,23 +2,22 @@ package ru.netology.nework
 
 import android.os.Bundle
 import android.view.Menu
-import android.view.MenuItem
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.setupWithNavController
 import com.google.android.material.snackbar.Snackbar
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
 import ru.netology.nework.databinding.ActivityMainBinding
 import ru.netology.nework.fragment.ConfirmLogoutDialog
 import ru.netology.nework.viewmodel.AuthViewModel
-import androidx.lifecycle.lifecycleScope
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
@@ -108,28 +107,6 @@ class MainActivity : AppCompatActivity() {
         menu.findItem(R.id.action_register).isVisible = !isAuthenticated
 
         return super.onPrepareOptionsMenu(menu)
-    }
-
-    override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        return when (item.itemId) {
-            R.id.action_profile -> {
-                navigateToMyProfile()
-                true
-            }
-            R.id.action_login -> {
-                navigateToLogin()
-                true
-            }
-            R.id.action_register -> {
-                navigateToRegister()
-                true
-            }
-            R.id.action_logout -> {
-                showLogoutConfirmation()
-                true
-            }
-            else -> super.onOptionsItemSelected(item)
-        }
     }
 
     private fun updateUi(uiState: AuthViewModel.AuthUiState) {
