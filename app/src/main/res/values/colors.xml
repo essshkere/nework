@@ -20,4 +20,10 @@
     <color name="text_primary">#1A1A1A</color>
     <color name="text_secondary">#6B7280</color>
     <color name="white">#FFFFFFFF</color>
+    <color name="cardbg">#FAFAFA</color>
+    <color name="textprimary">#212121</color>
+    <color name="textsecondary">#757575</color>
+    <color name="texthint">#BDBDBD</color>
+    <color name="iconhint">#BDBDBD</color>
+    <color name="textlink">#2979FF</color>
 </resources>

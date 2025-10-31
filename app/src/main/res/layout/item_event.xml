@@ -8,7 +8,7 @@
     android:layout_margin="8dp"
     app:cardCornerRadius="14dp"
     app:cardElevation="3dp"
-    app:cardBackgroundColor="@color/card_bg">
+    app:cardBackgroundColor="@color/cardbg">
 
     <LinearLayout
         android:orientation="vertical"
@@ -16,13 +16,13 @@
         android:layout_height="wrap_content"
         android:padding="16dp">
 
-        <!-- Автор, роль, дата, меню -->
+        <!-- Верхняя строка: аватар, имя, должность, дата -->
         <LinearLayout
             android:orientation="horizontal"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="10dp"
-            android:gravity="center_vertical">
+            android:gravity="center_vertical"
+            android:layout_marginBottom="10dp">
 
             <de.hdodenhof.circleimageview.CircleImageView
                 android:id="@+id/authorAvatarImageView"
@@ -30,7 +30,9 @@
                 android:layout_height="40dp"
                 app:civ_border_width="1dp"
                 app:civ_border_color="@color/colorPrimary"
-                android:src="@drawable/ic_account_circle"/>
+                android:src="@drawable/ic_account_circle"
+                android:contentDescription="@string/avatar"
+                />
 
             <LinearLayout
                 android:layout_width="0dp"
@@ -45,8 +47,8 @@
                     android:layout_height="wrap_content"
                     android:textStyle="bold"
                     android:textSize="16sp"
-                    android:textColor="@color/text_primary"
-                    tools:text="Иван Иванов"/>
+                    android:textColor="@color/textprimary"
+                    tools:text="Иван Иванов" />
 
                 <TextView
                     android:id="@+id/authorJobTextView"
@@ -54,9 +56,8 @@
                     android:layout_height="wrap_content"
                     android:textStyle="italic"
                     android:textSize="12sp"
-                    android:textColor="@color/text_secondary"
-                    tools:text="Android"/>
-
+                    android:textColor="@color/textsecondary"
+                    tools:text="Android Developer" />
             </LinearLayout>
 
             <TextView
@@ -64,10 +65,8 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:textSize="12sp"
-                android:textColor="@color/text_hint"
-                android:textStyle="italic"
-                android:paddingEnd="6dp"
-                tools:text="31.10.2025"/>
+                android:textColor="@color/texthint"
+                tools:text="31.10.2025" />
 
             <ImageButton
                 android:id="@+id/menuButton"
@@ -75,86 +74,106 @@
                 android:layout_height="24dp"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:src="@drawable/ic_more_vert"
-                app:tint="@color/icon_hint"
+                app:tint="@color/iconhint"
                 android:contentDescription="@string/menu" />
         </LinearLayout>
 
-        <!-- Дата и тип события -->
-        <TextView
-            android:id="@+id/eventDateTimeTextView"
-            android:layout_width="wrap_content"
+        <!-- Дата и онлайн/оффлайн -->
+        <LinearLayout
+            android:orientation="horizontal"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textColor="@color/colorPrimary"
-            android:textSize="13sp"
-            android:layout_marginBottom="3dp"
-            tools:text="31.10.2025, 19:00"/>
+            android:layout_marginBottom="8dp">
 
-        <TextView
-            android:id="@+id/eventTypeTextView"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textColor="@color/colorPrimary"
-            android:textSize="13sp"
-            android:textStyle="bold"
-            android:layout_marginBottom="6dp"
-            tools:text="ONLINE"/>
+            <TextView
+                android:id="@+id/eventDateTimeTextView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="@color/colorPrimary"
+                android:textSize="13sp"
+                android:layout_marginEnd="8dp"
+                tools:text="31.10.2025, 19:00" />
 
-        <!-- Место -->
+            <TextView
+                android:id="@+id/eventTypeTextView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="@color/colorPrimary"
+                android:textStyle="bold"
+                android:textSize="13sp"
+                tools:text="ONLINE" />
+        </LinearLayout>
+
+        <!-- Локация -->
         <TextView
             android:id="@+id/locationTextView"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textColor="@color/text_link"
+            android:textColor="@color/textlink"
             android:textSize="13sp"
             android:visibility="gone"
             android:layout_marginBottom="6dp"
-            tools:text="г. Тюмень"/>
+            tools:text="г. Москва, ул. Ленина 12" />
 
-        <!-- Описание события -->
+        <!-- Текст события -->
         <TextView
             android:id="@+id/contentTextView"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textSize="14sp"
-            android:textColor="@color/text_primary"
+            android:textSize="15sp"
+            android:textColor="@color/textprimary"
             android:layout_marginBottom="8dp"
             android:maxLines="7"
             android:ellipsize="end"
-            tools:text="Описание события"/>
+            tools:text="Описание события" />
 
         <!-- Ссылка -->
         <TextView
             android:id="@+id/linkTextView"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textColor="@color/text_link"
-            android:textSize="13sp"
-            android:layout_marginBottom="6dp"
+            android:textColor="@color/textlink"
+            android:textSize="14sp"
+            android:paddingTop="6dp"
+            android:paddingBottom="2dp"
+            android:visibility="gone"
             android:autoLink="web"
             android:textStyle="italic"
-            android:visibility="gone"
-            tools:text="https://event.ru"/>
+            tools:text="https://netology.ru" />
 
-        <!-- Медиавложение -->
+        <!-- Вложение -->
         <ImageView
             android:id="@+id/attachmentImageView"
             android:layout_width="match_parent"
             android:layout_height="180dp"
             android:scaleType="centerCrop"
-            android:layout_marginBottom="8dp"
-            android:visibility="gone" />
+            android:layout_marginBottom="10dp"
+            android:visibility="gone"
+            android:background="@color/cardbg"
+            android:contentDescription="@string/attachment" />
 
-        <!-- Кол-во участников -->
+        <!-- Упомянутые пользователи -->
+        <TextView
+            android:id="@+id/mentionedUsersTextView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="@color/textlink"
+            android:textSize="13sp"
+            android:visibility="gone"
+            android:layout_marginBottom="6dp"
+            tools:text="@user1, @speaker2" />
+
+        <!-- Счетчик участников -->
         <TextView
             android:id="@+id/participantsCountTextView"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textColor="@color/text_secondary"
+            android:textColor="@color/textsecondary"
             android:textSize="13sp"
             android:layout_marginBottom="6dp"
-            tools:text="Участников: 10"/>
+            tools:text="23" />
 
-        <!-- Кнопки действия и лайк -->
+        <!-- Нижняя строка: лайки, участие -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -168,7 +187,7 @@
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:src="@drawable/ic_favorite_border"
                 app:tint="@color/colorPrimary"
-                android:contentDescription="@string/like"/>
+                android:contentDescription="@string/like" />
 
             <TextView
                 android:id="@+id/likesCountTextView"
@@ -177,18 +196,18 @@
                 android:paddingStart="4dp"
                 android:paddingEnd="14dp"
                 android:textSize="14sp"
-                android:textColor="@color/text_secondary"
-                tools:text="23"/>
+                android:textColor="@color/textsecondary"
+                tools:text="5" />
 
             <Button
                 android:id="@+id/participateButton"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Записаться"
+                android:text="@string/participate"
                 android:textSize="12sp"
                 android:layout_marginStart="10dp"
-                app:backgroundTint="@color/colorPrimary"
-                android:textColor="@android:color/white"/>
+                android:backgroundTint="@color/colorPrimary"
+                android:textColor="@android:color/white" />
         </LinearLayout>
     </LinearLayout>
 </com.google.android.material.card.MaterialCardView>

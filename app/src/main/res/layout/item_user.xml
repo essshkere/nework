@@ -2,12 +2,13 @@
 <LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="horizontal"
     android:padding="12dp"
-    android:background="@color/card_bg">
+    android:background="@color/cardbg"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:gravity="center_vertical">
 
     <de.hdodenhof.circleimageview.CircleImageView
         android:id="@+id/avatarImageView"
@@ -15,7 +16,8 @@
         android:layout_height="44dp"
         app:civ_border_width="2dp"
         app:civ_border_color="@color/colorPrimary"
-        android:src="@drawable/ic_account_circle"/>
+        android:src="@drawable/ic_account_circle"
+        android:contentDescription="@string/avatar" />
 
     <LinearLayout
         android:layout_width="0dp"
@@ -30,15 +32,23 @@
             android:layout_height="wrap_content"
             android:textSize="16sp"
             android:textStyle="bold"
-            android:textColor="@color/text_primary"
-            tools:text="Иван Иванов" />
+            android:textColor="@color/textprimary"
+            tools:text="Имя Фамилия" />
 
         <TextView
             android:id="@+id/userLoginTextView"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:textSize="13sp"
-            android:textColor="@color/text_secondary"
+            android:textColor="@color/textsecondary"
             tools:text="login" />
     </LinearLayout>
+
+    <!-- Чекбокс для выбора, по условию из адаптера -->
+    <CheckBox
+        android:id="@+id/userCheckBox"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:visibility="gone"
+        android:buttonTint="@color/colorPrimary"/>
 </LinearLayout>

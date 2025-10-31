@@ -2,4 +2,13 @@
     <string name="app_name">NeWork</string>
     <string name="menu">Меню</string>
     <string name="like">Лайк</string>
+    <string name="no_data">Нет постов для отображения</string>
+    <string name="try_refresh">Попробуйте потянуть вниз для обновления</string>
+    <string name="add_post">Создать пост</string>
+    <string name="avatar">Аватар автора</string>
+    <string name="attachment">Вложение</string>
+    <string name="no_events">Нет событий для отображения</string>
+    <string name="add_event">Создать событие</string>
+    <string name="participate">Участвовать</string>
+    <string name="choose_users">Выбрать пользователей</string>
 </resources>

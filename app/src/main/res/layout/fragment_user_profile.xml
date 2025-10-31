@@ -1,11 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:paddingTop="70dp"
     android:layout_height="match_parent"
-    android:orientation="vertical">
+    android:paddingTop="70dp"
+    android:orientation="vertical"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:background="@color/cardbg">
 
+    <!-- Основная карточка профиля -->
     <com.google.android.material.card.MaterialCardView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -22,7 +26,10 @@
                 android:id="@+id/avatarImageView"
                 android:layout_width="80dp"
                 android:layout_height="80dp"
-                android:src="@drawable/ic_account_circle" />
+                android:src="@drawable/ic_account_circle"
+                app:civ_border_width="2dp"
+                app:civ_border_color="@color/colorPrimary"
+                android:contentDescription="@string/avatar" />
 
             <LinearLayout
                 android:layout_width="0dp"
@@ -36,49 +43,43 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:textStyle="bold"
-                    android:textSize="20sp" />
+                    android:textSize="20sp"
+                    android:textColor="@color/textprimary"
+                    tools:text="Иван Иванов"/>
 
                 <TextView
                     android:id="@+id/userLoginTextView"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:textColor="@android:color/darker_gray"
-                    android:layout_marginTop="4dp" />
+                    android:layout_marginTop="4dp"
+                    android:textSize="14sp"
+                    tools:text="@ivan123"/>
 
                 <TextView
                     android:id="@+id/currentJobTextView"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="8dp"
-                    android:textStyle="italic" />
-
+                    android:textStyle="italic"
+                    android:textColor="@color/textsecondary"
+                    tools:text="Android Developer в Netology"/>
             </LinearLayout>
-
         </LinearLayout>
-
     </com.google.android.material.card.MaterialCardView>
 
+    <!-- TabLayout и ViewPager2 для экранов "Работы" и "Стена" -->
     <com.google.android.material.tabs.TabLayout
         android:id="@+id/tabLayout"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
-
-        <com.google.android.material.tabs.TabItem
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Стена" />
-
-        <com.google.android.material.tabs.TabItem
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Работы" />
-
-    </com.google.android.material.tabs.TabLayout>
+        android:layout_height="wrap_content"
+        app:tabIndicatorColor="@color/colorPrimary"
+        app:tabTextColor="@color/textsecondary"
+        app:tabSelectedTextColor="@color/colorPrimary"/>
 
     <androidx.viewpager2.widget.ViewPager2
         android:id="@+id/viewPager"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="1" />
-
+        android:layout_weight="1"/>
 </LinearLayout>

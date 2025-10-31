@@ -1,33 +1,32 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.coordinatorlayout.widget.CoordinatorLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:background="@color/cardbg"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:paddingTop="70dp">
 
     <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
         android:id="@+id/swipeRefreshLayout"
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
-        <LinearLayout
+        <FrameLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:paddingTop="70dp"
-            android:orientation="vertical">
-
-            <ProgressBar
-                android:id="@+id/progressBar"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center"
-                android:visibility="gone" />
+            android:layout_height="match_parent">
 
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/eventsRecyclerView"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:padding="8dp" />
+                android:padding="8dp"
+                android:clipToPadding="false"
+                android:scrollbars="vertical"
+                tools:listitem="@layout/item_event" />
 
+            <!-- Пустой экран -->
             <LinearLayout
                 android:id="@+id/emptyStateLayout"
                 android:layout_width="match_parent"
@@ -42,21 +41,30 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:gravity="center"
-                    android:text="Пока нет событий\nСоздайте первое мероприятие!"
-                    android:textSize="16sp"
-                    android:textStyle="bold" />
+                    android:text="@string/no_events"
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/textprimary" />
 
                 <Button
                     android:id="@+id/emptyStateButton"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="16dp"
-                    android:text="Создать событие" />
-
+                    android:text="@string/add_event"
+                    android:backgroundTint="@color/colorPrimary"
+                    android:textColor="@android:color/white"
+                    android:textStyle="bold"/>
             </LinearLayout>
 
-        </LinearLayout>
+            <ProgressBar
+                android:id="@+id/progressBar"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:visibility="gone" />
 
+        </FrameLayout>
     </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
@@ -65,7 +73,8 @@
         android:layout_height="wrap_content"
         android:layout_gravity="bottom|end"
         android:layout_margin="16dp"
-        android:src="@android:drawable/ic_input_add"
-        app:tint="@android:color/white" />
-
+        android:src="@drawable/ic_input_add"
+        app:tint="@android:color/white"
+        app:backgroundTint="@color/colorPrimary"
+        android:contentDescription="@string/add_event" />
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

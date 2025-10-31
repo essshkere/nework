@@ -2,10 +2,10 @@
 <ScrollView
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/card_bg"
+    android:background="@color/cardbg"
+    xmlns:tools="http://schemas.android.com/tools"
     android:padding="16dp">
 
     <LinearLayout
@@ -18,100 +18,106 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="14dp">
+
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/titleEditText"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="Название события"
-                android:textColor="@color/text_primary"
+                android:hint="Название"
+                android:textColor="@color/textprimary"
                 android:textSize="16sp"
                 tools:text="IT-Meetup"/>
         </com.google.android.material.textfield.TextInputLayout>
 
-        <!-- Описание -->
+        <!-- Описание события -->
         <com.google.android.material.textfield.TextInputLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="14dp">
+
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/contentEditText"
                 android:layout_width="match_parent"
                 android:layout_height="110dp"
+                android:hint="Описание события"
                 android:gravity="top"
-                android:hint="Опишите событие"
                 android:inputType="textMultiLine"
-                android:textColor="@color/text_primary"
-                tools:text="Встреча для it-специалистов, доклады, кофе"/>
+                android:textColor="@color/textprimary"
+                tools:text="Краткое описание встречи..."/>
         </com.google.android.material.textfield.TextInputLayout>
 
-        <!-- Дата и время -->
+        <!-- Кнопка и выбранная дата/время -->
         <com.google.android.material.button.MaterialButton
             android:id="@+id/selectDateTimeButton"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Выбрать дату и время"
+            android:text="Дата и время"
             app:icon="@drawable/ic_event"
             app:iconTint="@color/colorPrimary"
             android:textColor="@color/colorPrimary"
             android:layout_marginBottom="8dp"/>
+
         <TextView
             android:id="@+id/selectedDateTimeText"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textColor="@color/text_secondary"
+            android:textColor="@color/textsecondary"
             android:textSize="14sp"
             android:layout_marginBottom="14dp"
-            tools:text="31 октября 2025, 19:00"
-            android:visibility="visible"/>
+            android:visibility="visible"
+            tools:text="31 окт 2025, 19:00"/>
 
-        <!-- ONLINE / OFFLINE переключатель -->
+        <!-- ON/OFFLINE событие -->
         <com.google.android.material.button.MaterialButtonToggleGroup
             android:id="@+id/eventTypeToggleGroup"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="14dp">
+
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/onlineRadioButton"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="ОНЛАЙН"
+                android:text="ONLINE"
                 style="@style/Widget.Material3.Button.TextButton"/>
+
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/offlineRadioButton"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="ОФФЛАЙН"
+                android:text="OFFLINE"
                 style="@style/Widget.Material3.Button.TextButton"/>
         </com.google.android.material.button.MaterialButtonToggleGroup>
 
-        <!-- Место и карта -->
+        <!-- Кнопка и выбранная локация -->
         <com.google.android.material.button.MaterialButton
             android:id="@+id/selectLocationButton"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Выбрать место"
-            app:icon="@drawable/ic_pin_drop"
+            android:text="Локация"
+            app:icon="@drawable/ic_pindrop"
             app:iconTint="@color/colorPrimary"
             android:textColor="@color/colorPrimary"
             android:layout_marginBottom="8dp"/>
+
         <TextView
             android:id="@+id/selectedLocationText"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textColor="@color/text_hint"
+            android:textColor="@color/texthint"
             android:textSize="13sp"
             android:layout_marginBottom="14dp"
             android:visibility="gone"
-            tools:text="Тюменская набережная, 12"/>
+            tools:text="г. Москва, ул. Ленина 12"/>
 
-        <!-- Кнопка выбор спикеров -->
+        <!-- Кнопка и выбранные спикеры -->
         <com.google.android.material.button.MaterialButton
             android:id="@+id/selectSpeakersButton"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Выбрать спикеров"
+            android:text="Спикеры"
             app:icon="@drawable/ic_alternate_email"
             app:iconTint="@color/colorPrimary"
             android:textColor="@color/colorPrimary"
@@ -121,17 +127,18 @@
             android:id="@+id/selectedSpeakersText"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textColor="@color/text_link"
+            android:textColor="@color/textlink"
             android:textSize="13sp"
             android:layout_marginBottom="14dp"
-            android:visibility="gone" />
+            android:visibility="gone"
+            tools:text="@speaker1, @speaker2"/>
 
-        <!-- Кнопка выбор участников -->
+        <!-- Кнопка и выбранные участники -->
         <com.google.android.material.button.MaterialButton
             android:id="@+id/selectParticipantsButton"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Выбрать участников"
+            android:text="Участники"
             app:icon="@drawable/ic_group"
             app:iconTint="@color/colorPrimary"
             android:textColor="@color/colorPrimary"
@@ -141,12 +148,13 @@
             android:id="@+id/selectedParticipantsText"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textColor="@color/text_link"
+            android:textColor="@color/textlink"
             android:textSize="13sp"
             android:layout_marginBottom="14dp"
-            android:visibility="gone" />
+            android:visibility="gone"
+            tools:text="@user1, @user2"/>
 
-        <!-- Медиавложения -->
+        <!-- Кнопки вложений -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -163,9 +171,7 @@
                 app:icon="@drawable/ic_image"
                 app:iconTint="@color/colorPrimary" />
 
-            <Space
-                android:layout_width="8dp"
-                android:layout_height="1dp"/>
+            <Space android:layout_width="8dp" android:layout_height="1dp"/>
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/attachVideoButton"
@@ -177,9 +183,7 @@
                 app:icon="@drawable/ic_videocam"
                 app:iconTint="@color/colorPrimary" />
 
-            <Space
-                android:layout_width="8dp"
-                android:layout_height="1dp"/>
+            <Space android:layout_width="8dp" android:layout_height="1dp"/>
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/attachAudioButton"
@@ -189,10 +193,10 @@
                 android:layout_weight="1"
                 android:text="Аудио"
                 app:icon="@drawable/ic_mic"
-                app:iconTint="@color/colorPrimary"/>
+                app:iconTint="@color/colorPrimary" />
         </LinearLayout>
 
-        <!-- Превью и удаление вложения -->
+        <!-- Превью вложения, тип и удаление -->
         <FrameLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -202,8 +206,8 @@
                 android:id="@+id/attachmentPreview"
                 android:layout_width="match_parent"
                 android:layout_height="180dp"
+                android:background="@color/cardbg"
                 android:scaleType="centerCrop"
-                android:background="@color/card_bg"
                 android:visibility="gone" />
 
             <ImageView
@@ -213,7 +217,7 @@
                 android:layout_gravity="end|bottom"
                 android:layout_margin="8dp"
                 android:visibility="gone"
-                android:src="@drawable/ic_image"/>
+                android:src="@drawable/ic_image" />
 
             <ImageButton
                 android:id="@+id/removeAttachmentButton"
@@ -223,7 +227,7 @@
                 android:background="@android:color/transparent"
                 android:src="@drawable/ic_close"
                 app:tint="@color/colorPrimary"
-                android:contentDescription="Удалить вложение"
+                android:contentDescription="Удалить"
                 android:visibility="gone"/>
         </FrameLayout>
 
@@ -232,17 +236,18 @@
             android:id="@+id/publishButton"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Опубликовать"
+            android:text="Создать событие"
             android:textStyle="bold"
             app:backgroundTint="@color/colorPrimary"
-            android:textColor="@android:color/white" />
+            android:textColor="@android:color/white"
+            android:layout_marginTop="8dp"/>
 
-        <!-- Прогресс -->
+        <!-- Прогрессбар -->
         <ProgressBar
             android:id="@+id/progressBar"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_gravity="center"
+            android:layout_gravity="center_horizontal"
             android:visibility="gone"/>
     </LinearLayout>
 </ScrollView>

@@ -2,10 +2,10 @@
 <ScrollView
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/card_bg"
+    android:background="@color/cardbg"
+    xmlns:tools="http://schemas.android.com/tools"
     android:padding="16dp">
 
     <LinearLayout
@@ -18,21 +18,21 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="24dp"
-            android:layout_marginBottom="14dp">
+            android:layout_marginBottom="14dp"
+            app:errorEnabled="true">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/contentEditText"
                 android:layout_width="match_parent"
                 android:layout_height="150dp"
+                android:hint="Что нового?"
                 android:gravity="top"
-                android:hint="Что у вас нового?"
                 android:inputType="textMultiLine"
-                android:textColor="@color/text_primary"
-                android:textSize="15sp"
-                tools:text="Это мой новый пост!" />
+                android:textColor="@color/textprimary"
+                android:textSize="15sp"/>
         </com.google.android.material.textfield.TextInputLayout>
 
-        <!-- Выбор места и пользователей -->
+        <!-- Кнопки выбора локации и пользователей -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -46,14 +46,14 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="Место"
-                app:icon="@drawable/ic_pin_drop"
+                android:text="Локация"
+                app:icon="@drawable/ic_pindrop"
                 app:iconTint="@color/colorPrimary"
-                app:rippleColor="@color/colorPrimary"/>
+                app:rippleColor="@color/colorPrimary" />
 
             <Space
                 android:layout_width="12dp"
-                android:layout_height="1dp"/>
+                android:layout_height="1dp" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/selectUsersButton"
@@ -64,10 +64,10 @@
                 android:text="Упомянуть"
                 app:icon="@drawable/ic_alternate_email"
                 app:iconTint="@color/colorPrimary"
-                app:rippleColor="@color/colorPrimary"/>
+                app:rippleColor="@color/colorPrimary" />
         </LinearLayout>
 
-        <!-- Кнопки прикрепления вложений -->
+        <!-- Кнопки вложений -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -82,11 +82,9 @@
                 android:layout_weight="1"
                 android:text="Фото"
                 app:icon="@drawable/ic_image"
-                app:iconTint="@color/colorPrimary"/>
+                app:iconTint="@color/colorPrimary" />
 
-            <Space
-                android:layout_width="8dp"
-                android:layout_height="1dp"/>
+            <Space android:layout_width="8dp" android:layout_height="1dp"/>
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/attachVideoButton"
@@ -96,11 +94,9 @@
                 android:layout_weight="1"
                 android:text="Видео"
                 app:icon="@drawable/ic_videocam"
-                app:iconTint="@color/colorPrimary"/>
+                app:iconTint="@color/colorPrimary" />
 
-            <Space
-                android:layout_width="8dp"
-                android:layout_height="1dp"/>
+            <Space android:layout_width="8dp" android:layout_height="1dp"/>
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/attachAudioButton"
@@ -110,10 +106,10 @@
                 android:layout_weight="1"
                 android:text="Аудио"
                 app:icon="@drawable/ic_mic"
-                app:iconTint="@color/colorPrimary"/>
+                app:iconTint="@color/colorPrimary" />
         </LinearLayout>
 
-        <!-- Превью вложения и индикатор типа -->
+        <!-- Превью вложения, тип и удаление -->
         <FrameLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -124,8 +120,8 @@
                 android:layout_width="match_parent"
                 android:layout_height="180dp"
                 android:scaleType="centerCrop"
-                android:visibility="gone"
-                android:background="@color/card_bg" />
+                android:background="@color/cardbg"
+                android:visibility="gone" />
 
             <ImageView
                 android:id="@+id/attachmentTypeIndicator"
@@ -141,33 +137,34 @@
                 android:layout_width="38dp"
                 android:layout_height="38dp"
                 android:layout_gravity="top|end"
-                android:visibility="gone"
                 android:background="@android:color/transparent"
+                android:visibility="gone"
                 android:src="@drawable/ic_close"
                 app:tint="@color/colorPrimary"
-                android:contentDescription="Удалить вложение"/>
+                android:contentDescription="Удалить" />
         </FrameLayout>
 
-        <!-- Выбранное место -->
+        <!-- Выбранная локация -->
         <TextView
             android:id="@+id/selectedLocationText"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textColor="@color/text_link"
+            android:textColor="@color/textlink"
             android:textSize="13sp"
             android:visibility="gone"
             android:layout_marginBottom="8dp"
-            tools:text="Тюменская набережная" />
+            tools:text="Москва, ул. Ленина, 12" />
 
         <!-- Упомянутые пользователи -->
         <TextView
             android:id="@+id/mentionedUsersText"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textColor="@color/text_link"
+            android:textColor="@color/textlink"
             android:textSize="13sp"
             android:visibility="gone"
-            android:layout_marginBottom="16dp" />
+            android:layout_marginBottom="16dp"
+            tools:text="@user1, @user2" />
 
         <!-- Кнопка публикации -->
         <com.google.android.material.button.MaterialButton
@@ -177,9 +174,10 @@
             android:text="Опубликовать"
             android:textStyle="bold"
             app:backgroundTint="@color/colorPrimary"
-            android:textColor="@android:color/white" />
+            android:textColor="@android:color/white"
+            android:layout_marginTop="12dp"/>
 
-        <!-- Прогрессбар загрузки -->
+        <!-- Прогрессбар -->
         <ProgressBar
             android:id="@+id/progressBar"
             android:layout_width="wrap_content"

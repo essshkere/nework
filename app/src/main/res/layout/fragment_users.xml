@@ -1,27 +1,71 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="@color/card_bg"
+    android:background="@color/cardbg"
     xmlns:tools="http://schemas.android.com/tools"
     android:paddingTop="70dp">
 
+    <!-- Поиск пользователя -->
     <androidx.appcompat.widget.SearchView
         android:id="@+id/searchView"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:queryHint="Поиск пользователей..."
+        android:queryHint="Поиск по имени или логину"
         android:iconifiedByDefault="false"
-        android:layout_margin="12dp"
-        android:background="@color/card_bg"/>
+        android:background="@color/cardbg"
+        android:layout_margin="12dp"/>
 
+    <!-- Информация о выборе -->
+    <TextView
+        android:id="@+id/selectionInfoTextView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textColor="@color/textlink"
+        android:textSize="14sp"
+        android:paddingBottom="6dp"
+        android:visibility="gone"
+        tools:text="Выбрано: 3"/>
+
+    <!-- Список пользователей с возможностью множественного выбора -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/usersRecyclerView"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
         android:padding="8dp"
-        tools:listitem="@layout/item_user"/>
+        tools:listitem="@layout/item_user" />
+
+    <!-- Кнопки подтверждения -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:paddingTop="14dp">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/cancelButton"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Отмена"
+            app:backgroundTint="@color/texthint"
+            android:textColor="@color/textprimary" />
+
+        <Space
+            android:layout_width="16dp"
+            android:layout_height="1dp"/>
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/confirmButton"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Выбрать"
+            app:backgroundTint="@color/colorPrimary"
+            android:textColor="@android:color/white"/>
+    </LinearLayout>
 </LinearLayout>
