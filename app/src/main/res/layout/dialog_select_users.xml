@@ -1,9 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical">
+    android:background="@color/card_bg"
+    android:orientation="vertical"
+    android:padding="20dp">
 
+    <!-- Заголовок -->
     <TextView
         android:id="@+id/titleTextView"
         android:layout_width="match_parent"
@@ -11,50 +17,64 @@
         android:text="Выберите пользователей"
         android:textSize="18sp"
         android:textStyle="bold"
-        android:padding="16dp" />
+        android:textColor="@color/text_primary"
+        android:paddingBottom="8dp"/>
 
+    <!-- Поиск по пользователям -->
     <SearchView
         android:id="@+id/searchView"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:queryHint="Поиск пользователей" />
+        android:queryHint="Поиск..."
+        android:iconifiedByDefault="false"
+        android:layout_marginBottom="8dp"/>
 
+    <!-- Информация о выбранных -->
     <TextView
         android:id="@+id/selectionInfoTextView"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:padding="8dp"
-        android:textAppearance="?attr/textAppearanceBodySmall"
-        android:visibility="gone" />
+        android:textColor="@color/text_link"
+        android:textSize="14sp"
+        android:paddingBottom="6dp"
+        android:visibility="gone"
+        tools:text="Выбрано: "/>
 
+    <!-- Список пользователей с чекбоксом -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/usersRecyclerView"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="1" />
+        android:layout_weight="1"
+        tools:listitem="@layout/item_user_select"/>
 
+    <!-- Кнопки подтверждения и отмены -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:padding="16dp">
+        android:paddingTop="14dp">
 
-        <Button
+        <com.google.android.material.button.MaterialButton
             android:id="@+id/cancelButton"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:layout_marginEnd="8dp"
-            android:text="Отмена" />
+            android:text="Отмена"
+            app:backgroundTint="@color/text_hint"
+            android:textColor="@color/text_primary"/>
 
-        <Button
+        <Space
+            android:layout_width="16dp"
+            android:layout_height="1dp"/>
+
+        <com.google.android.material.button.MaterialButton
             android:id="@+id/confirmButton"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:layout_marginStart="8dp"
-            android:text="Выбрать" />
-
+            android:text="Ок"
+            app:backgroundTint="@color/colorPrimary"
+            android:textColor="@android:color/white"/>
     </LinearLayout>
-
 </LinearLayout>

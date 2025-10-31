@@ -87,7 +87,7 @@ class CreateEventFragment : Fragment(), MenuProvider {
         requireActivity().addMenuProvider(this, viewLifecycleOwner)
         setupTextWatchers()
         setupClickListeners()
-        setupEventType()
+        setupEventTypeToggle()
         setupAttachmentRemoval()
     }
 
@@ -123,21 +123,26 @@ class CreateEventFragment : Fragment(), MenuProvider {
         binding.removeAttachmentButton.setOnClickListener { removeAttachment() }
     }
 
-    private fun setupEventType() {
-        binding.onlineRadioButton.setOnCheckedChangeListener { _, isChecked ->
-            if (isChecked) {
-                eventType = Event.EventType.ONLINE
-                binding.selectLocationButton.visibility = View.GONE
-                binding.selectedLocationText.visibility = View.GONE
+    private fun setupEventTypeToggle() {
+        binding.eventTypeToggleGroup.addOnButtonCheckedListener { group, checkedId, isChecked ->
+            when (checkedId) {
+                R.id.onlineRadioButton -> {
+                    if (isChecked) {
+                        eventType = Event.EventType.ONLINE
+                        binding.selectLocationButton.visibility = View.GONE
+                        binding.selectedLocationText.visibility = View.GONE
+                    }
+                }
+                R.id.offlineRadioButton -> {
+                    if (isChecked) {
+                        eventType = Event.EventType.OFFLINE
+                        binding.selectLocationButton.visibility = View.VISIBLE
+                        binding.selectedLocationText.visibility = View.VISIBLE
+                    }
+                }
             }
         }
-        binding.offlineRadioButton.setOnCheckedChangeListener { _, isChecked ->
-            if (isChecked) {
-                eventType = Event.EventType.OFFLINE
-                binding.selectLocationButton.visibility = View.VISIBLE
-            }
-        }
-        binding.onlineRadioButton.isChecked = true
+        binding.eventTypeToggleGroup.check(R.id.onlineRadioButton)
     }
 
     private fun setupAttachmentRemoval() {

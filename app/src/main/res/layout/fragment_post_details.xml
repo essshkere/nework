@@ -1,9 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:paddingTop="70dp"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:background="@color/card_bg"
+    android:paddingTop="70dp">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -11,16 +14,20 @@
         android:orientation="vertical"
         android:padding="16dp">
 
+        <!-- Автор, имя, дата -->
         <LinearLayout
+            android:orientation="horizontal"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:layout_marginBottom="16dp">
+            android:layout_marginBottom="16dp"
+            android:gravity="center_vertical">
 
             <de.hdodenhof.circleimageview.CircleImageView
                 android:id="@+id/authorAvatarImageView"
                 android:layout_width="48dp"
                 android:layout_height="48dp"
+                app:civ_border_width="2dp"
+                app:civ_border_color="@color/colorPrimary"
                 android:src="@drawable/ic_account_circle" />
 
             <LinearLayout
@@ -35,56 +42,69 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:textStyle="bold"
-                    android:textSize="16sp" />
+                    android:textSize="16sp"
+                    android:textColor="@color/text_primary" />
 
                 <TextView
                     android:id="@+id/publishedDateTextView"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:textSize="12sp"
-                    android:textColor="@android:color/darker_gray" />
-
+                    android:textColor="@color/text_hint" />
             </LinearLayout>
 
             <ImageButton
                 android:id="@+id/likeButton"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
                 android:src="@drawable/ic_favorite_border"
-                android:background="?attr/selectableItemBackgroundBorderless" />
+                app:tint="@color/colorPrimary"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/like" />
 
             <TextView
                 android:id="@+id/likesCountTextView"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:paddingStart="4dp"
-                android:paddingEnd="8dp" />
-
+                android:paddingEnd="8dp"
+                android:textColor="@color/text_secondary" />
         </LinearLayout>
 
+        <!-- Основной контент -->
         <TextView
             android:id="@+id/contentTextView"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="16dp"
-            android:textSize="16sp" />
+            android:textSize="16sp"
+            android:textColor="@color/text_primary"
+            android:maxLines="18"
+            android:ellipsize="end" />
 
+        <!-- Ссылка -->
+        <TextView
+            android:id="@+id/linkTextView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="@color/text_link"
+            android:visibility="gone"
+            android:layout_marginBottom="16dp"
+            android:autoLink="web"
+            android:textStyle="italic"
+            android:textSize="14sp"
+            tools:text="https://netology.ru" />
+
+        <!-- Медиавложение -->
         <ImageView
             android:id="@+id/attachmentImageView"
             android:layout_width="match_parent"
             android:layout_height="200dp"
             android:scaleType="centerCrop"
-            android:visibility="gone"
-            android:layout_marginBottom="16dp" />
+            android:layout_marginBottom="16dp"
+            android:visibility="gone" />
 
-        <TextView
-            android:id="@+id/linkTextView"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:textColor="@color/design_default_color_primary"
-            android:visibility="gone"
-            android:layout_marginBottom="16dp" />
-
+        <!-- Локация (если есть) -->
         <com.google.android.material.card.MaterialCardView
             android:id="@+id/locationCardView"
             android:layout_width="match_parent"
@@ -98,22 +118,22 @@
                 android:orientation="vertical">
 
                 <TextView
+                    android:id="@+id/locationTextView"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Местоположение"
                     android:textStyle="bold"
-                    android:padding="8dp" />
+                    android:padding="8dp"
+                    android:textColor="@color/text_primary" />
 
+                <!-- Здесь можно вставить карту или превью -->
                 <FrameLayout
                     android:layout_width="match_parent"
-                    android:layout_height="0dp"
-                    android:layout_weight="1"
-                    android:background="@android:color/darker_gray" />
-
+                    android:layout_height="100dp"
+                    android:background="@color/text_hint"/>
             </LinearLayout>
-
         </com.google.android.material.card.MaterialCardView>
 
+        <!-- Упомянутые пользователи -->
         <com.google.android.material.card.MaterialCardView
             android:id="@+id/mentionedUsersCardView"
             android:layout_width="match_parent"
@@ -130,24 +150,26 @@
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Упомянутые пользователи"
                     android:textStyle="bold"
-                    android:layout_marginBottom="8dp" />
+                    android:textColor="@color/text_primary"
+                    android:textSize="14sp"
+                    android:text="Упомянутые:" />
 
                 <androidx.recyclerview.widget.RecyclerView
                     android:id="@+id/mentionedUsersRecyclerView"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content" />
-
+                    android:layout_height="wrap_content"
+                    tools:listitem="@layout/item_user"/>
             </LinearLayout>
-
         </com.google.android.material.card.MaterialCardView>
 
+        <!-- Работа автора -->
         <com.google.android.material.card.MaterialCardView
             android:id="@+id/authorJobCardView"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:visibility="gone">
+            android:visibility="gone"
+            android:layout_marginBottom="16dp">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -158,19 +180,26 @@
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Последнее место работы"
                     android:textStyle="bold"
-                    android:layout_marginBottom="8dp" />
+                    android:textColor="@color/text_primary"
+                    android:textSize="14sp"
+                    android:text="Работа:" />
 
                 <TextView
                     android:id="@+id/authorJobTextView"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content" />
-
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="14sp"/>
             </LinearLayout>
-
         </com.google.android.material.card.MaterialCardView>
 
+        <!-- Прогрессбар -->
+        <ProgressBar
+            android:id="@+id/progressBar"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:visibility="gone"/>
     </LinearLayout>
-
 </ScrollView>

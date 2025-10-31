@@ -1,8 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@color/card_bg"
     android:padding="16dp">
 
     <LinearLayout
@@ -10,79 +13,107 @@
         android:layout_height="wrap_content"
         android:orientation="vertical">
 
+        <!-- Текст поста -->
         <com.google.android.material.textfield.TextInputLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:paddingTop="70dp"
-            android:layout_marginBottom="16dp">
+            android:layout_marginTop="24dp"
+            android:layout_marginBottom="14dp">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/contentEditText"
                 android:layout_width="match_parent"
                 android:layout_height="150dp"
                 android:gravity="top"
-                android:hint="Текст поста"
-                android:inputType="textMultiLine" />
-
+                android:hint="Что у вас нового?"
+                android:inputType="textMultiLine"
+                android:textColor="@color/text_primary"
+                android:textSize="15sp"
+                tools:text="Это мой новый пост!" />
         </com.google.android.material.textfield.TextInputLayout>
 
+        <!-- Выбор места и пользователей -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:layout_marginBottom="16dp">
+            android:layout_marginBottom="14dp"
+            android:gravity="center_vertical|start">
 
-            <Button
+            <com.google.android.material.button.MaterialButton
                 android:id="@+id/selectLocationButton"
+                style="@style/Widget.Material3.Button.TextButton"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="Местоположение"
-                android:layout_marginEnd="8dp" />
+                android:text="Место"
+                app:icon="@drawable/ic_pin_drop"
+                app:iconTint="@color/colorPrimary"
+                app:rippleColor="@color/colorPrimary"/>
 
-            <Button
+            <Space
+                android:layout_width="12dp"
+                android:layout_height="1dp"/>
+
+            <com.google.android.material.button.MaterialButton
                 android:id="@+id/selectUsersButton"
+                style="@style/Widget.Material3.Button.TextButton"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:text="Упомянуть"
-                android:layout_marginStart="8dp" />
-
+                app:icon="@drawable/ic_alternate_email"
+                app:iconTint="@color/colorPrimary"
+                app:rippleColor="@color/colorPrimary"/>
         </LinearLayout>
 
+        <!-- Кнопки прикрепления вложений -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:layout_marginBottom="16dp">
 
-            <Button
+            <com.google.android.material.button.MaterialButton
                 android:id="@+id/attachImageButton"
+                style="@style/Widget.Material3.Button.TextButton"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:text="Фото"
-                android:layout_marginEnd="4dp" />
+                app:icon="@drawable/ic_image"
+                app:iconTint="@color/colorPrimary"/>
 
-            <Button
+            <Space
+                android:layout_width="8dp"
+                android:layout_height="1dp"/>
+
+            <com.google.android.material.button.MaterialButton
                 android:id="@+id/attachVideoButton"
+                style="@style/Widget.Material3.Button.TextButton"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:text="Видео"
-                android:layout_marginStart="4dp"
-                android:layout_marginEnd="4dp" />
+                app:icon="@drawable/ic_videocam"
+                app:iconTint="@color/colorPrimary"/>
 
-            <Button
+            <Space
+                android:layout_width="8dp"
+                android:layout_height="1dp"/>
+
+            <com.google.android.material.button.MaterialButton
                 android:id="@+id/attachAudioButton"
+                style="@style/Widget.Material3.Button.TextButton"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:text="Аудио"
-                android:layout_marginStart="4dp" />
-
+                app:icon="@drawable/ic_mic"
+                app:iconTint="@color/colorPrimary"/>
         </LinearLayout>
 
+        <!-- Превью вложения и индикатор типа -->
         <FrameLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -91,9 +122,10 @@
             <ImageView
                 android:id="@+id/attachmentPreview"
                 android:layout_width="match_parent"
-                android:layout_height="200dp"
+                android:layout_height="180dp"
                 android:scaleType="centerCrop"
-                android:visibility="gone" />
+                android:visibility="gone"
+                android:background="@color/card_bg" />
 
             <ImageView
                 android:id="@+id/attachmentTypeIndicator"
@@ -102,39 +134,57 @@
                 android:layout_gravity="end|bottom"
                 android:layout_margin="6dp"
                 android:visibility="gone"
-                android:src="@drawable/ic_video" />
+                android:src="@drawable/ic_image" />
 
             <ImageButton
                 android:id="@+id/removeAttachmentButton"
-                android:layout_width="34dp"
-                android:layout_height="34dp"
-                android:layout_gravity="start|top"
-                android:src="@drawable/ic_close"
-                android:background="@android:color/transparent"
+                android:layout_width="38dp"
+                android:layout_height="38dp"
+                android:layout_gravity="top|end"
                 android:visibility="gone"
+                android:background="@android:color/transparent"
+                android:src="@drawable/ic_close"
+                app:tint="@color/colorPrimary"
                 android:contentDescription="Удалить вложение"/>
         </FrameLayout>
 
+        <!-- Выбранное место -->
         <TextView
             android:id="@+id/selectedLocationText"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:textColor="@color/text_link"
+            android:textSize="13sp"
+            android:visibility="gone"
             android:layout_marginBottom="8dp"
-            android:visibility="gone" />
+            tools:text="Тюменская набережная" />
 
+        <!-- Упомянутые пользователи -->
         <TextView
             android:id="@+id/mentionedUsersText"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
-            android:visibility="gone" />
+            android:textColor="@color/text_link"
+            android:textSize="13sp"
+            android:visibility="gone"
+            android:layout_marginBottom="16dp" />
 
+        <!-- Кнопка публикации -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/publishButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Опубликовать"
+            android:textStyle="bold"
+            app:backgroundTint="@color/colorPrimary"
+            android:textColor="@android:color/white" />
+
+        <!-- Прогрессбар загрузки -->
         <ProgressBar
             android:id="@+id/progressBar"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:visibility="gone" />
-
+            android:layout_gravity="center_horizontal"
+            android:visibility="gone"/>
     </LinearLayout>
 </ScrollView>

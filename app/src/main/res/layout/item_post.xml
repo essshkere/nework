@@ -1,88 +1,124 @@
 <?xml version="1.0" encoding="utf-8"?>
-<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+<com.google.android.material.card.MaterialCardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_margin="8dp"
-    app:cardCornerRadius="8dp"
-    app:cardElevation="2dp">
+    app:cardCornerRadius="16dp"
+    app:cardElevation="4dp"
+    app:cardBackgroundColor="@color/card_bg">
 
     <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="16dp">
+        android:padding="16dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
 
+        <!-- Верхний блок: аватар, имя, должность, дата, меню -->
         <LinearLayout
+            android:orientation="horizontal"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:layout_marginBottom="12dp">
+            android:layout_marginBottom="12dp"
+            android:gravity="center_vertical">
 
             <de.hdodenhof.circleimageview.CircleImageView
                 android:id="@+id/authorAvatarImageView"
-                android:layout_width="40dp"
-                android:layout_height="40dp"
-                android:src="@drawable/ic_account_circle"
-                app:civ_border_width="1dp"
-                app:civ_border_color="@color/design_default_color_primary" />
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                app:civ_border_width="2dp"
+                app:civ_border_color="@color/colorPrimary"
+                android:src="@drawable/ic_account_circle" />
 
             <LinearLayout
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:orientation="vertical"
-                android:paddingStart="12dp">
+                android:paddingStart="14dp">
 
                 <TextView
                     android:id="@+id/authorNameTextView"
-                    android:layout_width="match_parent"
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:textStyle="bold"
+                    android:textColor="@color/text_primary"
                     android:textSize="16sp" />
 
                 <TextView
-                    android:id="@+id/publishedDateTextView"
-                    android:layout_width="match_parent"
+                    android:id="@+id/authorJobTextView"
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:textStyle="italic"
+                    android:textColor="@color/text_secondary"
                     android:textSize="12sp"
-                    android:textColor="@android:color/darker_gray" />
+                    android:layout_marginTop="2dp" />
 
+                <TextView
+                    android:id="@+id/publishedDateTextView"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/text_hint"
+                    android:textSize="12sp"
+                    android:layout_marginTop="2dp" />
             </LinearLayout>
 
             <ImageButton
                 android:id="@+id/menuButton"
-                android:layout_width="24dp"
-                android:layout_height="24dp"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:src="@drawable/ic_more_vert"
-                android:contentDescription="Меню" />
-
+                app:tint="@color/icon_hint"
+                android:contentDescription="@string/menu" />
         </LinearLayout>
 
+        <!-- Текст поста -->
         <TextView
             android:id="@+id/contentTextView"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="12dp"
-            android:textSize="14sp" />
+            android:textColor="@color/text_primary"
+            android:textSize="15sp"
+            android:layout_marginBottom="10dp"
+            android:maxLines="7"
+            android:ellipsize="end" />
 
-        <ImageView
-            android:id="@+id/attachmentImageView"
-            android:layout_width="match_parent"
-            android:layout_height="200dp"
-            android:scaleType="centerCrop"
-            android:visibility="gone"
-            android:layout_marginBottom="12dp" />
-
+        <!-- Внешняя или внутренняя ссылка (если есть) -->
         <TextView
             android:id="@+id/linkTextView"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textColor="@color/design_default_color_primary"
+            android:textColor="@color/text_link"
+            android:textSize="14sp"
+            android:paddingTop="6dp"
+            android:paddingBottom="2dp"
             android:visibility="gone"
-            android:layout_marginBottom="12dp" />
+            android:autoLink="web"
+            tools:text="https://netology.ru" />
 
+        <!-- Медиавложение (если есть) -->
+        <ImageView
+            android:id="@+id/attachmentImageView"
+            android:layout_width="match_parent"
+            android:layout_height="180dp"
+            android:scaleType="centerCrop"
+            android:layout_marginBottom="10dp"
+            android:visibility="gone" />
+
+        <!-- Упомянутые пользователи (если есть) -->
+        <TextView
+            android:id="@+id/mentionedUsersTextView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="@color/text_link"
+            android:textSize="13sp"
+            android:visibility="gone"
+            android:layout_marginBottom="6dp" />
+
+        <!-- Блок лайков -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -91,30 +127,21 @@
 
             <ImageButton
                 android:id="@+id/likeButton"
-                android:layout_width="24dp"
-                android:layout_height="24dp"
+                android:layout_width="28dp"
+                android:layout_height="28dp"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:src="@drawable/ic_favorite_border"
-                android:contentDescription="Лайк" />
+                app:tint="@color/colorPrimary"
+                android:contentDescription="@string/like" />
 
             <TextView
                 android:id="@+id/likesCountTextView"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:paddingStart="4dp"
-                android:paddingEnd="16dp" />
-
-            <TextView
-                android:id="@+id/mentionedUsersTextView"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:textSize="12sp"
-                android:textColor="@android:color/darker_gray"
-                android:visibility="gone" />
+                android:textColor="@color/text_secondary"
+                android:textSize="14sp" />
 
         </LinearLayout>
-
     </LinearLayout>
-
 </com.google.android.material.card.MaterialCardView>

@@ -1,56 +1,73 @@
 <?xml version="1.0" encoding="utf-8"?>
-<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+<com.google.android.material.card.MaterialCardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_margin="8dp"
-    app:cardCornerRadius="8dp"
-    app:cardElevation="2dp">
+    app:cardCornerRadius="14dp"
+    app:cardElevation="3dp"
+    app:cardBackgroundColor="@color/card_bg">
 
     <LinearLayout
+        android:orientation="vertical"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
         android:padding="16dp">
 
+        <!-- Автор, роль, дата, меню -->
         <LinearLayout
-            android:layout_width="match_parent"
-
-            android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:layout_marginBottom="12dp">
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="10dp"
+            android:gravity="center_vertical">
 
             <de.hdodenhof.circleimageview.CircleImageView
                 android:id="@+id/authorAvatarImageView"
                 android:layout_width="40dp"
                 android:layout_height="40dp"
-                android:src="@drawable/ic_account_circle"
                 app:civ_border_width="1dp"
-                app:civ_border_color="@color/design_default_color_primary" />
+                app:civ_border_color="@color/colorPrimary"
+                android:src="@drawable/ic_account_circle"/>
 
             <LinearLayout
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:orientation="vertical"
-                android:paddingStart="12dp">
+                android:paddingStart="10dp">
 
                 <TextView
                     android:id="@+id/authorNameTextView"
-                    android:layout_width="match_parent"
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:textStyle="bold"
                     android:textSize="16sp"
-                    android:textColor="@android:color/black" />
+                    android:textColor="@color/text_primary"
+                    tools:text="Иван Иванов"/>
 
                 <TextView
-                    android:id="@+id/publishedDateTextView"
-                    android:layout_width="match_parent"
+                    android:id="@+id/authorJobTextView"
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:textStyle="italic"
                     android:textSize="12sp"
-                    android:textColor="@android:color/darker_gray" />
+                    android:textColor="@color/text_secondary"
+                    tools:text="Android"/>
 
             </LinearLayout>
+
+            <TextView
+                android:id="@+id/publishedDateTextView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="12sp"
+                android:textColor="@color/text_hint"
+                android:textStyle="italic"
+                android:paddingEnd="6dp"
+                tools:text="31.10.2025"/>
 
             <ImageButton
                 android:id="@+id/menuButton"
@@ -58,94 +75,86 @@
                 android:layout_height="24dp"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:src="@drawable/ic_more_vert"
-                android:contentDescription="Меню" />
-
+                app:tint="@color/icon_hint"
+                android:contentDescription="@string/menu" />
         </LinearLayout>
 
-        <com.google.android.material.card.MaterialCardView
+        <!-- Дата и тип события -->
+        <TextView
+            android:id="@+id/eventDateTimeTextView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="@color/colorPrimary"
+            android:textSize="13sp"
+            android:layout_marginBottom="3dp"
+            tools:text="31.10.2025, 19:00"/>
+
+        <TextView
+            android:id="@+id/eventTypeTextView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="@color/colorPrimary"
+            android:textSize="13sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="6dp"
+            tools:text="ONLINE"/>
+
+        <!-- Место -->
+        <TextView
+            android:id="@+id/locationTextView"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="12dp"
-            app:cardBackgroundColor="@color/design_default_color_primary_variant">
+            android:textColor="@color/text_link"
+            android:textSize="13sp"
+            android:visibility="gone"
+            android:layout_marginBottom="6dp"
+            tools:text="г. Тюмень"/>
 
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="12dp">
-
-                <TextView
-                    android:id="@+id/eventDateTimeTextView"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:textStyle="bold"
-                    android:textColor="@android:color/white" />
-
-                <TextView
-                    android:id="@+id/eventTypeTextView"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:textColor="@android:color/white"
-                    android:layout_marginTop="4dp" />
-
-                <TextView
-                    android:id="@+id/participantsCountTextView"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:textColor="@android:color/white"
-                    android:layout_marginTop="4dp" />
-
-            </LinearLayout>
-
-        </com.google.android.material.card.MaterialCardView>
-
+        <!-- Описание события -->
         <TextView
             android:id="@+id/contentTextView"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="8dp"
             android:textSize="14sp"
-            android:textColor="@android:color/black" />
+            android:textColor="@color/text_primary"
+            android:layout_marginBottom="8dp"
+            android:maxLines="7"
+            android:ellipsize="end"
+            tools:text="Описание события"/>
 
+        <!-- Ссылка -->
         <TextView
             android:id="@+id/linkTextView"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textColor="@color/design_default_color_primary"
+            android:textColor="@color/text_link"
+            android:textSize="13sp"
+            android:layout_marginBottom="6dp"
             android:autoLink="web"
-            android:visibility="gone"
             android:textStyle="italic"
-            android:layout_marginBottom="8dp"
-            android:textSize="14sp" />
+            android:visibility="gone"
+            tools:text="https://event.ru"/>
 
+        <!-- Медиавложение -->
         <ImageView
             android:id="@+id/attachmentImageView"
             android:layout_width="match_parent"
-            android:layout_height="200dp"
+            android:layout_height="180dp"
             android:scaleType="centerCrop"
             android:layout_marginBottom="8dp"
             android:visibility="gone" />
 
+        <!-- Кол-во участников -->
         <TextView
-            android:id="@+id/speakersTextView"
-            android:layout_width="match_parent"
+            android:id="@+id/participantsCountTextView"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="🎤 Спикеры"
-            android:textSize="14sp"
-            android:textColor="@android:color/holo_blue_dark"
-            android:visibility="gone"
-            android:layout_marginBottom="4dp" />
+            android:textColor="@color/text_secondary"
+            android:textSize="13sp"
+            android:layout_marginBottom="6dp"
+            tools:text="Участников: 10"/>
 
-        <TextView
-            android:id="@+id/participantsTextView"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="👥 Участники"
-            android:textSize="14sp"
-            android:textColor="@android:color/holo_blue_dark"
-            android:visibility="gone"
-            android:layout_marginBottom="8dp" />
-
+        <!-- Кнопки действия и лайк -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -158,23 +167,28 @@
                 android:layout_height="24dp"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:src="@drawable/ic_favorite_border"
-                android:contentDescription="Лайк" />
+                app:tint="@color/colorPrimary"
+                android:contentDescription="@string/like"/>
 
             <TextView
                 android:id="@+id/likesCountTextView"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:paddingStart="4dp"
-                android:paddingEnd="16dp"
-                android:textColor="@android:color/black" />
+                android:paddingEnd="14dp"
+                android:textSize="14sp"
+                android:textColor="@color/text_secondary"
+                tools:text="23"/>
 
             <Button
                 android:id="@+id/participateButton"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Участвовать"
-                android:textSize="12sp" />
-
+                android:text="Записаться"
+                android:textSize="12sp"
+                android:layout_marginStart="10dp"
+                app:backgroundTint="@color/colorPrimary"
+                android:textColor="@android:color/white"/>
         </LinearLayout>
     </LinearLayout>
 </com.google.android.material.card.MaterialCardView>
