@@ -9,6 +9,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
+import androidx.paging.PagingDataAdapter
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
@@ -24,7 +25,7 @@ class PostAdapter(
     private val onEditPost: (Post) -> Unit,
     private val onDeletePost: (Post) -> Unit,
     private val onReportPost: (Post) -> Unit
-) : ListAdapter<Post, PostAdapter.ViewHolder>(DiffCallback) {
+) : PagingDataAdapter<Post, PostAdapter.ViewHolder>(DiffCallback) {
 
     var onPostClicked: ((Long) -> Unit)? = null
     var onLikeClicked: ((Long) -> Unit)? = null
@@ -37,8 +38,14 @@ class PostAdapter(
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-        holder.bind(getItem(position))
+        val post = getItem(position)
+        post?.let {
+            holder.bind(it)
+        } ?: run {
+            holder.bindEmpty()
+        }
     }
+
 
     inner class ViewHolder(private val binding: ItemPostBinding) :
         RecyclerView.ViewHolder(binding.root) {
@@ -109,6 +116,21 @@ class PostAdapter(
 
             menuButton.visibility = View.VISIBLE
             menuButton.setOnClickListener { showPostMenuOptions(post) }
+        }
+        fun bindEmpty() {
+            with(binding) {
+                authorNameTextView.text = ""
+                publishedDateTextView.text = ""
+                contentTextView.text = "Загрузка..."
+                likesCountTextView.text = ""
+                authorAvatarImageView.setImageResource(R.drawable.ic_account_circle)
+                attachmentImageView.visibility = View.GONE
+                linkTextView.visibility = View.GONE
+                mentionedUsersTextView.visibility = View.GONE
+                menuButton.visibility = View.GONE
+                likeButton.setOnClickListener(null)
+                root.setOnClickListener(null)
+            }
         }
 
         private fun showPostMenuOptions(post: Post) {

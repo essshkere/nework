@@ -1,5 +1,6 @@
 package ru.netology.nework.repository
 
+import androidx.paging.PagingData
 import kotlinx.coroutines.flow.Flow
 import ru.netology.nework.data.Job
 import ru.netology.nework.data.Post
@@ -12,5 +13,6 @@ interface UserRepository {
     suspend fun getUserWall(userId: Long): List<Post>
     suspend fun getMyWall(): List<Post>
     suspend fun saveUser(user: User)
+    fun getUserWallPaging(userId: Long): Flow<PagingData<Post>>
 
 }

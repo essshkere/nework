@@ -145,6 +145,7 @@ class PostsFragment : Fragment() {
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 postsViewModel.data.collect { pagingData ->
+                    postAdapter.submitData(pagingData)
                     updateEmptyState()
                 }
             }

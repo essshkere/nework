@@ -6,6 +6,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
+import androidx.paging.PagingDataAdapter
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
@@ -16,7 +17,7 @@ import ru.netology.nework.databinding.ItemEventBinding
 import java.text.SimpleDateFormat
 import java.util.*
 
-class EventAdapter : ListAdapter<Event, EventAdapter.ViewHolder>(DiffCallback) {
+class EventAdapter : PagingDataAdapter<Event, EventAdapter.ViewHolder>(DiffCallback) {
 
     var onEventClicked: ((Long) -> Unit)? = null
     var onLikeClicked: ((Long) -> Unit)? = null
@@ -31,9 +32,13 @@ class EventAdapter : ListAdapter<Event, EventAdapter.ViewHolder>(DiffCallback) {
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-        holder.bind(getItem(position))
+        val event = getItem(position)
+        event?.let {
+            holder.bind(it)
+        } ?: run {
+            holder.bindEmpty()
+        }
     }
-
     inner class ViewHolder(private val binding: ItemEventBinding) :
         RecyclerView.ViewHolder(binding.root) {
 
@@ -57,7 +62,6 @@ class EventAdapter : ListAdapter<Event, EventAdapter.ViewHolder>(DiffCallback) {
                 authorAvatarImageView.setImageResource(R.drawable.ic_account_circle)
             }
 
-            // Вложение (картинка, видео, аудио)
             when (event.attachment?.type) {
                 Event.AttachmentType.IMAGE -> {
                     attachmentImageView.visibility = View.VISIBLE
@@ -99,6 +103,26 @@ class EventAdapter : ListAdapter<Event, EventAdapter.ViewHolder>(DiffCallback) {
             participateButton.setOnClickListener { onParticipateClicked?.invoke(event) }
 
             menuButton.setOnClickListener { showMenu(event) }
+
+
+        }
+        fun bindEmpty() {
+            with(binding) {
+                authorNameTextView.text = ""
+                publishedDateTextView.text = ""
+                eventDateTimeTextView.text = ""
+                eventTypeTextView.text = ""
+                contentTextView.text = "Загрузка..."
+                likesCountTextView.text = ""
+                participantsCountTextView.text = ""
+                authorAvatarImageView.setImageResource(R.drawable.ic_account_circle)
+                attachmentImageView.visibility = View.GONE
+                linkTextView.visibility = View.GONE
+                menuButton.visibility = View.GONE
+                likeButton.setOnClickListener(null)
+                participateButton.setOnClickListener(null)
+                root.setOnClickListener(null)
+            }
         }
 
         private fun showMenu(event: Event) {

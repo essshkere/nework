@@ -14,6 +14,7 @@ import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.android.material.snackbar.Snackbar
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import ru.netology.nework.R
 import ru.netology.nework.adapter.EventAdapter
@@ -178,8 +179,18 @@ class EventsFragment : Fragment() {
         }
     }
 
-    private fun observeEvents() {
-    }
+
+        private fun observeEvents() {
+            viewLifecycleOwner.lifecycleScope.launch {
+                viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                    eventsViewModel.data.collectLatest { pagingData ->
+                        eventAdapter.submitData(pagingData)
+
+                    }
+                }
+            }
+        }
+
 
     private fun observeUiState() {
         viewLifecycleOwner.lifecycleScope.launch {

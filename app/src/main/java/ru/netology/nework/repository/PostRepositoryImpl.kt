@@ -71,13 +71,21 @@ class PostRepositoryImpl @Inject constructor(
 
     override suspend fun getAll() {
         try {
+            println("DEBUG: Запрашиваем посты с сервера...")
             val response = postApi.getAll()
+            println("DEBUG: Ответ от сервера: код ${response.code()}, успех: ${response.isSuccessful}")
             if (response.isSuccessful) {
-                response.body()?.let { posts ->
+                val posts = response.body()
+                println("DEBUG: Получено постов: ${posts?.size ?: 0}")
+                posts?.let {
                     postDao.insert(posts.map { it.toEntity() })
                 }
+            } else {
+                println("DEBUG: Ошибка при запросе: ${response.errorBody()?.string()}")
             }
         } catch (e: Exception) {
+            println("DEBUG: Исключение при загрузке постов: ${e.message}")
+            e.printStackTrace()
             throw Exception("Ошибка загрузки постов: ${e.message}")
         }
     }

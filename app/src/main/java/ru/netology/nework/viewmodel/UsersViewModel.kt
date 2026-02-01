@@ -2,6 +2,7 @@ package ru.netology.nework.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.paging.PagingData
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
@@ -20,6 +21,10 @@ class UsersViewModel @Inject constructor(
 
     init {
         loadUsers()
+    }
+
+    fun getUserWallPaging(userId: Long): Flow<PagingData<Post>> {
+        return repository.getUserWallPaging(userId)
     }
 
     private fun loadUsers() {

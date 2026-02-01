@@ -26,6 +26,8 @@ class PostsViewModel @Inject constructor(
     val postsState: StateFlow<PostsState> = _postsState.asStateFlow()
     private val _uiState = MutableStateFlow<PostsUiState>(PostsUiState())
     val uiState: StateFlow<PostsUiState> = _uiState.asStateFlow()
+    private val _postsList = MutableStateFlow<List<Post>>(emptyList())
+    val postsList: StateFlow<List<Post>> = _postsList.asStateFlow()
 
     suspend fun uploadMedia(uri: Uri, type: Post.AttachmentType): String {
         return withContext(Dispatchers.IO) {

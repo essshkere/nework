@@ -231,15 +231,8 @@ class UserWallFragment : Fragment() {
     private fun observeUserWall() {
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                usersViewModel.getUserWall(userId).let { posts ->
-                    postAdapter.submitList(posts)
-                    if (posts.isEmpty()) {
-                        android.widget.Toast.makeText(
-                            requireContext(),
-                            "На стене пока нет постов",
-                            android.widget.Toast.LENGTH_SHORT
-                        ).show()
-                    }
+                postsViewModel.getUserWallPaging(userId).collect { pagingData ->
+                    postAdapter.submitData(pagingData)
                 }
             }
         }
