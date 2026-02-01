@@ -69,6 +69,20 @@ class PostRepositoryImpl @Inject constructor(
         }
     }
 
+    override fun getUserWallPaging(userId: Long): Flow<PagingData<Post>> {
+
+        return Pager(
+            config = PagingConfig(
+                pageSize = 10,
+                enablePlaceholders = false,
+                initialLoadSize = 20
+            ),
+            pagingSourceFactory = {
+                UserWallPagingSource(postApi, userId)
+            }
+        ).flow
+    }
+
     override suspend fun getAll() {
         try {
             println("DEBUG: Запрашиваем посты с сервера...")
@@ -398,4 +412,5 @@ class PostRepositoryImpl @Inject constructor(
             throw Exception("Ошибка удаления комментария: ${response.code()}")
         }
     }
+
 }

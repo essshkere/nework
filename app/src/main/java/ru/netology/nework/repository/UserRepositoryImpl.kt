@@ -1,5 +1,6 @@
 package ru.netology.nework.repository
 
+import androidx.paging.PagingData
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import ru.netology.nework.api.UserApi
@@ -16,7 +17,8 @@ import javax.inject.Singleton
 @Singleton
 class UserRepositoryImpl @Inject constructor(
     private val userApi: UserApi,
-    private val userDao: UserDao
+    private val userDao: UserDao,
+    private val postRepository: PostRepository
 ) : UserRepository {
 
     private val userCache = mutableMapOf<Long, User>()
@@ -25,6 +27,10 @@ class UserRepositoryImpl @Inject constructor(
         return userDao.getAll().map { users ->
             users.map { it.toModel() }
         }
+    }
+
+    override fun getUserWallPaging(userId: Long): Flow<PagingData<Post>> {
+        return postRepository.getUserWallPaging(userId)
     }
 
     override suspend fun getUserById(id: Long): User? {

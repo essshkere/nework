@@ -231,7 +231,7 @@ class UserWallFragment : Fragment() {
     private fun observeUserWall() {
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                postsViewModel.getUserWallPaging(userId).collect { pagingData ->
+                usersViewModel.getUserWallPaging(userId).collect { pagingData ->
                     postAdapter.submitData(pagingData)
                 }
             }
@@ -252,7 +252,6 @@ class UserJobsFragment : Fragment() {
     private val usersViewModel: UsersViewModel by viewModels()
 
     private lateinit var jobAdapter: JobAdapter
-
     private var userId: Long = 0
 
     companion object {

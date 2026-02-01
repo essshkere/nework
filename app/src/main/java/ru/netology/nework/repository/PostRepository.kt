@@ -22,4 +22,5 @@ interface PostRepository {
     suspend fun likeComment(postId: Long, commentId: Long)
     suspend fun dislikeComment(postId: Long, commentId: Long)
     suspend fun removeComment(postId: Long, commentId: Long)
+    fun getUserWallPaging(userId: Long): Flow<PagingData<Post>>
 }

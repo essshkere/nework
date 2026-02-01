@@ -110,8 +110,12 @@ object AppModule {
 
     @Provides
     @Singleton
-    fun provideUserRepository(userApi: UserApi, db: AppDatabase): UserRepository =
-        UserRepositoryImpl(userApi, db.userDao())
+    fun provideUserRepository(
+        userApi: UserApi,
+        db: AppDatabase,
+        postRepository: PostRepository
+    ): UserRepository =
+        UserRepositoryImpl(userApi, db.userDao(), postRepository)
 
     @Provides
     @Singleton
