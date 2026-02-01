@@ -29,6 +29,10 @@ class PostsViewModel @Inject constructor(
     private val _postsList = MutableStateFlow<List<Post>>(emptyList())
     val postsList: StateFlow<List<Post>> = _postsList.asStateFlow()
 
+    init {
+        refresh()
+    }
+
     suspend fun uploadMedia(uri: Uri, type: Post.AttachmentType): String {
         return withContext(Dispatchers.IO) {
             try {

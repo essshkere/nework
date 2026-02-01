@@ -29,6 +29,40 @@ class UserRepositoryImpl @Inject constructor(
         }
     }
 
+    override suspend fun hasUsers(): Boolean {
+        val users = userDao.getAll()
+        var count = 0
+        users.collect { list ->
+            count = list.size
+        }
+        return count > 0
+    }
+
+    override suspend fun loadUsersFromApi() {
+        try {
+            println("DEBUG: Загружаем пользователей с API...")
+            val response = userApi.getAllUsers()
+            println("DEBUG: Ответ на запрос пользователей: ${response.code()}")
+            if (response.isSuccessful) {
+                val users = response.body() ?: emptyList()
+                println("DEBUG: Получено ${users.size} пользователей")
+                userCache.clear()
+                userDao.insert(users.map { it.toEntity() })
+                users.forEach { userDto ->
+                    val user = userDto.toEntity().toModel()
+                    userCache[userDto.id] = user
+                }
+
+                println("DEBUG: Пользователи успешно загружены и сохранены")
+            } else {
+                println("DEBUG: Ошибка при загрузке пользователей: ${response.code()}")
+            }
+        } catch (e: Exception) {
+            println("DEBUG: Исключение при загрузке пользователей: ${e.message}")
+            e.printStackTrace()
+        }
+    }
+
     override fun getUserWallPaging(userId: Long): Flow<PagingData<Post>> {
         return postRepository.getUserWallPaging(userId)
     }

@@ -30,7 +30,10 @@ class UsersViewModel @Inject constructor(
     private fun loadUsers() {
         viewModelScope.launch {
             try {
-                repository.getUsers().collect {}
+                val hasUsers = repository.hasUsers()
+                if (!hasUsers) {
+                    repository.loadUsersFromApi()
+                }
             } catch (e: Exception) {
                 e.printStackTrace()
             }

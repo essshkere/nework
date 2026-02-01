@@ -14,5 +14,6 @@ interface UserRepository {
     suspend fun getMyWall(): List<Post>
     suspend fun saveUser(user: User)
     fun getUserWallPaging(userId: Long): Flow<PagingData<Post>>
-
+    suspend fun loadUsersFromApi()
+    suspend fun hasUsers(): Boolean
 }

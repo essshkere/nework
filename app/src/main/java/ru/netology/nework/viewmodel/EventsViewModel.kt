@@ -27,6 +27,10 @@ class EventsViewModel @Inject constructor(
     private val _uiState = MutableStateFlow<EventsUiState>(EventsUiState())
     val uiState: StateFlow<EventsUiState> = _uiState.asStateFlow()
 
+    init {
+        refresh()
+    }
+
     suspend fun uploadMedia(uri: Uri, type: Event.AttachmentType): String {
         return withContext(Dispatchers.IO) {
             try {

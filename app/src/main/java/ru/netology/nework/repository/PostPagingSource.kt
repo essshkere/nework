@@ -13,13 +13,26 @@ class PostPagingSource(
 
     override suspend fun load(params: LoadParams<Long>): LoadResult<Long, Post> {
         return try {
-            val pageSize = params.loadSize
-            val key = params.key
-
-            val response = if (key == null) {
-                postApi.getLatest(count = pageSize)
-            } else {
-                postApi.getBefore(id = key, count = pageSize)
+            val response = when (params) {
+                is LoadParams.Refresh -> {
+                    postApi.getLatest(count = params.loadSize)
+                }
+                is LoadParams.Append -> {
+                    val key = params.key ?: return LoadResult.Page(
+                        data = emptyList(),
+                        prevKey = null,
+                        nextKey = null
+                    )
+                    postApi.getBefore(id = key, count = params.loadSize)
+                }
+                is LoadParams.Prepend -> {
+                    val key = params.key ?: return LoadResult.Page(
+                        data = emptyList(),
+                        prevKey = null,
+                        nextKey = null
+                    )
+                    postApi.getAfter(id = key, count = params.loadSize)
+                }
             }
 
             if (!response.isSuccessful) {
@@ -30,8 +43,8 @@ class PostPagingSource(
 
             LoadResult.Page(
                 data = posts,
-                prevKey = null,
-                nextKey = posts.lastOrNull()?.id
+                prevKey = if (posts.isEmpty()) null else posts.first().id,
+                nextKey = if (posts.isEmpty()) null else posts.last().id
             )
         } catch (e: Exception) {
             LoadResult.Error(e)

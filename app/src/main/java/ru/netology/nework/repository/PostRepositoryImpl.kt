@@ -48,6 +48,7 @@ class PostRepositoryImpl @Inject constructor(
                 initialLoadSize = 20
             ),
             pagingSourceFactory = {
+                println("DEBUG: Creating PostPagingSource")
                 PostPagingSource(postApi)
             }
         ).flow

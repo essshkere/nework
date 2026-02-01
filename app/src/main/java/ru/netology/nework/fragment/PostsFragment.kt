@@ -4,15 +4,18 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
+import androidx.paging.LoadState
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.android.material.snackbar.Snackbar
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import ru.netology.nework.R
 import ru.netology.nework.adapter.PostAdapter
@@ -144,9 +147,19 @@ class PostsFragment : Fragment() {
     private fun observePosts() {
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                postsViewModel.data.collect { pagingData ->
+                postsViewModel.data.collectLatest { pagingData ->
                     postAdapter.submitData(pagingData)
-                    updateEmptyState()
+                }
+
+                postAdapter.loadStateFlow.collect { loadState ->
+                    val isEmpty = loadState.refresh is LoadState.NotLoading &&
+                            postAdapter.itemCount == 0
+
+                    binding?.emptyStateLayout?.isVisible = isEmpty
+                    binding?.postsRecyclerView?.isVisible = !isEmpty
+
+                    binding?.swipeRefreshLayout?.isRefreshing =
+                        loadState.refresh is LoadState.Loading
                 }
             }
         }

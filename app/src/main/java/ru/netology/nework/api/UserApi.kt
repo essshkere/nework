@@ -39,4 +39,7 @@ interface UserApi {
         @Path("id") postId: Long
     ): Response<PostDto>
 
+    @GET("api/users")
+    suspend fun getAllUsers(): Response<List<UserDto>>
+
 }
