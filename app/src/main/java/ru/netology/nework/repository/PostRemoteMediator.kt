@@ -8,18 +8,17 @@ import androidx.room.withTransaction
 import ru.netology.nework.api.PostApi
 import ru.netology.nework.data.AppDatabase
 import ru.netology.nework.data.PostEntity
-import ru.netology.nework.dto.PostDto
 import ru.netology.nework.mapper.toEntity
 
 @OptIn(ExperimentalPagingApi::class)
 class PostRemoteMediator(
     private val postApi: PostApi,
     private val db: AppDatabase
-) : RemoteMediator<Long, PostEntity>() {
+) : RemoteMediator<Int, PostEntity>() {
 
     override suspend fun load(
         loadType: LoadType,
-        state: PagingState<Long, PostEntity>
+        state: PagingState<Int, PostEntity>
     ): MediatorResult {
         return try {
             val response = when (loadType) {

@@ -11,6 +11,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
+import androidx.paging.LoadState
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.android.material.snackbar.Snackbar
 import dagger.hilt.android.AndroidEntryPoint
@@ -185,7 +186,7 @@ class EventsFragment : Fragment() {
                 viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
                     eventsViewModel.data.collectLatest { pagingData ->
                         eventAdapter.submitData(pagingData)
-
+                        binding?.swipeRefreshLayout?.isRefreshing = false
                     }
                 }
             }
@@ -225,8 +226,11 @@ class EventsFragment : Fragment() {
     private fun observeEmptyState() {
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                eventsViewModel.uiState.collect { _ ->
-                    updateEmptyStateBasedOnAdapter()
+                eventAdapter.loadStateFlow.collect { loadState ->
+                    val isEmpty = loadState.refresh is LoadState.NotLoading &&
+                            eventAdapter.itemCount == 0
+                    binding?.emptyStateLayout?.isVisible = isEmpty
+                    binding?.eventsRecyclerView?.isVisible = !isEmpty
                 }
             }
         }

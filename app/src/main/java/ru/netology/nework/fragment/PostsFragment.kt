@@ -149,17 +149,7 @@ class PostsFragment : Fragment() {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 postsViewModel.data.collectLatest { pagingData ->
                     postAdapter.submitData(pagingData)
-                }
-
-                postAdapter.loadStateFlow.collect { loadState ->
-                    val isEmpty = loadState.refresh is LoadState.NotLoading &&
-                            postAdapter.itemCount == 0
-
-                    binding?.emptyStateLayout?.isVisible = isEmpty
-                    binding?.postsRecyclerView?.isVisible = !isEmpty
-
-                    binding?.swipeRefreshLayout?.isRefreshing =
-                        loadState.refresh is LoadState.Loading
+                    binding?.swipeRefreshLayout?.isRefreshing = false
                 }
             }
         }

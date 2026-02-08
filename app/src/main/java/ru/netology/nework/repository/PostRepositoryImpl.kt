@@ -5,8 +5,11 @@ import androidx.paging.ExperimentalPagingApi
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.PagingData
+import androidx.paging.cachedIn
 import androidx.paging.map
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
@@ -18,6 +21,7 @@ import ru.netology.nework.api.PostApi
 import ru.netology.nework.api.UserApi
 import ru.netology.nework.dao.PostDao
 import ru.netology.nework.data.Post
+import ru.netology.nework.data.AppDatabase
 import ru.netology.nework.data.toModel
 import ru.netology.nework.dto.AttachmentDto
 import ru.netology.nework.dto.AttachmentTypeDto
@@ -37,8 +41,11 @@ class PostRepositoryImpl @Inject constructor(
     private val postApi: PostApi,
     private val userApi: UserApi,
     private val postDao: PostDao,
-    private val mediaApi: MediaApi
+    private val mediaApi: MediaApi,
+    private val appDatabase: AppDatabase
 ) : PostRepository {
+
+    private val repositoryScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
     override fun getPagingData(): Flow<PagingData<Post>> {
         return Pager(
@@ -47,11 +54,11 @@ class PostRepositoryImpl @Inject constructor(
                 enablePlaceholders = false,
                 initialLoadSize = 20
             ),
-            pagingSourceFactory = {
-                println("DEBUG: Creating PostPagingSource")
-                PostPagingSource(postApi)
-            }
-        ).flow
+            remoteMediator = PostRemoteMediator(postApi, appDatabase),
+            pagingSourceFactory = { postDao.pagingSource() }
+        ).flow.map { pagingData ->
+            pagingData.map { it.toModel() }
+        }.cachedIn(repositoryScope)
     }
 
     fun getPagingDataFromDb(): Flow<PagingData<Post>> {

@@ -98,7 +98,7 @@ object AppModule {
         userApi: UserApi,
         mediaApi: MediaApi,
         db: AppDatabase
-    ): PostRepository = PostRepositoryImpl(postApi, userApi, db.postDao(), mediaApi)
+    ): PostRepository = PostRepositoryImpl(postApi, userApi, db.postDao(), mediaApi,db)
 
     @Provides
     @Singleton
