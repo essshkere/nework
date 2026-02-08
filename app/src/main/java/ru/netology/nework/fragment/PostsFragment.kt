@@ -58,25 +58,39 @@ class PostsFragment : Fragment() {
     }
 
     private fun setupRecyclerView() {
-        binding?.postsRecyclerView?.apply {
-            layoutManager = LinearLayoutManager(requireContext())
-            adapter = postAdapter
+        postAdapter = PostAdapter(
+            currentUserId = authViewModel.getUserId(),
+            onEditPost = { post ->
+                val bundle = Bundle().apply {
+                    putLong("postId", post.id)
+                }
+                findNavController().navigate(R.id.editPostFragment, bundle)
+            },
+            onDeletePost = { post ->
+                confirmDeletePost(post)
+            },
+            onReportPost = { post ->
+                showReportPostDialog(post)
+            }
+        ).apply {
+            onPostClicked = { postId ->
+                navigateToPostDetails(postId)
+            }
+            onLikeClicked = { postId ->
+                postsViewModel.likeById(postId)
+            }
+            onAuthorClicked = { authorId ->
+                navigateToUserProfile(authorId)
+            }
+            onMentionClicked = { userId ->
+                navigateToUserProfile(userId)
+            }
         }
 
-        postAdapter.onPostClicked = { postId ->
-            navigateToPostDetails(postId)
-        }
-
-        postAdapter.onLikeClicked = { postId ->
-            postsViewModel.likeById(postId)
-        }
-
-        postAdapter.onMentionClicked = { userId ->
-            navigateToUserProfile(userId)
-        }
-
-        postAdapter.onAuthorClicked = { authorId ->
-            navigateToUserProfile(authorId)
+        binding?.postsRecyclerView.apply {
+            this?.layoutManager = LinearLayoutManager(requireContext())
+            this?.adapter = postAdapter
+            this!!.setHasFixedSize(true)
         }
     }
 

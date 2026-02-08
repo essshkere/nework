@@ -50,15 +50,14 @@ class PostRepositoryImpl @Inject constructor(
     override fun getPagingData(): Flow<PagingData<Post>> {
         return Pager(
             config = PagingConfig(
-                pageSize = 10,
+                pageSize = 20,
                 enablePlaceholders = false,
-                initialLoadSize = 20
+                initialLoadSize = 40
             ),
-            remoteMediator = PostRemoteMediator(postApi, appDatabase),
-            pagingSourceFactory = { postDao.pagingSource() }
-        ).flow.map { pagingData ->
-            pagingData.map { it.toModel() }
-        }.cachedIn(repositoryScope)
+            pagingSourceFactory = {
+                PostPagingSource(postApi)
+            }
+        ).flow.cachedIn(repositoryScope)
     }
 
     fun getPagingDataFromDb(): Flow<PagingData<Post>> {

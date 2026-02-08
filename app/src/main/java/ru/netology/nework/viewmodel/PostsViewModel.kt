@@ -30,7 +30,7 @@ class PostsViewModel @Inject constructor(
     val postsList: StateFlow<List<Post>> = _postsList.asStateFlow()
 
     init {
-        refresh()
+//        refresh()
     }
 
     suspend fun uploadMedia(uri: Uri, type: Post.AttachmentType): String {

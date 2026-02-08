@@ -1,4 +1,3 @@
-// PostPagingSource.kt
 package ru.netology.nework.repository
 
 import androidx.paging.PagingSource
@@ -9,31 +8,14 @@ import ru.netology.nework.mapper.toModel
 
 class PostPagingSource(
     private val postApi: PostApi
-) : PagingSource<Long, Post>() {
+) : PagingSource<Int, Post>() {
 
-    override suspend fun load(params: LoadParams<Long>): LoadResult<Long, Post> {
+    override suspend fun load(params: LoadParams<Int>): LoadResult<Int, Post> {
         return try {
-            val response = when (params) {
-                is LoadParams.Refresh -> {
-                    postApi.getLatest(count = params.loadSize)
-                }
-                is LoadParams.Append -> {
-                    val key = params.key ?: return LoadResult.Page(
-                        data = emptyList(),
-                        prevKey = null,
-                        nextKey = null
-                    )
-                    postApi.getBefore(id = key, count = params.loadSize)
-                }
-                is LoadParams.Prepend -> {
-                    val key = params.key ?: return LoadResult.Page(
-                        data = emptyList(),
-                        prevKey = null,
-                        nextKey = null
-                    )
-                    postApi.getAfter(id = key, count = params.loadSize)
-                }
-            }
+            val page = params.key ?: 0
+            val pageSize = params.loadSize
+
+            val response = postApi.getLatest(count = pageSize)
 
             if (!response.isSuccessful) {
                 throw Exception("Failed to load posts: ${response.code()}")
@@ -43,18 +25,18 @@ class PostPagingSource(
 
             LoadResult.Page(
                 data = posts,
-                prevKey = if (posts.isEmpty()) null else posts.first().id,
-                nextKey = if (posts.isEmpty()) null else posts.last().id
+                prevKey = if (page > 0) page - 1 else null,
+                nextKey = if (posts.isNotEmpty()) page + 1 else null
             )
         } catch (e: Exception) {
             LoadResult.Error(e)
         }
     }
 
-    override fun getRefreshKey(state: PagingState<Long, Post>): Long? {
+    override fun getRefreshKey(state: PagingState<Int, Post>): Int? {
         return state.anchorPosition?.let { anchorPosition ->
-            state.closestPageToPosition(anchorPosition)?.prevKey?.plus(1)
-                ?: state.closestPageToPosition(anchorPosition)?.nextKey?.minus(1)
+            val anchorPage = state.closestPageToPosition(anchorPosition)
+            anchorPage?.prevKey?.plus(1) ?: anchorPage?.nextKey?.minus(1)
         }
     }
 }
