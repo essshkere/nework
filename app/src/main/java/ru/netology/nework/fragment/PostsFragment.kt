@@ -15,6 +15,7 @@ import androidx.paging.LoadState
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.android.material.snackbar.Snackbar
 import dagger.hilt.android.AndroidEntryPoint
+import jakarta.inject.Inject
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import ru.netology.nework.R
@@ -26,10 +27,10 @@ import ru.netology.nework.viewmodel.PostsViewModel
 @AndroidEntryPoint
 class PostsFragment : Fragment() {
     private var _binding: FragmentPostsBinding? = null
-    private val binding get() = _binding
+    private val binding get() = _binding!!
     private val postsViewModel: PostsViewModel by viewModels()
     private val authViewModel: AuthViewModel by viewModels()
-    private lateinit var postAdapter: PostAdapter
+    lateinit var postAdapter: PostAdapter
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -37,24 +38,28 @@ class PostsFragment : Fragment() {
         savedInstanceState: Bundle?
     ): View {
         _binding = FragmentPostsBinding.inflate(inflater, container, false)
-        return binding!!.root
+        return binding.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        postAdapter = PostAdapter(
-            currentUserId = authViewModel.getUserId(),
-            onEditPost = { post -> navigateToEditPost(post.id) },
-            onDeletePost = { post -> confirmDeletePost(post) },
-            onReportPost = { post -> showReportPostDialog(post) }
-        )
+
+        if (!authViewModel.isAuthenticated()) {
+            navigateToLogin()
+            return
+        }
+
 
         setupRecyclerView()
         setupSwipeRefresh()
         setupFab()
         observePosts()
-        observeUiState()
-        observePostsState()
+        observeLoadState()
+        observeAuthState()
+    }
+
+    private fun navigateToLogin() {
+        findNavController().navigate(R.id.loginFragment)
     }
 
     private fun setupRecyclerView() {
@@ -87,10 +92,43 @@ class PostsFragment : Fragment() {
             }
         }
 
-        binding?.postsRecyclerView.apply {
-            this?.layoutManager = LinearLayoutManager(requireContext())
-            this?.adapter = postAdapter
-            this!!.setHasFixedSize(true)
+        binding.postsRecyclerView.apply {
+            layoutManager = LinearLayoutManager(requireContext())
+            adapter = postAdapter
+            setHasFixedSize(true)
+        }
+    }
+
+    private fun observePosts() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                postsViewModel.data.collectLatest { pagingData ->
+                    postAdapter.submitData(pagingData)
+                }
+            }
+        }
+    }
+
+    private fun handleError(error: Throwable) {
+        val errorMessage = when {
+            error.message?.contains("403") == true -> {
+                Snackbar.make(binding.root, "Сессия истекла. Войдите снова", Snackbar.LENGTH_LONG)
+                    .setAction("Войти") {
+                        navigateToLogin()
+                    }
+                    .show()
+                "Требуется авторизация"
+            }
+            error.message?.contains("network", ignoreCase = true) == true -> {
+                "Ошибка сети. Проверьте подключение"
+            }
+            else -> {
+                "Ошибка загрузки: ${error.message}"
+            }
+        }
+
+        if (errorMessage != "Требуется авторизация") {
+            Snackbar.make(binding.root, errorMessage, Snackbar.LENGTH_LONG).show()
         }
     }
 
@@ -111,7 +149,7 @@ class PostsFragment : Fragment() {
     private fun confirmDeletePost(post: ru.netology.nework.data.Post) {
         androidx.appcompat.app.AlertDialog.Builder(requireContext())
             .setTitle("Удаление поста")
-            .setMessage("Вы уверены, что хотите удалить этот пост? Это действие нельзя отменить.")
+            .setMessage("Вы уверены, что хотите удалить этот пост?")
             .setPositiveButton("Удалить") { _, _ ->
                 postsViewModel.removeById(post.id)
             }
@@ -120,9 +158,7 @@ class PostsFragment : Fragment() {
     }
 
     private fun showReportPostDialog(post: ru.netology.nework.data.Post) {
-        binding?.root?.let {
-            Snackbar.make(it, "Жалоба на пост отправлена", Snackbar.LENGTH_SHORT).show()
-        }
+        Snackbar.make(binding.root, "Жалоба отправлена", Snackbar.LENGTH_SHORT).show()
     }
 
     private fun navigateToEditPost(postId: Long) {
@@ -136,20 +172,14 @@ class PostsFragment : Fragment() {
     }
 
     private fun setupSwipeRefresh() {
-        binding?.swipeRefreshLayout?.setColorSchemeResources(
-            R.color.purple_500,
-            R.color.purple_700,
-            R.color.teal_200
-        )
-
-        binding?.swipeRefreshLayout?.setOnRefreshListener {
-            refreshData()
+        binding.swipeRefreshLayout.setOnRefreshListener {
+            postsViewModel.refresh()
+            binding.swipeRefreshLayout.isRefreshing = false
         }
-        binding?.swipeRefreshLayout?.isRefreshing = true
     }
 
     private fun setupFab() {
-        binding?.fab?.setOnClickListener {
+        binding.fab.setOnClickListener {
             if (authViewModel.isAuthenticated()) {
                 findNavController().navigate(R.id.createPostFragment)
             } else {
@@ -158,12 +188,45 @@ class PostsFragment : Fragment() {
         }
     }
 
-    private fun observePosts() {
+    private fun observeLoadState() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            postAdapter.loadStateFlow.collectLatest { loadState ->
+                binding.apply {
+                    progressBar.isVisible = loadState.refresh is LoadState.Loading
+                    swipeRefreshLayout.isRefreshing = loadState.refresh is LoadState.Loading
+
+                    if (loadState.refresh is LoadState.Error) {
+                        val error = (loadState.refresh as LoadState.Error).error
+                        showError("Ошибка загрузки: ${error.message}")
+                    }
+
+                    val isEmpty = loadState.refresh is LoadState.NotLoading &&
+                            postAdapter.itemCount == 0
+                    emptyStateLayout.isVisible = isEmpty
+                    postsRecyclerView.isVisible = !isEmpty
+
+                    if (isEmpty) {
+                        emptyStateTextView.text = "Пока нет постов"
+                        emptyStateButton?.let {
+                            it.text = "Обновить"
+                            it.setOnClickListener {
+                                postsViewModel.refresh()
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private fun observeAuthState() {
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                postsViewModel.data.collectLatest { pagingData ->
-                    postAdapter.submitData(pagingData)
-                    binding?.swipeRefreshLayout?.isRefreshing = false
+                authViewModel.uiState.collect { uiState ->
+                    binding.fab.isEnabled = uiState.isAuthenticated
+                    if (!uiState.isAuthenticated) {
+                        navigateToLogin()
+                    }
                 }
             }
         }
@@ -250,13 +313,11 @@ class PostsFragment : Fragment() {
     }
 
     private fun showAuthenticationRequired() {
-        binding?.root?.let {
-            Snackbar.make(it, "Для создания поста необходимо авторизоваться", Snackbar.LENGTH_LONG)
-                .setAction("Войти") {
-                    findNavController().navigate(R.id.loginFragment)
-                }
-                .show()
-        }
+        Snackbar.make(binding.root, "Необходимо авторизоваться", Snackbar.LENGTH_LONG)
+            .setAction("Войти") {
+                findNavController().navigate(R.id.loginFragment)
+            }
+            .show()
     }
 
     private fun showSuccess(message: String) {
@@ -266,14 +327,7 @@ class PostsFragment : Fragment() {
     }
 
     private fun showError(message: String) {
-        binding?.root?.let {
-            Snackbar.make(it, message, Snackbar.LENGTH_LONG)
-                .setAction("Повторить") {
-                    refreshData()
-                }
-                .show()
-        }
-        binding?.swipeRefreshLayout?.isRefreshing = false
+        Snackbar.make(binding.root, message, Snackbar.LENGTH_LONG).show()
     }
 
     private fun showShortMessage(message: String) {
@@ -284,8 +338,10 @@ class PostsFragment : Fragment() {
 
     override fun onResume() {
         super.onResume()
-        if (postAdapter.itemCount == 0) {
-            refreshData()
+        if (!authViewModel.isAuthenticated()) {
+            navigateToLogin()
+        } else {
+            postsViewModel.refresh()
         }
     }
 

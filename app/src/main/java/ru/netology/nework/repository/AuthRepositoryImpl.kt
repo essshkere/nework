@@ -38,8 +38,12 @@ class AuthRepositoryImpl @Inject constructor(
             }
         }
         val body = response.body() ?: throw Exception("Пустой ответ от сервера")
-        tokenProvider.saveToken(body.token)
-        tokenProvider.saveUserId(body.id)
+        println("DEBUG: Получен токен: ${body.token.take(20)}...")
+        println("DEBUG: Получен ID пользователя: ${body.id}")
+        saveToken(body.token)
+        saveUserId(body.id)
+        println("DEBUG: Токен сохранен в SharedPreferences")
+        println("DEBUG: Проверка сохраненного токена: ${getToken()?.take(20)}...")
         return body
     }
 

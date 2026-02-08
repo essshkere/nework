@@ -2,6 +2,7 @@ package ru.netology.nework
 
 import android.os.Bundle
 import android.view.Menu
+import android.view.MenuItem
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
@@ -39,24 +40,22 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
-
         setupNavigation()
         setupToolbar()
         observeAuthState()
-
         checkAuthorizationOnStart()
     }
 
     private fun checkAuthorizationOnStart() {
         val navHostFragment = supportFragmentManager
-            .findFragmentById(R.id.nav_host_fragment) as NavHostFragment
-        val navController = navHostFragment.navController
-
-        if (!authViewModel.isAuthenticated()) {
-            navController.navigate(R.id.loginFragment)
+            .findFragmentById(R.id.nav_host_fragment) as? NavHostFragment
+        navHostFragment?.let {
+            val navController = it.navController
+            if (!authViewModel.isAuthenticated()) {
+                navController.navigate(R.id.loginFragment)
+            }
         }
     }
 
@@ -64,6 +63,14 @@ class MainActivity : AppCompatActivity() {
         val navHostFragment = supportFragmentManager
             .findFragmentById(R.id.nav_host_fragment) as NavHostFragment
         val navController = navHostFragment.navController
+        try {
+            val navGraph = navController.navInflater.inflate(R.navigation.nav_graph)
+            navController.graph = navGraph
+        } catch (e: Exception) {
+            println("DEBUG: Ошибка загрузки навигационного графа: ${e.message}")
+            e.printStackTrace()
+        }
+
         binding.toolbar.setupWithNavController(navController, appBarConfiguration)
         binding.bottomNavigation.setupWithNavController(navController)
         navController.addOnDestinationChangedListener { _, destination, _ ->
@@ -90,8 +97,26 @@ class MainActivity : AppCompatActivity() {
             authViewModel.uiState.collectLatest { uiState ->
                 invalidateOptionsMenu()
                 updateUi(uiState)
+                if (!uiState.isAuthenticated &&
+                    !isOnAuthScreen() &&
+                    !isSplashOrWelcomeScreen()) {
+                    navigateToLogin()
+                }
             }
         }
+    }
+
+    private fun isOnAuthScreen(): Boolean {
+        val navHostFragment = supportFragmentManager
+            .findFragmentById(R.id.nav_host_fragment) as? NavHostFragment
+        val currentDestination = navHostFragment?.navController?.currentDestination?.id
+
+        return currentDestination == R.id.loginFragment ||
+                currentDestination == R.id.registerFragment
+    }
+
+    private fun isSplashOrWelcomeScreen(): Boolean {
+        return false
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
@@ -107,6 +132,29 @@ class MainActivity : AppCompatActivity() {
         menu.findItem(R.id.action_register).isVisible = !isAuthenticated
 
         return super.onPrepareOptionsMenu(menu)
+    }
+
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        return when (item.itemId) {
+            R.id.action_profile -> {
+                navigateToMyProfile()
+                true
+            }
+            R.id.action_logout -> {
+                showLogoutConfirmation()
+                true
+            }
+            R.id.action_login -> {
+                navigateToLogin()
+                true
+            }
+            R.id.action_register -> {
+                navigateToRegister()
+                true
+            }
+            else -> super.onOptionsItemSelected(item)
+        }
     }
 
     private fun updateUi(uiState: AuthViewModel.AuthUiState) {
@@ -135,6 +183,12 @@ class MainActivity : AppCompatActivity() {
             is ru.netology.nework.fragment.UserProfileFragment -> {
                 supportActionBar?.title = "Профиль пользователя"
             }
+            is ru.netology.nework.fragment.LoginFragment -> {
+                supportActionBar?.title = "Вход"
+            }
+            is ru.netology.nework.fragment.RegisterFragment -> {
+                supportActionBar?.title = "Регистрация"
+            }
             else -> {
                 supportActionBar?.title = getString(R.string.app_name)
             }
@@ -148,26 +202,20 @@ class MainActivity : AppCompatActivity() {
 
     private fun navigateToMyProfile() {
         val navHostFragment = supportFragmentManager
-            .findFragmentById(R.id.nav_host_fragment) as NavHostFragment
-        val navController = navHostFragment.navController
-
-        navController.navigate(R.id.myProfileFragment)
+            .findFragmentById(R.id.nav_host_fragment) as? NavHostFragment
+        navHostFragment?.navController?.navigate(R.id.myProfileFragment)
     }
 
     private fun navigateToLogin() {
         val navHostFragment = supportFragmentManager
-            .findFragmentById(R.id.nav_host_fragment) as NavHostFragment
-        val navController = navHostFragment.navController
-
-        navController.navigate(R.id.loginFragment)
+            .findFragmentById(R.id.nav_host_fragment) as? NavHostFragment
+        navHostFragment?.navController?.navigate(R.id.loginFragment)
     }
 
     private fun navigateToRegister() {
         val navHostFragment = supportFragmentManager
-            .findFragmentById(R.id.nav_host_fragment) as NavHostFragment
-        val navController = navHostFragment.navController
-
-        navController.navigate(R.id.registerFragment)
+            .findFragmentById(R.id.nav_host_fragment) as? NavHostFragment
+        navHostFragment?.navController?.navigate(R.id.registerFragment)
     }
 
     private fun showLogoutConfirmation() {
@@ -175,6 +223,7 @@ class MainActivity : AppCompatActivity() {
         dialog.onLogoutConfirmed = {
             authViewModel.logout()
             Snackbar.make(binding.root, "Вы вышли из аккаунта", Snackbar.LENGTH_SHORT).show()
+            navigateToLogin()
         }
         dialog.show(supportFragmentManager, ConfirmLogoutDialog.TAG)
     }
@@ -185,7 +234,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onSupportNavigateUp(): Boolean {
         val navHostFragment = supportFragmentManager
-            .findFragmentById(R.id.nav_host_fragment) as NavHostFragment
-        return navHostFragment.navController.navigateUp() || super.onSupportNavigateUp()
+            .findFragmentById(R.id.nav_host_fragment) as? NavHostFragment
+        return navHostFragment?.navController?.navigateUp() == true || super.onSupportNavigateUp()
     }
 }

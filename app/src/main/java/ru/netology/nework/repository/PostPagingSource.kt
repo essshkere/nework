@@ -15,13 +15,21 @@ class PostPagingSource(
             val page = params.key ?: 0
             val pageSize = params.loadSize
 
-            val response = postApi.getLatest(count = pageSize)
+            println("DEBUG: Загрузка постов, страница: $page, размер: $pageSize")
+
+            val response = postApi.getAll()
 
             if (!response.isSuccessful) {
-                throw Exception("Failed to load posts: ${response.code()}")
+                println("DEBUG: Ошибка при запросе: ${response.code()}")
+                when (response.code()) {
+                    403 -> throw Exception("403: Требуется авторизация")
+                    401 -> throw Exception("401: Не авторизован")
+                    else -> throw Exception("Ошибка сервера: ${response.code()}")
+                }
             }
 
             val posts = response.body()?.map { it.toModel() } ?: emptyList()
+            println("DEBUG: Получено постов: ${posts.size}")
 
             LoadResult.Page(
                 data = posts,
@@ -29,6 +37,8 @@ class PostPagingSource(
                 nextKey = if (posts.isNotEmpty()) page + 1 else null
             )
         } catch (e: Exception) {
+            println("DEBUG: Исключение в PostPagingSource: ${e.message}")
+            e.printStackTrace()
             LoadResult.Error(e)
         }
     }

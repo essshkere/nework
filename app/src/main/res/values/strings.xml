@@ -11,4 +11,5 @@
     <string name="add_event">Создать событие</string>
     <string name="participate">Участвовать</string>
     <string name="choose_users">Выбрать пользователей</string>
+    <string name="refresh">Обновить</string>
 </resources>

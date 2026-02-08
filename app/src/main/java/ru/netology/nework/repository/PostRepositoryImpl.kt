@@ -51,13 +51,12 @@ class PostRepositoryImpl @Inject constructor(
         return Pager(
             config = PagingConfig(
                 pageSize = 20,
-                enablePlaceholders = false,
-                initialLoadSize = 40
+                enablePlaceholders = false
             ),
             pagingSourceFactory = {
                 PostPagingSource(postApi)
             }
-        ).flow.cachedIn(repositoryScope)
+        ).flow
     }
 
     fun getPagingDataFromDb(): Flow<PagingData<Post>> {
