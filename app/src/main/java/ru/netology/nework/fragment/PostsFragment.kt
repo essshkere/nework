@@ -21,6 +21,7 @@ import kotlinx.coroutines.launch
 import ru.netology.nework.R
 import ru.netology.nework.adapter.PostAdapter
 import ru.netology.nework.databinding.FragmentPostsBinding
+import ru.netology.nework.repository.AuthException
 import ru.netology.nework.viewmodel.AuthViewModel
 import ru.netology.nework.viewmodel.PostsViewModel
 
@@ -43,12 +44,6 @@ class PostsFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
-        if (!authViewModel.isAuthenticated()) {
-            navigateToLogin()
-            return
-        }
-
 
         setupRecyclerView()
         setupSwipeRefresh()
@@ -197,23 +192,17 @@ class PostsFragment : Fragment() {
 
                     if (loadState.refresh is LoadState.Error) {
                         val error = (loadState.refresh as LoadState.Error).error
-                        showError("Ошибка загрузки: ${error.message}")
+                        if (error is AuthException || error.message?.contains("403") == true) {
+                            navigateToLogin()
+                        } else {
+                            showError("Ошибка загрузки: ${error.message}")
+                        }
                     }
 
                     val isEmpty = loadState.refresh is LoadState.NotLoading &&
                             postAdapter.itemCount == 0
                     emptyStateLayout.isVisible = isEmpty
                     postsRecyclerView.isVisible = !isEmpty
-
-                    if (isEmpty) {
-                        emptyStateTextView.text = "Пока нет постов"
-                        emptyStateButton?.let {
-                            it.text = "Обновить"
-                            it.setOnClickListener {
-                                postsViewModel.refresh()
-                            }
-                        }
-                    }
                 }
             }
         }

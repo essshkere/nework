@@ -14,8 +14,8 @@ class AuthInterceptor @Inject constructor(
         val token = tokenProvider.getToken()
         println("DEBUG: AuthInterceptor - токен: ${token?.take(20)}...")
         token?.let {
-            requestBuilder.addHeader("Authorization", "Bearer $token")
-            println("DEBUG: AuthInterceptor - добавляем заголовок Authorization")
+            requestBuilder.addHeader("Authorization", it)
+            println("DEBUG: AuthInterceptor - добавляем заголовок Authorization с токеном (без Bearer)")
         } ?: run {
             println("DEBUG: AuthInterceptor - токен отсутствует")
         }

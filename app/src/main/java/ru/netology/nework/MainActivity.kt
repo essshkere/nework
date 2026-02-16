@@ -53,7 +53,10 @@ class MainActivity : AppCompatActivity() {
             .findFragmentById(R.id.nav_host_fragment) as? NavHostFragment
         navHostFragment?.let {
             val navController = it.navController
-            if (!authViewModel.isAuthenticated()) {
+            val currentDestination = navController.currentDestination?.id
+            val isOnAuthScreen = currentDestination == R.id.loginFragment ||
+                    currentDestination == R.id.registerFragment
+            if (!authViewModel.isAuthenticated() && !isOnAuthScreen) {
                 navController.navigate(R.id.loginFragment)
             }
         }

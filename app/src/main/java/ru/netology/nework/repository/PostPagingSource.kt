@@ -22,7 +22,9 @@ class PostPagingSource(
             if (!response.isSuccessful) {
                 println("DEBUG: Ошибка при запросе: ${response.code()}")
                 when (response.code()) {
-                    403 -> throw Exception("403: Требуется авторизация")
+                    403 -> {
+                        throw AuthException("403: Требуется авторизация")
+                    }
                     401 -> throw Exception("401: Не авторизован")
                     else -> throw Exception("Ошибка сервера: ${response.code()}")
                 }
@@ -50,3 +52,5 @@ class PostPagingSource(
         }
     }
 }
+
+class AuthException(message: String) : Exception(message)
