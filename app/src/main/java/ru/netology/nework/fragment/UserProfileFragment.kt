@@ -129,6 +129,7 @@ class ProfileViewPagerAdapter(
     }
 }
 
+@AndroidEntryPoint
 class UserWallFragment : Fragment() {
 
     private var _binding: ru.netology.nework.databinding.FragmentPostsBinding? = null
@@ -244,6 +245,7 @@ class UserWallFragment : Fragment() {
     }
 }
 
+@AndroidEntryPoint
 class UserJobsFragment : Fragment() {
 
     private var _binding: ru.netology.nework.databinding.FragmentUsersBinding? = null
